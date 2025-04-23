@@ -23,9 +23,9 @@ class User(AbstractUser):
     ]
     middle_initial = models.CharField(max_length=1, blank=True)
     nationality = models.IntegerField(choices=NATIONALITY_CHOICES, default=1)
-    job_title = models.CharField(max_length=50, blank=True)
+    job_title = models.CharField(max_length=1000, blank=True)
     institute = models.CharField(max_length=1000)
-    department = models.CharField(max_length=50, blank=True)
+    department = models.CharField(max_length=1000, blank=True)
     disability = models.TextField(blank=True)
     dietary = models.TextField(blank=True)
 
@@ -46,8 +46,8 @@ class Attendee(models.Model):
     last_name = models.CharField(max_length=1000)
     nationality = models.IntegerField()
     institute = models.CharField(max_length=1000)
-    department = models.CharField(max_length=50, blank=True)
-    job_title = models.CharField(max_length=50, blank=True)
+    department = models.CharField(max_length=1000, blank=True)
+    job_title = models.CharField(max_length=1000, blank=True)
     disability = models.TextField(blank=True)
     dietary = models.TextField(blank=True)
     @property
