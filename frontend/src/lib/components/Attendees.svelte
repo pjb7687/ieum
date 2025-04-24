@@ -434,7 +434,7 @@
     <form method="post" action="?/send_emails" use:enhance={afterSuccessfulSendEmails}>
         <div class="mb-6">
             <Label for="to" class="block mb-2 text-black">To</Label>
-            <Input id="to" name="to" type="text" value={selectedAttendees.map(id => table_data_attendees.find(a => a.id === id).email).join("; ")} disabled />
+            <Input id="to" name="to" type="text" value={selectedAttendees.map(id => table_data_attendees.find(a => a.id === id).email).join("; ")} readonly />
         </div>
         <div class="mb-6">
             <Label for="subject" class="block mb-2">Subject</Label>
