@@ -270,6 +270,7 @@
         <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>Export All Data as CSV</Button>
     </div>
 </div>
+<p class="mt-5 mb-3 text-sm text-right">{table_data_attendees.length} people registered to this event.</p>
 <TableSearch placeholder="Search by First Name" hoverable={true} bind:inputValue={searchTermAttendee}>
     <TableHead>
         <TableHeadCell class="w-1">
