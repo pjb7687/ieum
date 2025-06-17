@@ -68,7 +68,8 @@
 
     const exportAttendeesAsCSV = () => {
         const csv = [
-            [   "First Name",
+            [   "ID",
+                "First Name",
                 "Middle Initial",
                 "Last Name",
                 "Email",
@@ -80,6 +81,7 @@
                 "Dietary",
                 ...custom_headers_attendees.map(q => q.replace(/\n/, ' ').replace(/\s+/g, ' '))],
             ...table_data_attendees.map(row => [
+                row.id,
                 row.first_name,
                 row.middle_initial,
                 row.last_name,
@@ -288,6 +290,7 @@
                 }}
             />
         </TableHeadCell>
+        <TableHeadCell>ID</TableHeadCell>
         <TableHeadCell>Name</TableHeadCell>
         <TableHeadCell>Email</TableHeadCell>
         <TableHeadCell>Nationality</TableHeadCell>
@@ -313,6 +316,7 @@
                         selectedAttendees = selectedAttendees.filter(a => a !== row.id);
                     }
                 }} /></TableBodyCell>
+                <TableBodyCell>{row.id}</TableBodyCell>
                 <TableBodyCell>{row.name}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
                 <TableBodyCell>{stringify_nationality(row.nationality)}</TableBodyCell>
