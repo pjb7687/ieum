@@ -9,8 +9,13 @@
 
     let { data } = $props();
 
+    function sortAttendeesById(a, b) {
+        return a.id - b.id;
+    }
+
     function transformToTableFormat(attendees) {
         // Extract all unique questions object
+        attendees.sort(sortAttendeesById);
         let unique_questions = new Set();
         data.questions.forEach(item => {
             unique_questions.add(item.question.question);
