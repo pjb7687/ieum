@@ -3,9 +3,10 @@
     import { Modal, Heading, Textarea, Select, Label, Card, Input } from 'flowbite-svelte';
     import { Alert } from 'flowbite-svelte';
     import { enhance } from '$app/forms';
-    import { UserAddSolid, UserEditSolid, UserRemoveSolid, TextSizeOutline } from 'flowbite-svelte-icons';
+    import { UserAddSolid, UserEditSolid, UserRemoveSolid, TextSizeOutline, TagOutline } from 'flowbite-svelte-icons';
 
     import OnSiteRegistrationForm from './OnSiteRegistrationForm.svelte';
+    import jsPDF from 'jspdf';
 
     let { data } = $props();
 
@@ -73,6 +74,30 @@
             remove_attendee_modal = false;
         };
     };
+
+    let nametag_modal = $state(false);
+    let selected_nametag = $state({});
+    const showNametagModal = async (id) => {
+        const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: [90, 100]
+        });
+        let p = data.onsite_attendees.find(a => a.id === id);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(30);
+        let splitName = doc.splitTextToSize(p.name, 80);
+        doc.text(splitName, 45, 45 - (splitName.length - 1) * 12, 'center');
+        doc.setFontSize(20);
+        let splitInstitute = doc.splitTextToSize(p.institute, 80);
+        doc.text(splitInstitute, 45, 55, 'center');
+        doc.setFontSize(23);
+        doc.setLineWidth(1);
+        doc.line(5, 82, 85, 82);
+        doc.text(`Participant`, 45, 93, 'center');
+        selected_nametag = doc.output('bloburi');
+        nametag_modal = true;
+    };
 </script>
 
 <Heading tag="h2" customSize="text-xl font-bold" class="mb-3">On-site Attendees</Heading>
@@ -122,6 +147,9 @@
                 <TableBodyCell>{row.job_title}</TableBodyCell>
                 <TableBodyCell>
                     <div class="flex justify-center gap-2">
+                        <Button color="none" size="none" onclick={() => showNametagModal(row.id)}>
+                            <TagOutline class="w-5 h-5" />
+                        </Button>
                         <Button color="none" size="none" onclick={() => showAttenteeModal(row.id)}>
                             <UserEditSolid class="w-5 h-5" />
                         </Button>
@@ -159,4 +187,19 @@
             <Button color="dark" onclick={() => remove_attendee_modal = false}>Cancel</Button>
         </div>
     </form>
+</Modal>
+
+<Modal id="nametag_modal" size="lg" title="Nametag" bind:open={nametag_modal} outsideclose>
+    <iframe id="nametag" class="w-full h-[500px]" src={selected_nametag} title="Nametag">
+        Your browser does not support iframes.
+    </iframe>
+    <div class="flex justify-center mt-6 gap-2">
+        <Button color="primary" onclick={() => {
+            const iframe = document.getElementById('nametag');
+            if (iframe) {
+                iframe.contentWindow.print();
+            }
+        }}>Print</Button>
+        <Button color="dark" onclick={() => nametag_modal = false}>Close</Button>
+    </div>
 </Modal>
