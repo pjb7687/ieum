@@ -275,4 +275,30 @@ export const actions = {
         }
         return;
     },
+    update_onsite_attendee: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/onsite/${formdata.get('id')}/update`, {
+            first_name: formdata.get('first_name'),
+            middle_initial: formdata.get('middle_initial'),
+            last_name: formdata.get('last_name'),
+            institute: formdata.get('institute'),
+            job_title: formdata.get('job_title'),
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
+    remove_onsite_attendee: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/onsite/${formdata.get('id')}/delete`, {}, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    }
 };

@@ -740,3 +740,25 @@ def register_on_site(request, event_id: int):
 def get_on_site_attendees(request, event_id: int):
     event = Event.objects.get(id=event_id)
     return event.onsite_attendees.all()
+
+@ensure_event_staff
+@api.post("/event/{event_id}/onsite/{onsite_id}/delete", response=MessageSchema)
+def delete_on_site_attendee(request, event_id: int, onsite_id: int):
+    event = Event.objects.get(id=event_id)
+    oa = OnSiteAttendee.objects.get(id=onsite_id, event=event)
+    oa.delete()
+    return {"code": "success", "message": "On-site attendee deleted."}
+
+@ensure_event_staff
+@api.post("/event/{event_id}/onsite/{onsite_id}/update", response=MessageSchema)
+def update_on_site_attendee(request, event_id: int, onsite_id: int):
+    event = Event.objects.get(id=event_id)
+    oa = OnSiteAttendee.objects.get(id=onsite_id, event=event)
+    data = json.loads(request.body)
+    oa.first_name = data.get("first_name")
+    oa.middle_initial = data.get("middle_initial")
+    oa.last_name = data.get("last_name")
+    oa.institute = data.get("institute")
+    oa.job_title = data.get("job_title")
+    oa.save()
+    return {"code": "success", "message": "On-site attendee updated."}

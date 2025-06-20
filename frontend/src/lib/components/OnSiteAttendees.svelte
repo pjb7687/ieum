@@ -66,6 +66,18 @@
         remove_attendee_modal = true;
     };
 
+    let message_update = $state({});
+    const afterSuccessfulSubmit = () => {
+        return async ({ result, action, update }) => {
+            if (result.type === 'success') {
+                await update({ reset: false });
+                message_update = { type: 'success', message: 'Successfully updated attendee information.' };
+            } else {
+                message_update = { type: 'error', message: 'Failed to update attendee information.' };
+            }
+        };
+    };
+
     const afterSuccessfulDeregistration = () => {
         return async ({ result, action, update }) => {
             if (result.type === 'success') {
@@ -107,7 +119,7 @@
         <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>Export All Data as CSV</Button>
     </div>
 </div>
-<p class="mt-5 mb-3 text-sm text-right">{data.onsite_attendees.length} people registered to this event.</p>
+<p class="mt-5 mb-3 text-sm text-right">{data.onsite_attendees.length} people registered on-site.</p>
 <TableSearch placeholder="Search by First Name" hoverable={true} bind:inputValue={searchTermAttendee}>
     <TableHead>
         <TableHeadCell class="w-1">
@@ -172,6 +184,11 @@
     <form method="post" action="?/update_onsite_attendee" use:enhance={afterSuccessfulSubmit}>
         <input type="hidden" name="id" value={data.onsite_attendees[selected_idx].id} />
         <OnSiteRegistrationForm data={data.onsite_attendees[selected_idx]} />
+        {#if message_update.type === 'success'}
+            <Alert type="success" color="green">{message_update.message}</Alert>
+        {:else if message_update.type === 'error'}
+            <Alert type="error" color="red">{message_update.message}</Alert>
+        {/if}
         <div class="flex justify-center mt-6">
             <Button color="primary" type="submit">Update Attendee Information</Button>
         </div>
