@@ -27,6 +27,7 @@ export async function load({ parent, params, cookies, request }) {
     rtn.eventadmins = await get_data_or_404_event('eventadmins');
     rtn.email_templates = await get_data_or_404_event('email_templates');
     rtn.users = await get_data_or_404('users');
+    rtn.onsite_attendees = await get_data_or_404_event('onsite');
 
     return rtn;
 }

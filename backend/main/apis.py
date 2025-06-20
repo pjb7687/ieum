@@ -15,7 +15,7 @@ from django.template import Template, Context
 
 from django.conf import settings
 
-from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote
+from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee
 from main.schema import *
 
 from .tasks import send_mail
@@ -720,3 +720,23 @@ def get_email_templates(request, event_id: int):
         "abstract": event.email_template_abstract_submission
     }
     return rtn
+
+@api.post("/event/{event_id}/onsite")
+def register_on_site(request, event_id: int):
+    event = Event.objects.get(id=event_id)
+    data = json.loads(request.body)
+    oa = OnSiteAttendee.objects.create(
+        event=event,
+        first_name=data.get("first_name"),
+        middle_initial=data.get("middle_initial"),
+        last_name=data.get("last_name"),
+        institute=data.get("institute"),
+        job_title=data.get("job_title", "")
+    )
+    return {"code": "success", "message": "Successfully registered on-site.", "id": oa.id}
+
+@ensure_event_staff
+@api.get("/event/{event_id}/onsite", response=List[OnSiteAttendeeSchema])
+def get_on_site_attendees(request, event_id: int):
+    event = Event.objects.get(id=event_id)
+    return event.onsite_attendees.all()

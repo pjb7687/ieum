@@ -4,7 +4,7 @@ from ninja import Schema
 from typing import List, Union
 from datetime import date
 
-from main.models import User, Attendee, Abstract
+from main.models import User, Attendee, Abstract, OnSiteAttendee
 from main.utils import docx_to_html, odt_to_html
 
 class LoginSchema(Schema):
@@ -184,3 +184,20 @@ class AbstractVoteSchema(Schema):
     id: int
     reviewer: AttendeeSchema
     voted_abstracts: List[AbstractShortSchema]
+
+class OnSiteAttendeeSchema(Schema):
+    id: int
+    first_name: str
+    middle_initial: str
+    last_name: str
+    name: str
+    institute: str
+    job_title: str
+
+    @staticmethod
+    def resolve_name(da: OnSiteAttendee) -> str:
+        name = da.first_name
+        if da.middle_initial:
+            name += " " + da.middle_initial
+        name += " " + da.last_name
+        return name

@@ -14,6 +14,7 @@
     import EventSpecificQuestions from '$lib/components/EventSpecificQuestions.svelte';
     import Speakers from '$lib/components/Speakers.svelte';
     import Attendees from '$lib/components/Attendees.svelte';
+    import OnSiteAttendees from '$lib/components/OnSiteAttendees.svelte';
     import Abstracts from '$lib/components/Abstracts.svelte';
     import EventAdmins from '$lib/components/EventAdmins.svelte';
 
@@ -33,7 +34,8 @@
             location.hash !== '#speakers' &&
             location.hash !== '#attendees' &&
             location.hash !== '#abstracts' &&
-            location.hash !== '#event_admins'
+            location.hash !== '#event_admins' &&
+            location.hash !== '#onsite'
         ) {
             location.hash = '#event_information';
             return;
@@ -100,6 +102,11 @@
                             <UsersGroupSolid class="w-6 h-6" />
                         </svelte:fragment>
                     </SidebarItem>
+                    <SidebarItem label="On-site Attendees" class={(sidebar_selected === 'onsite')?activeClass:nonActiveClass} href="#onsite">
+                        <svelte:fragment slot="icon">
+                            <UsersGroupSolid class="w-6 h-6" />
+                        </svelte:fragment>
+                    </SidebarItem>
                     <SidebarItem label="Abstracts" class={(sidebar_selected === 'abstracts')?activeClass:nonActiveClass} href="#abstracts">
                         <svelte:fragment slot="icon">
                             <EditSolid class="w-6 h-6" />
@@ -133,6 +140,10 @@
 
             {#if sidebar_selected === 'attendees'}
             <Attendees data={data} />
+            {/if}
+
+            {#if sidebar_selected === 'onsite'}
+            <OnSiteAttendees data={data} />
             {/if}
             
             {#if sidebar_selected === 'abstracts'}
