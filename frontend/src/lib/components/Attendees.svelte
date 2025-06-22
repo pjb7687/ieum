@@ -258,6 +258,7 @@
 
     let nametag_modal = $state(false);
     let selected_nametag = $state({});
+    let role = $state('Participant'); // Default role for nametag
     const showNametagModal = async (id) => {
         const doc = new jsPDF({
             orientation: "portrait",
@@ -277,7 +278,7 @@
         doc.setFontSize(23);
         doc.setLineWidth(1);
         doc.line(5, 82, 85, 82);
-        doc.text(`Participant`, 45, 93, 'center');
+        doc.text(role, 45, 93, 'center');
         selected_nametag = doc.output('bloburi');
         nametag_modal = true;
     };
@@ -305,6 +306,7 @@
     </div>
 </div>
 <p class="mt-5 mb-3 text-sm text-right">{table_data_attendees.length} people registered to this event.</p>
+<Input type="text" placeholder="Role" bind:value={role} class="mb-6" /><br>
 <TableSearch placeholder="Search by First Name" hoverable={true} bind:inputValue={searchTermAttendee}>
     <TableHead>
         <TableHeadCell class="w-1">
