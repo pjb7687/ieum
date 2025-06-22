@@ -721,7 +721,7 @@ def get_email_templates(request, event_id: int):
     }
     return rtn
 
-@api.post("/event/{event_id}/onsite")
+@api.post("/event/{event_id}/onsite", auth=None)
 def register_on_site(request, event_id: int):
     event = Event.objects.get(id=event_id)
     data = json.loads(request.body)
