@@ -15,6 +15,8 @@
     let { data, form } = $props();
 
     let event = data.event;
+    let deadline = event.registration_deadline ? new Date(event.registration_deadline) : new Date(event.start_date);
+    let now = new Date();
     
     let form_config = { 
         hide_login_info: true,
@@ -81,6 +83,14 @@
     You are registering for the event <b>{event.name}</b> on {event.start_date} to {event.end_date}. Please fill the following form to register for the event. Your information was automatically filled based on your account information.<br><br>
     Once this form is submitted, you <b>cannot</b> change the information you provided to the event. If you need to update your information, please contact the event organizers.
 </p>
+{#if deadline && deadline < now}
+    <Alert color="red">
+        Registration for this event has been closed.
+    </Alert>
+    <p class="text-center mt-10">
+        <Button color="alternative" href={event.link_info} size="lg" data-sveltekit-reload>Return to Event Page</Button>
+    </p>
+{:else}
 <form use:felteForm method="post" class="space-y-5">
     <RegistrationForm data={$formData} errors={$errors} config={form_config} />
     {#if data.questions.length > 0}
@@ -119,5 +129,7 @@
     {/if}
     <div class="flex flex-col md:flex-row justify-center gap-4">
         <Button type="submit" color="blue" size="lg" disabled={$isSubmitting}>Register</Button>
+        <Button color="alternative" href={event.link_info} size="lg" data-sveltekit-reload>Return to Event Page</Button>
     </div>
 </form>
+{/if}
