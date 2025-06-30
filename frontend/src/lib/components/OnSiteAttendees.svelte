@@ -3,7 +3,7 @@
     import { Modal, Heading, Textarea, Select, Label, Card, Input } from 'flowbite-svelte';
     import { Alert } from 'flowbite-svelte';
     import { enhance } from '$app/forms';
-    import { UserAddSolid, UserEditSolid, UserRemoveSolid, TextSizeOutline, TagOutline } from 'flowbite-svelte-icons';
+    import { UserAddSolid, UserEditSolid, UserRemoveSolid, TextSizeOutline, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
 
     import OnSiteRegistrationForm from './OnSiteRegistrationForm.svelte';
     import jsPDF from 'jspdf';
@@ -110,6 +110,54 @@
         selected_nametag = doc.output('bloburi');
         nametag_modal = true;
     };
+
+    let cert_modal = $state(false);
+    let selected_cert = $state({});
+    const showCertificateModal = async (id) => {
+        const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: [210, 297]
+        });
+        let p = data.onsite_attendees.find(a => a.id === id);
+        let curr_y = 45;
+        const add_line = (text, font_weight, font_size, y) => {
+            doc.setFont("helvetica", font_weight?font_weight:'normal');
+            doc.setFontSize(font_size?font_size:15);
+            let splitText = doc.splitTextToSize(text, 150);
+            if (y) {
+                splitText.forEach((line, index) => {
+                    doc.text(line, 105, y, 'center');
+                });
+            } else {
+                splitText.forEach((line, index) => {
+                    doc.text(line, 105, curr_y + (index * 10), 'center');
+                });
+                curr_y += (splitText.length * 12);
+            }
+        };
+        add_line(`Issue date: ${new Date().toLocaleDateString()}`, 'italic', 10, 10);
+        add_line(`Certificate of Attendance`, 'bold', 30);
+        curr_y += 15;
+        add_line(`This is to certify that below person`);
+        add_line(p.name, 'bold');
+        add_line(p.institute, 'bold');
+        add_line(`has attended`);
+        add_line(data.event.name, 'bold');
+        add_line(`on`);
+        add_line(data.event.start_date, 'bold');
+        add_line(`to`);
+        add_line(data.event.end_date, 'bold');
+        add_line(`held at`);
+        add_line(data.event.venue, 'bold');
+        add_line(`as a Participant.`);
+        curr_y += 20;
+        add_line(data.event.organizers, 'bold');
+        add_line('This certificate was machine generated and is valid without a signature.', 'italic', 10, 287);
+
+        selected_cert = doc.output('bloburi');
+        cert_modal = true;
+    };
 </script>
 
 <Heading tag="h2" customSize="text-xl font-bold" class="mb-3">On-site Attendees</Heading>
@@ -161,6 +209,9 @@
                     <div class="flex justify-center gap-2">
                         <Button color="none" size="none" onclick={() => showNametagModal(row.id)}>
                             <TagOutline class="w-5 h-5" />
+                        </Button>
+                        <Button color="none" size="none" onclick={() => showCertificateModal(row.id)}>
+                            <AwardOutline class="w-5 h-5" />
                         </Button>
                         <Button color="none" size="none" onclick={() => showAttenteeModal(row.id)}>
                             <UserEditSolid class="w-5 h-5" />
@@ -218,5 +269,20 @@
             }
         }}>Print</Button>
         <Button color="dark" onclick={() => nametag_modal = false}>Close</Button>
+    </div>
+</Modal>
+
+<Modal id="cert_modal" size="lg" title="Certificate" bind:open={cert_modal} outsideclose>
+    <iframe id="cert" class="w-full h-[500px]" src={selected_cert} title="Certificate">
+        Your browser does not support iframes.
+    </iframe>
+    <div class="flex justify-center mt-6 gap-2">
+        <Button color="primary" onclick={() => {
+            const iframe = document.getElementById('cert');
+            if (iframe) {
+                iframe.contentWindow.print();
+            }
+        }}>Print</Button>
+        <Button color="dark" onclick={() => cert_modal = false}>Close</Button>
     </div>
 </Modal>
