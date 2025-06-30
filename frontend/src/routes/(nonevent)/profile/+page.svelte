@@ -18,7 +18,7 @@
         first_name: yup.string().required('First name is required.'),
         last_name: yup.string().required('Last name is required.'),
         middle_initial: yup.string().max(1),
-        nationality: yup.number().required(),
+        nationality: yup.string().required(),
         job_title: yup.string(),
         department: yup.string(),
         institute: yup.string().required('Institute is required.'),

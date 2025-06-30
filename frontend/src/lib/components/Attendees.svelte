@@ -38,7 +38,7 @@
                 middle_initial: item.middle_initial,
                 last_name: item.last_name,
                 email: item.user.email,
-                nationality: item.nationality,
+                nationality: item.nationality.toString(),
                 institute: item.institute,
                 department: item.department,
                 job_title: item.job_title,
@@ -230,9 +230,9 @@
     };
 
     const stringify_nationality = (value) => {
-        if (value === 1) {
+        if (value === '1') {
             return 'Korean';
-        } else if (value === 2) {
+        } else if (value === '2') {
             return 'Non-Korean';
         }
         return 'Not Specified';

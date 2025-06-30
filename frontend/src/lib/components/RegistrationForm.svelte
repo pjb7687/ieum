@@ -157,9 +157,9 @@
   <Label for="nationality" class="block mb-2">Nationality*</Label>
   <Select id="nationality" name="nationality" bind:value={data.nationality} items={
     [
-      { value: 1, name: 'Korean' },
-      { value: 2, name: 'Non-Korean' },
-      { value: 3, name: 'Prefer not to respond' },
+      { value: "1", name: 'Korean' },
+      { value: "2", name: 'Non-Korean' },
+      { value: "3", name: 'Prefer not to respond' },
     ]
   } />
   {#if errors.nationality}
