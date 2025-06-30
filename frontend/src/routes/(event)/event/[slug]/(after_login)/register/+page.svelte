@@ -32,7 +32,7 @@
         first_name: yup.string().required('First name is required.').test('no-korean', 'Korean characters are not allowed.', rejectKorean),
         last_name: yup.string().required('Last name is required.').test('no-korean', 'Korean characters are not allowed.', rejectKorean),
         middle_initial: yup.string().max(1).test('no-korean', 'Korean characters are not allowed.', rejectKorean),
-        nationality: yup.number().required().test('no-korean', 'Korean characters are not allowed.', rejectKorean),
+        nationality: yup.number().required(),
         job_title: yup.string().test('no-korean', 'Korean characters are not allowed.', rejectKorean),
         department: yup.string().test('no-korean', 'Korean characters are not allowed.', rejectKorean),
         institute: yup.string().required('Institute is required.').test('no-korean', 'Korean characters are not allowed.', rejectKorean),
