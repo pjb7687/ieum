@@ -150,7 +150,7 @@
         add_line(data.event.end_date, 'bold');
         add_line(`held at`);
         add_line(data.event.venue, 'bold');
-        add_line(`as a Participant.`);
+        add_line(`as a participant.`);
         curr_y += 20;
         add_line(data.event.organizers, 'bold');
         add_line('This certificate was machine generated and is valid without a signature.', 'italic', 10, 287);
