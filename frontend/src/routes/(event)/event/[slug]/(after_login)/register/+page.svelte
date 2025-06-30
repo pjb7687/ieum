@@ -21,17 +21,23 @@
     let form_config = { 
         hide_login_info: true,
     };
+    
+    const koreanRegex = /[\u3131-\u3163\uac00-\ud7a3]/;
+    const rejectKorean = (value) => {
+        if (!value) return true;
+        return !koreanRegex.test(value);
+    };
 
     const schema = yup.object({
-        first_name: yup.string().required('First name is required.'),
-        last_name: yup.string().required('Last name is required.'),
-        middle_initial: yup.string().max(1),
-        nationality: yup.number().required(),
-        job_title: yup.string(),
-        department: yup.string(),
-        institute: yup.string().required('Institute is required.'),
-        disability: yup.string(),
-        dietary: yup.string(),
+        first_name: yup.string().required('First name is required.').test('no-korean', 'Korean characters are not allowed.', rejectKorean),
+        last_name: yup.string().required('Last name is required.').test('no-korean', 'Korean characters are not allowed.', rejectKorean),
+        middle_initial: yup.string().max(1).test('no-korean', 'Korean characters are not allowed.', rejectKorean),
+        nationality: yup.number().required().test('no-korean', 'Korean characters are not allowed.', rejectKorean),
+        job_title: yup.string().test('no-korean', 'Korean characters are not allowed.', rejectKorean),
+        department: yup.string().test('no-korean', 'Korean characters are not allowed.', rejectKorean),
+        institute: yup.string().required('Institute is required.').test('no-korean', 'Korean characters are not allowed.', rejectKorean),
+        disability: yup.string().test('no-korean', 'Korean characters are not allowed.', rejectKorean),
+        dietary: yup.string().test('no-korean', 'Korean characters are not allowed.', rejectKorean),
     });
 
     let me = data.user;
@@ -83,7 +89,7 @@
     You are registering for the event <b>{event.name}</b> on {event.start_date} to {event.end_date}. Please fill the following form to register for the event. Your information was automatically filled based on your account information.<br><br>
     Once this form is submitted, you <b>cannot</b> change the information you provided to the event. If you need to update your information, please contact the event organizers.
 </p>
-{#if deadline && deadline < now}
+{#if deadline && deadline > now}
     <Alert color="red">
         Registration for this event has been closed.
     </Alert>
