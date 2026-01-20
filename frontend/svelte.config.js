@@ -7,7 +7,6 @@ export default {
 	],
 	extensions: ['.svelte', '.svx'],
 	kit: {
-		adapter: adapter(),
-		csrf: false,
+		adapter: adapter()
 	}
 };
