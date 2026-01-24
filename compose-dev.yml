@@ -11,10 +11,10 @@ services:
 
   caddy:
     image: caddy:2.8.4
-    environment:
-        - DJANGO_ADMIN_PAGE_NAME=${DJANGO_ADMIN_PAGE_NAME}
     ports:
-      - "9090:80"
+      - "9080:80"
+    environment:
+      - DJANGO_ADMIN_PAGE_NAME=${DJANGO_ADMIN_PAGE_NAME}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
@@ -28,7 +28,7 @@ services:
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DJANGO_ADMIN_PAGE_NAME=${DJANGO_ADMIN_PAGE_NAME}
-      - ALLOWED_HOST=${HOST}
+      - ALLOWED_HOST=127.0.0.1
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
@@ -40,14 +40,16 @@ services:
       - EMAIL_HOST=${EMAIL_HOST}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
-      - HEADLESS_URL_ROOT=https://${HOST}
-      - ORCID_BASE_DOMAIN=orcid.org
-      - ACCOUNT_DEFAULT_HTTP_PROTOCOL=https
-      - LOG_FILE=/app/backend.log
-      - DEBUG=False
+      - EMAIL_PORT=${EMAIL_PORT}
+      - HEADLESS_URL_ROOT=http://127.0.0.1:9080
+      - ORCID_BASE_DOMAIN=sandbox.orcid.org
+      - ACCOUNT_DEFAULT_HTTP_PROTOCOL=http
+      - LOG_FILE=/dev/null
+      - DEBUG=True
     ports:
       - "8090:8080"
     volumes:
+      - ./backend:/app
       - static_data:/app/static
       - media_data:/app/media
     restart: always
@@ -59,8 +61,9 @@ services:
       - ORCID_CLIENT_ID=${ORCID_CLIENT_ID}
       - ORCID_CLIENT_SECRET=${ORCID_CLIENT_SECRET}
       - ADMIN_PAGE_NAME=${ADMIN_PAGE_NAME}
-      - NODE_ENV=production
-      - DEBUG=False
+      - DEBUG=True
+    volumes:
+      - ./frontend:/app
     restart: always
 
   rabbitmq:
@@ -90,6 +93,9 @@ services:
       - EMAIL_HOST=${EMAIL_HOST}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - EMAIL_PORT=${EMAIL_PORT}
+    volumes:
+      - ./backend:/app
     restart: always
     logging:
       driver: "json-file"
