@@ -1,6 +1,7 @@
 import os
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from allauth.account.models import EmailAddress
 
 User = get_user_model()
 
@@ -34,8 +35,17 @@ class Command(BaseCommand):
                 last_name=last_name,
                 institute=institute,
             )
+
+            # Mark email as verified
+            EmailAddress.objects.create(
+                user=user,
+                email=email,
+                verified=True,
+                primary=True
+            )
+
             self.stdout.write(self.style.SUCCESS(
-                f'Superuser "{username}" created successfully'
+                f'Superuser "{username}" created successfully with verified email'
             ))
             self.stdout.write(self.style.WARNING(
                 'Please change the default password immediately!'
