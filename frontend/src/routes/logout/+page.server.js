@@ -1,4 +1,4 @@
-import { get } from '$lib/fetch';
+import { post } from '$lib/fetch';
 import { redirect } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
@@ -11,6 +11,14 @@ export async function load({ parent, request, cookies }) {
         return redirect(303, next);
     }
 
+    // Call backend logout endpoint
+    try {
+        await post('/_allauth/browser/v1/auth/session', {}, cookies);
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+
+    // Delete the session cookie
     cookies.delete('sessionid', {
         path: '/',
         httpOnly: true,
