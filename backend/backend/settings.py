@@ -181,12 +181,15 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_SUBJECT_PREFIX = os.environ.get('EMAIL_PREFIX', '')
 
-EMAIL_USE_TLS = True
 EMAIL_FROM = os.environ.get('EMAIL_FROM', None)
 EMAIL_HOST = os.environ.get('EMAIL_HOST', None)
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', None)
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', None)
-EMAIL_PORT = 587
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+
+# Use SSL for port 465, TLS for other ports (typically 587)
+EMAIL_USE_SSL = EMAIL_PORT == 465
+EMAIL_USE_TLS = EMAIL_PORT != 465
 
 CELERY_BROKER_URL = f'amqp://{os.environ.get("RABBITMQ_DEFAULT_USER", "guest")}:{os.environ.get("RABBITMQ_DEFAULT_PASS", "guest")}@rabbitmq:5672'
 CELERY_RESULT_BACKEND = 'rpc://'
