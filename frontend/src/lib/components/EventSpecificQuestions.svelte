@@ -1,6 +1,7 @@
 <script>
     import { enhance } from '$app/forms';
     import { Alert, Button, Card, Heading, Input, Label, Li, List, Select, Textarea } from 'flowbite-svelte';
+    import * as m from '$lib/paraglide/messages.js';
 
     let { data } = $props();
 
@@ -41,9 +42,9 @@
                 if (result.type === 'success') {
                     await update({ reset: false });
                     resetCustomQuestionChanges();
-                    message_custom_question_changes = { type: 'success', message: 'Successfully updated custom questions.' };
+                    message_custom_question_changes = { type: 'success', message: m.eventQuestions_successMessage() };
                 } else {
-                    message_custom_question_changes = { type: 'error', message: 'Failed to update custom questions.' };
+                    message_custom_question_changes = { type: 'error', message: m.eventQuestions_errorMessage() };
                 }
             }
             scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
@@ -55,35 +56,35 @@
     });
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">Event Specific Questions</Heading>
-<p class="font-light mb-6">Customize event specific questions below. Note that the following information is already collected by default:</p>
+<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.eventQuestions_title()}</Heading>
+<p class="font-light mb-6">{m.eventQuestions_description()}</p>
 <List class="mb-6">
-    <Li>First Name, Middle Initial, Last Name, Nationality, Institute, Department, Job Title, Disability Information, Dietary Information</Li>
+    <Li>{m.eventQuestions_defaultInfo()}</Li>
 </List>
-<p class="font-light mb-6">Four types of custom questions are supported: checkbox (multiple choices), dropdown (single choice), text (text input), textarea (multiline text input)</p>
+<p class="font-light mb-6">{m.eventQuestions_supportedTypes()}</p>
 <form method="POST" action="?/update_questions" use:enhance={afterSuccessfulSubmitCustomQuestionChanges}>
     <div class="flex justify-center mb-6 gap-2">
-        <Button color="primary" onclick={resetCustomQuestionChanges}>Reset Changes</Button>
-        <Button type="submit" color="primary">Apply Changes</Button>
+        <Button color="primary" onclick={resetCustomQuestionChanges}>{m.eventQuestions_resetChanges()}</Button>
+        <Button type="submit" color="primary">{m.eventQuestions_applyChanges()}</Button>
     </div>
     {#each custom_questions as question}
     <Card size="none" class="mb-6">
         <div class="mb-6">
-            <Label for="question_type" class="block mb-2">Question Type</Label>
+            <Label for="question_type" class="block mb-2">{m.eventQuestions_questionType()}</Label>
             <Select id="question_type" name="question_type[]" bind:value={question.question.type} items={[
-                { value: 'checkbox', name: 'Checkbox' },
-                { value: 'select', name: 'Dropdown' },
-                { value: 'text', name: 'Text' },
-                { value: 'textarea', name: 'Textarea' }
+                { value: 'checkbox', name: m.questionType_checkbox() },
+                { value: 'select', name: m.questionType_select() },
+                { value: 'text', name: m.questionType_text() },
+                { value: 'textarea', name: m.questionType_textarea() }
             ]} />
         </div>
         <div class="mb-6">
-            <Label for="question_question" class="block mb-2">Question</Label>
+            <Label for="question_question" class="block mb-2">{m.eventQuestions_question()}</Label>
             <Textarea id="question_question" name="question_question[]" bind:value={question.question.question} />
         </div>
         {#if question.question.type === 'checkbox' || question.question.type === 'select'}
         <div class="mb-6">
-            <Label for="question_options" class="block mb-2">Options (for checkbox and select, separate by new line)</Label>
+            <Label for="question_options" class="block mb-2">{m.eventQuestions_options()}</Label>
             <Textarea id="question_options" name="question_options[]" rows="3" bind:value={question.question.options} />
         </div>
         {/if}
@@ -91,13 +92,13 @@
         <div class="flex justify-center">
             <Button color="red" class="ml-2" onclick={() => {
                 custom_questions = custom_questions.filter(q => q.id !== question.id);
-            }}>Delete Question</Button>
+            }}>{m.eventQuestions_deleteQuestion()}</Button>
         </div>
-    
+
     </Card>
     {/each}
     {#if custom_questions.length === 0}
-        <p class="font-light text-center mb-6">No custom questions defined.</p>
+        <p class="font-light text-center mb-6">{m.eventQuestions_noQuestions()}</p>
     {/if}
     <div class="flex justify-center mb-6">
         <Button color="dark" onclick={addNewCustomQuestion}>+</Button>
@@ -110,7 +111,7 @@
         {/if}
     </div>
     <div class="flex justify-center gap-2">
-        <Button color="primary" onclick={resetCustomQuestionChanges}>Reset Changes</Button>
-        <Button type="submit" color="primary">Apply Changes</Button>
+        <Button color="primary" onclick={resetCustomQuestionChanges}>{m.eventQuestions_resetChanges()}</Button>
+        <Button type="submit" color="primary">{m.eventQuestions_applyChanges()}</Button>
     </div>
 </form>

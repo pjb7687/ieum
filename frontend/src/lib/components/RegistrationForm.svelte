@@ -1,5 +1,6 @@
 <script>
   import { Heading, Input, ButtonGroup, InputAddon, Button, Textarea, Select, Label, Alert } from 'flowbite-svelte';
+  import * as m from '$lib/paraglide/messages.js';
 
   // Props to accept form data and errors from parent
   export let data = {
@@ -72,9 +73,9 @@
   
 {#if !config.hide_login_info}
 <!-- Login Information -->
-<Heading tag="h2" customSize="text-lg font-bold" class="mb-6">Personal Information</Heading>
+<Heading tag="h2" customSize="text-lg font-bold" class="mb-6">{m.form_personalInfo()}</Heading>
 <div class="mb-6">
-  <Label for="email" class="block mb-2 text-dark">Email*</Label>
+  <Label for="email" class="block mb-2 text-dark">{m.form_email()}*</Label>
   <Input type="email" id="email" name="email" bind:value={data.email} disabled={config.hide_password} />
   {#if errors.email}
     <Alert type="error" color="red" class="mb-6 mt-3">
@@ -84,16 +85,16 @@
 </div>
 {#if config.hide_password}
 <div class="mb-6">
-  <Label for="orcid" class="block mb-2 text-dark">ORCID</Label>
+  <Label for="orcid" class="block mb-2 text-dark">{m.form_orcid()}</Label>
   <ButtonGroup class="w-full">
     <Input id="orcid" name="orcid" bind:value={data.orcid} disabled />
       {#if data.orcid}
       <Button on:click={unlink_orcid} class="w-40" style="background-color: #A6CE39; color: white;">
-        Unlink ORCID
+        {m.form_unlinkOrcid()}
       </Button>
       {:else}
       <Button on:click={link_orcid} class="w-40" style="background-color: #A6CE39; color: white;">
-        Link an ORCID
+        {m.form_linkOrcid()}
       </Button>
       {/if}
   </ButtonGroup>
@@ -107,7 +108,7 @@
 {#if !config.hide_password}
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
   <div class="mb-6">
-    <Label for="password" class="block mb-2">Password*</Label>
+    <Label for="password" class="block mb-2">{m.form_password()}*</Label>
     <Input id="password" name="password" type="password" bind:value={data.password} />
     {#if errors.password}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -116,7 +117,7 @@
     {/if}
   </div>
   <div class="mb-6">
-    <Label for="confirm_password" class="block mb-2">Confirm Password*</Label>
+    <Label for="confirm_password" class="block mb-2">{m.form_confirmPassword()}*</Label>
     <Input id="confirm_password" name="confirm_password" type="password" bind:value={data.confirm_password} />
     {#if errors.confirm_password}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -130,7 +131,7 @@
 
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
   <div class="mb-6">
-    <Label for="first_name" class="block mb-2">First Name*</Label>
+    <Label for="first_name" class="block mb-2">{m.form_firstName()}*</Label>
     <Input id="first_name" name="first_name" bind:value={data.first_name} />
     {#if errors.first_name}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -139,11 +140,11 @@
     {/if}
   </div>
   <div class="mb-6">
-    <Label for="middle_initial" class="block mb-2">Middle Initial</Label>
+    <Label for="middle_initial" class="block mb-2">{m.form_middleInitial()}</Label>
     <Input id="middle_initial" name="middle_initial" maxlength="1" bind:value={data.middle_initial} />
   </div>
   <div class="mb-6">
-    <Label for="last_name" class="block mb-2">Last Name*</Label>
+    <Label for="last_name" class="block mb-2">{m.form_lastName()}*</Label>
     <Input id="last_name" name="last_name" bind:value={data.last_name} />
     {#if errors.last_name}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -154,12 +155,12 @@
 </div>
 
 <div class="mb-6">
-  <Label for="nationality" class="block mb-2">Nationality*</Label>
+  <Label for="nationality" class="block mb-2">{m.form_nationality()}*</Label>
   <Select id="nationality" name="nationality" bind:value={data.nationality} items={
     [
-      { value: "1", name: 'Korean' },
-      { value: "2", name: 'Non-Korean' },
-      { value: "3", name: 'Prefer not to respond' },
+      { value: "1", name: m.form_nationalityKorean() },
+      { value: "2", name: m.form_nationalityNonKorean() },
+      { value: "3", name: m.form_nationalityPreferNot() },
     ]
   } />
   {#if errors.nationality}
@@ -170,9 +171,10 @@
 </div>
 
 <!-- Additional Information -->
-<Heading tag="h2" customSize="text-lg font-bold" class="mb-6 !mt-8">Additional Information</Heading>
+<hr class="my-8 border-gray-200" />
+<Heading tag="h2" customSize="text-lg font-bold" class="mb-6">{m.form_additionalInfo()}</Heading>
 <div class="mb-6">
-  <Label for="institute" class="block mb-2">Institute*</Label>
+  <Label for="institute" class="block mb-2">{m.form_institute()}*</Label>
   <Input id="institute" name="institute" bind:value={data.institute} />
   {#if errors.institute}
     <Alert type="error" color="red" class="mb-6 mt-3">
@@ -182,21 +184,21 @@
 </div>
 
 <div class="mb-6">
-  <Label for="department" class="block mb-2">Department</Label>
+  <Label for="department" class="block mb-2">{m.form_department()}</Label>
   <Input id="department" name="department" bind:value={data.department} />
 </div>
 
 <div class="mb-6">
-  <Label for="job_title" class="block mb-2">Job Title</Label>
+  <Label for="job_title" class="block mb-2">{m.form_jobTitle()}</Label>
   <Input id="job_title" name="job_title" bind:value={data.job_title} />
 </div>
 
 <div class="mb-6">
-  <Label for="disability" class="block mb-2">Disability Information</Label>
+  <Label for="disability" class="block mb-2">{m.form_disability()}</Label>
   <Textarea id="disability" name="disability" bind:value={data.disability} />
 </div>
 
 <div class="mb-6">
-  <Label for="dietary" class="block mb-2">Dietary Information</Label>
+  <Label for="dietary" class="block mb-2">{m.form_dietary()}</Label>
   <Textarea id="dietary" name="dietary" bind:value={data.dietary} />
 </div>

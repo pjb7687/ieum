@@ -4,6 +4,7 @@
     import { Alert } from 'flowbite-svelte';
     import { enhance } from '$app/forms';
     import { UserAddSolid, UserEditSolid, UserRemoveSolid, TextSizeOutline, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
+    import * as m from '$lib/paraglide/messages.js';
 
     import OnSiteRegistrationForm from './OnSiteRegistrationForm.svelte';
     import jsPDF from 'jspdf';
@@ -33,7 +34,7 @@
                 row.job_title
             ])
         ].map(row => row.map(item => `"${item}"`).join(',')).join('\n');
-        
+
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -44,7 +45,7 @@
         a.click();
         URL.revokeObjectURL(url);
     };
-    
+
     let searchTermAttendee = $state('');
     let filteredAttendees = $state([]);
     let selectedAttendees = $state([]);
@@ -54,7 +55,7 @@
 
     let attendee_modal = $state(false);
     let remove_attendee_modal = $state(false);
-    
+
     let selected_idx = $state(null);
     const showAttenteeModal = (id) => {
         selected_idx = data.onsite_attendees.findIndex(item => item.id === id);
@@ -71,9 +72,9 @@
         return async ({ result, action, update }) => {
             if (result.type === 'success') {
                 await update({ reset: false });
-                message_update = { type: 'success', message: 'Successfully updated attendee information.' };
+                message_update = { type: 'success', message: m.onsiteAttendees_successMessage() };
             } else {
-                message_update = { type: 'error', message: 'Failed to update attendee information.' };
+                message_update = { type: 'error', message: m.onsiteAttendees_errorMessage() };
             }
         };
     };
@@ -160,15 +161,15 @@
     };
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">On-site Attendees</Heading>
-<p class="font-light mb-6">Below is the list of on-site attendees for this event.</p>
+<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.onsiteAttendees_title()}</Heading>
+<p class="font-light mb-6">{m.onsiteAttendees_description()}</p>
 <div class="flex justify-end sm:flex-row flex-col">
     <div class="flex items-center gap-2">
-        <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>Export All Data as CSV</Button>
+        <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>{m.onsiteAttendees_exportCSV()}</Button>
     </div>
 </div>
-<p class="mt-5 mb-3 text-sm text-right">{data.onsite_attendees.length} people registered on-site.</p>
-<TableSearch placeholder="Search by First Name" hoverable={true} bind:inputValue={searchTermAttendee}>
+<p class="mt-5 mb-3 text-sm text-right">{data.onsite_attendees.length} {m.onsiteAttendees_peopleRegistered()}</p>
+<TableSearch placeholder={m.onsiteAttendees_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermAttendee}>
     <TableHead>
         <TableHeadCell class="w-1">
             <Checkbox
@@ -185,11 +186,11 @@
                 }}
             />
         </TableHeadCell>
-        <TableHeadCell>ID</TableHeadCell>
-        <TableHeadCell>Name</TableHeadCell>
-        <TableHeadCell>Institute</TableHeadCell>
-        <TableHeadCell>Job Title</TableHeadCell>
-        <TableHeadCell class="w-1">Actions</TableHeadCell>
+        <TableHeadCell>{m.onsiteAttendees_id()}</TableHeadCell>
+        <TableHeadCell>{m.onsiteAttendees_name()}</TableHeadCell>
+        <TableHeadCell>{m.onsiteAttendees_institute()}</TableHeadCell>
+        <TableHeadCell>{m.onsiteAttendees_jobTitle()}</TableHeadCell>
+        <TableHeadCell class="w-1">{m.onsiteAttendees_actions()}</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass="divide-y">
         {#each filteredAttendees as row}
@@ -225,13 +226,13 @@
         {/each}
         {#if filteredAttendees.length === 0}
             <TableBodyRow>
-                <TableBodyCell colspan="6" class="text-center">No records</TableBodyCell>
+                <TableBodyCell colspan="6" class="text-center">{m.onsiteAttendees_noRecords()}</TableBodyCell>
             </TableBodyRow>
         {/if}
     </TableBody>
 </TableSearch>
 
-<Modal id="attendee_modal" size="xl" title="Attendee Details" bind:open={attendee_modal} outsideclose>
+<Modal id="attendee_modal" size="xl" title={m.onsiteAttendees_detailsTitle()} bind:open={attendee_modal} outsideclose>
     <form method="post" action="?/update_onsite_attendee" use:enhance={afterSuccessfulSubmit}>
         <input type="hidden" name="id" value={data.onsite_attendees[selected_idx].id} />
         <OnSiteRegistrationForm data={data.onsite_attendees[selected_idx]} />
@@ -241,23 +242,23 @@
             <Alert type="error" color="red">{message_update.message}</Alert>
         {/if}
         <div class="flex justify-center mt-6">
-            <Button color="primary" type="submit">Update Attendee Information</Button>
+            <Button color="primary" type="submit">{m.onsiteAttendees_updateAttendee()}</Button>
         </div>
     </form>
 </Modal>
 
-<Modal id="remove_attendee_modal" size="sm" title="Are you sure?" bind:open={remove_attendee_modal} outsideclose>
+<Modal id="remove_attendee_modal" size="sm" title={m.onsiteAttendees_removeTitle()} bind:open={remove_attendee_modal} outsideclose>
     <form method="post" action="?/remove_onsite_attendee" use:enhance={afterSuccessfulDeregistration}>
         <input type="hidden" name="id" value={data.onsite_attendees[selected_idx].id} />
-        <p class="font-light mb-6">Are you sure you want to remove this attendee?</p>
+        <p class="font-light mb-6">{m.onsiteAttendees_removeConfirm()}</p>
         <div class="flex justify-center gap-2">
-            <Button color="red" type="submit">Remove</Button>
-            <Button color="dark" onclick={() => remove_attendee_modal = false}>Cancel</Button>
+            <Button color="red" type="submit">{m.onsiteAttendees_remove()}</Button>
+            <Button color="dark" onclick={() => remove_attendee_modal = false}>{m.onsiteAttendees_cancel()}</Button>
         </div>
     </form>
 </Modal>
 
-<Modal id="nametag_modal" size="lg" title="Nametag" bind:open={nametag_modal} outsideclose>
+<Modal id="nametag_modal" size="lg" title={m.onsiteAttendees_nametag()} bind:open={nametag_modal} outsideclose>
     <iframe id="nametag" class="w-full h-[500px]" src={selected_nametag} title="Nametag">
         Your browser does not support iframes.
     </iframe>
@@ -267,12 +268,12 @@
             if (iframe) {
                 iframe.contentWindow.print();
             }
-        }}>Print</Button>
-        <Button color="dark" onclick={() => nametag_modal = false}>Close</Button>
+        }}>{m.onsiteAttendees_print()}</Button>
+        <Button color="dark" onclick={() => nametag_modal = false}>{m.onsiteAttendees_close()}</Button>
     </div>
 </Modal>
 
-<Modal id="cert_modal" size="lg" title="Certificate" bind:open={cert_modal} outsideclose>
+<Modal id="cert_modal" size="lg" title={m.onsiteAttendees_certificate()} bind:open={cert_modal} outsideclose>
     <iframe id="cert" class="w-full h-[500px]" src={selected_cert} title="Certificate">
         Your browser does not support iframes.
     </iframe>
@@ -282,7 +283,7 @@
             if (iframe) {
                 iframe.contentWindow.print();
             }
-        }}>Print</Button>
-        <Button color="dark" onclick={() => cert_modal = false}>Close</Button>
+        }}>{m.onsiteAttendees_print()}</Button>
+        <Button color="dark" onclick={() => cert_modal = false}>{m.onsiteAttendees_close()}</Button>
     </div>
 </Modal>

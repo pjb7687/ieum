@@ -84,6 +84,7 @@ class Event(models.Model):
     """
     link_info = models.URLField(blank=True)
     name = models.CharField(max_length=1000)
+    description = models.TextField(blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
     venue = models.CharField(max_length=1000)

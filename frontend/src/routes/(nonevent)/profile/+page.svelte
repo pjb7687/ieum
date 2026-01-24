@@ -8,6 +8,7 @@
     import { Alert, Input, Textarea, Select, Button, Label, InputAddon, ButtonGroup, Heading, Card } from 'flowbite-svelte';
     import { UserCircleSolid } from 'flowbite-svelte-icons';
     import { goto } from '$app/navigation';
+    import * as m from '$lib/paraglide/messages.js';
 
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
 
@@ -77,15 +78,25 @@
     });
 </script>
 
-<Heading tag="h1" customSize="text-2xl font-bold" class="mb-3">My Info</Heading>
-<p class="mb-10 font-light">You can update your information here.</p>
-<form use:felteForm method="post">
-    <RegistrationForm data={$data} errors={$errors} config={form_config} />
-    {#if success}
-    <Alert color="blue" class="mb-4" dismissable>Update successful.</Alert>
-    {/if}
-    <div class="flex flex-col md:flex-row justify-center gap-4">
-        <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>Update Info</Button>
-        <Button on:click={() => goto(page_data.next)} size="lg" color="alternative">Go back</Button>
+<!-- Page Header Card -->
+<div class="relative rounded-lg shadow-sm py-16 px-8 mb-8 overflow-hidden" style="background-image: url('/bg-events.webp'); background-size: cover; background-position: center;">
+    <div class="absolute inset-0 bg-slate-900 opacity-60"></div>
+    <div class="relative z-10">
+        <h1 class="text-3xl font-bold text-white">{m.profile_title()}</h1>
+        <p class="text-slate-200 mt-2">{m.profile_description()}</p>
     </div>
-</form>
+</div>
+
+<!-- Form Card -->
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+    <form use:felteForm method="post">
+        <RegistrationForm data={$data} errors={$errors} config={form_config} />
+        {#if success}
+        <Alert color="blue" class="mb-4" dismissable>{m.profile_updateSuccess()}</Alert>
+        {/if}
+        <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
+            <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>{m.profile_updateInfo()}</Button>
+            <Button on:click={() => goto(page_data.next)} size="lg" color="alternative">{m.common_goBack()}</Button>
+        </div>
+    </form>
+</div>

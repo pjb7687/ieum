@@ -16,5 +16,26 @@ export async function load({ parent, params, cookies }) {
         rtn.speakers = [];
     }
 
+    // Check if user is an event admin
+    if (rtn.user) {
+        rtn.is_event_admin = false;
+
+        // Check if user is staff (superuser)
+        if (rtn.user.is_staff) {
+            rtn.is_event_admin = true;
+        } else {
+            // Check if user is an admin for this specific event
+            try {
+                const response_admin = await get(`api/admin/event/${params.slug}`, cookies);
+                if (response_admin.ok && response_admin.status === 200) {
+                    rtn.is_event_admin = true;
+                }
+            } catch (e) {
+                // User is not an event admin
+                rtn.is_event_admin = false;
+            }
+        }
+    }
+
     return rtn;
 }

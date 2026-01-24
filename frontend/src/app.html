@@ -1,10 +1,17 @@
 <!doctype html>
-<html lang="en">
+<html lang="%paraglide.lang%">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		%sveltekit.head%
+		<script>
+			// Set HTML lang attribute from localStorage before page renders
+			const savedLocale = localStorage.getItem('preferred-locale');
+			if (savedLocale) {
+				document.documentElement.lang = savedLocale;
+			}
+		</script>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>

@@ -1,6 +1,7 @@
 <script>
     import { Alert, Button, Heading } from 'flowbite-svelte';
     import { enhance } from '$app/forms';
+    import * as m from '$lib/paraglide/messages.js';
 
     import EventAdminForm from '$lib/components/EventAdminForm.svelte';
 
@@ -22,8 +23,8 @@
     };
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">Event Information</Heading>
-<p class="font-light mb-6">You can update the event information below.</p>
+<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.eventInfo_title()}</Heading>
+<p class="font-light mb-6">{m.eventInfo_description()}</p>
 <form method="POST" action="?/update_event" use:enhance={afterSubmit}>
     <EventAdminForm data={data.event} />
     <div class="mb-6">
@@ -35,6 +36,6 @@
         {/if}
     </div>
     <div class="flex justify-center">
-        <Button color="primary" type="submit" size="lg">Update</Button>
+        <Button color="primary" type="submit" size="lg">{m.eventInfo_update()}</Button>
     </div>
 </form>

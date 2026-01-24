@@ -2,6 +2,7 @@ import { get } from '$lib/fetch';
 import { fail, redirect } from '@sveltejs/kit';
 
 const ORCID_CLIENT_ID = process.env.ORCID_CLIENT_ID;
+const ADMIN_PAGE_NAME = process.env.ADMIN_PAGE_NAME || 'admin';
 
 /** @type {import('./$types').LayoutServerLoad} */
 export async function load({ cookies }) {
@@ -23,6 +24,11 @@ export async function load({ cookies }) {
         if (response_me.ok && response_me.status === 200) {
             let user = response_me.data;
             rtn.user = user;
+
+            // Only expose admin page name to staff users
+            if (user.is_staff) {
+                rtn.admin_page_name = ADMIN_PAGE_NAME;
+            }
         } else {
             cookies.delete('sessionid', {
                 path: '/',
@@ -40,6 +46,6 @@ export async function load({ cookies }) {
 
     rtn.orcid_client_id = ORCID_CLIENT_ID;
     rtn.csrf_token = response_csrftoken.data.csrftoken;
-    
+
     return rtn;
 }

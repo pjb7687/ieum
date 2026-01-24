@@ -2,11 +2,10 @@
     import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Checkbox, Card} from 'flowbite-svelte';
     import { Button, Modal, Label, Input, Select, Textarea, Alert } from 'flowbite-svelte';
     import { Tabs, TabItem } from 'flowbite-svelte';
-
     import { UserEditSolid, UserRemoveSolid } from 'flowbite-svelte-icons';
-
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
+    import * as m from '$lib/paraglide/messages.js';
 
     let { data } = $props();
 
@@ -19,7 +18,7 @@
     let eventadmin_modal = $state(false);
     let delete_eventadmin_modal = $state(false);
     let selected_eventadmin = $state(null);
-    
+
     const addEventAdminModal = () => {
         selected_eventadmin = null;
         eventadmin_modal = true;
@@ -56,17 +55,17 @@
     };
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">Event Admins</Heading>
-<p class="font-light mb-6">Add or delete admins that can manage this event below.</p>
+<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.eventAdmins_title()}</Heading>
+<p class="font-light mb-6">{m.eventAdmins_description()}</p>
 <div class="flex justify-end gap-2">
-    <Button color="primary" size="sm" onclick={addEventAdminModal}>Add Admin</Button>
+    <Button color="primary" size="sm" onclick={addEventAdminModal}>{m.eventAdmins_addAdmin()}</Button>
 </div>
-<TableSearch placeholder="Search by First Name" hoverable={true} bind:inputValue={searchTermEventAdmin}>
+<TableSearch placeholder={m.eventAdmins_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermEventAdmin}>
     <TableHead>
-        <TableHeadCell>Name</TableHeadCell>
-        <TableHeadCell>Email</TableHeadCell>
-        <TableHeadCell>Institute</TableHeadCell>
-        <TableHeadCell class="w-1">Actions</TableHeadCell>
+        <TableHeadCell>{m.eventAdmins_name()}</TableHeadCell>
+        <TableHeadCell>{m.eventAdmins_email()}</TableHeadCell>
+        <TableHeadCell>{m.eventAdmins_institute()}</TableHeadCell>
+        <TableHeadCell class="w-1">{m.eventAdmins_actions()}</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass="divide-y">
         {#each filteredEventAdmins as row}
@@ -85,16 +84,16 @@
         {/each}
         {#if filteredEventAdmins.length === 0}
             <TableBodyRow>
-                <TableBodyCell colspan="4" class="text-center">No records</TableBodyCell>
+                <TableBodyCell colspan="4" class="text-center">{m.eventAdmins_noRecords()}</TableBodyCell>
             </TableBodyRow>
         {/if}
     </TableBody>
 </TableSearch>
 
-<Modal bind:open={eventadmin_modal} title="Add Admin" size="lg">
+<Modal bind:open={eventadmin_modal} title={m.eventAdmins_addAdminTitle()} size="lg">
     <form method="POST" action="?/add_eventadmin" use:enhance={afterAddEventAdmin}>
         <div class="mb-6">
-            <Label for="id" class="block mb-2">Admin</Label>
+            <Label for="id" class="block mb-2">{m.eventAdmins_admin()}</Label>
             <Select id="id" name="id" items={
                 data.users.map(a => ({ value: a.id, name: `${a.name}, ${a.institute} (${a.email})` }))
             } onchange={
@@ -111,21 +110,21 @@
             <Alert color="red" class="mb-6">{add_eventadmin_error}</Alert>
         {/if}
         <div class="flex justify-center">
-            <Button color="primary" type="submit">Add</Button>
+            <Button color="primary" type="submit">{m.eventAdmins_add()}</Button>
         </div>
     </form>
 </Modal>
 
-<Modal bind:open={delete_eventadmin_modal} title="Delete Admin" size="sm">
+<Modal bind:open={delete_eventadmin_modal} title={m.eventAdmins_deleteAdmin()} size="sm">
     <form method="POST" action="?/delete_eventadmin" use:enhance={afterDeleteEventAdmin}>
         <input type="hidden" name="id" value={selected_eventadmin?selected_eventadmin.id:''} />
-        <p class="mb-6">Are you sure you want to delete the admin?</p>
+        <p class="mb-6">{m.eventAdmins_deleteConfirm()}</p>
         {#if delete_eventadmin_error}
             <Alert color="red" class="mb-6">{delete_eventadmin_error}</Alert>
         {/if}
         <div class="flex justify-center gap-2">
-            <Button color="red" type="submit">Delete</Button>
-            <Button color="dark" type="button" onclick={() => delete_eventadmin_modal = false}>Cancel</Button>
+            <Button color="red" type="submit">{m.eventAdmins_delete()}</Button>
+            <Button color="dark" type="button" onclick={() => delete_eventadmin_modal = false}>{m.eventAdmins_cancel()}</Button>
         </div>
     </form>
 </Modal>

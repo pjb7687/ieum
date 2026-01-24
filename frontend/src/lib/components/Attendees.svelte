@@ -5,6 +5,7 @@
     import { enhance } from '$app/forms';
     import { UserAddSolid, UserEditSolid, UserRemoveSolid, TextSizeOutline, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
     import { jsPDF } from "jspdf";
+    import * as m from '$lib/paraglide/messages.js';
 
     import RegistrationForm from './RegistrationForm.svelte';
 
@@ -27,7 +28,7 @@
             });
         });
         const custom_headers = [...unique_questions];
-        
+
         // Create table_data rows
         const table_data = attendees.map((item, idx) => {
             // Create a row with empty strings for each question
@@ -65,7 +66,7 @@
 
             return row;
         });
-        
+
         return {
             custom_headers,
             table_data
@@ -74,17 +75,17 @@
 
     const exportAttendeesAsCSV = () => {
         const csv = [
-            [   "ID",
-                "First Name",
-                "Middle Initial",
-                "Last Name",
-                "Email",
-                "Nationality",
-                "Institute",
-                "Department",
-                "Job Title",
-                "Disability",
-                "Dietary",
+            [   m.attendees_id(),
+                m.attendees_firstName(),
+                m.attendees_middleInitial(),
+                m.attendees_lastName(),
+                m.attendees_email(),
+                m.attendees_nationality(),
+                m.attendees_institute(),
+                m.attendees_department(),
+                m.attendees_jobTitle(),
+                m.attendees_disability(),
+                m.attendees_dietary(),
                 ...custom_headers_attendees.map(q => q.replace(/\n/, ' ').replace(/\s+/g, ' '))],
             ...table_data_attendees.map(row => [
                 row.id,
@@ -101,7 +102,7 @@
                 ...row.custom_answers.map(answer => answer ? answer.answer.replace(/^- /, '').replace(/\n- /g, '; ') : "")
             ])
         ].map(row => row.map(item => `"${item}"`).join(',')).join('\n');
-        
+
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -112,7 +113,7 @@
         a.click();
         URL.revokeObjectURL(url);
     };
-    
+
     let searchTermAttendee = $state('');
     let filteredAttendees = $state([]);
     let selectedAttendees = $state([]);
@@ -122,7 +123,7 @@
 
     let attendee_modal = $state(false);
     let remove_attendee_modal = $state(false);
-    
+
     let selected_idx = $state(null);
     const showAttenteeModal = (id) => {
         selected_idx = table_data_attendees.findIndex(item => item.id === id);
@@ -139,7 +140,7 @@
 
     let expand_attendees = $state(false);
 
-    
+
     let custom_answers = $state([]);
     const addNewCustomAnswer = () => {
         custom_answers = [...custom_answers, {
@@ -175,24 +176,24 @@
     let message_custom_answer_changes = $state({});
     const afterSuccessfulSubmitCustomAnswerChanges = ({ formData, cancel }) => {
         if (formData.getAll('answer_reference_id[]').length !== custom_answers.length) {
-            message_custom_answer_changes = { type: 'error', message: 'Please select a reference question for each answer.' };
+            message_custom_answer_changes = { type: 'error', message: m.attendees_errorSelectReference() };
             cancel();
             return;
         }
         if (formData.getAll('answer_question[]').length !== custom_answers.length) {
-            message_custom_answer_changes = { type: 'error', message: 'Please enter a question for each answer.' };
+            message_custom_answer_changes = { type: 'error', message: m.attendees_errorEnterQuestion() };
             cancel();
             return;
         }
         if (formData.getAll('answer_answer[]').length !== custom_answers.length) {
-            message_custom_answer_changes = { type: 'error', message: 'Please enter an answer for each question.' };
+            message_custom_answer_changes = { type: 'error', message: m.attendees_errorEnterAnswer() };
             cancel();
             return;
         }
         return async ({ result, action, update }) => {
             if (result.type === 'success') {
                 await update({ reset: false });
-                message_custom_answer_changes = { type: 'success', message: 'Successfully updated custom answers.' };
+                message_custom_answer_changes = { type: 'success', message: m.attendees_successCustomAnswers() };
             } else {
                 message_custom_answer_changes = { type: 'error', message: result.error.message };
             }
@@ -209,9 +210,9 @@
         return async ({ result, action, update }) => {
             if (result.type === 'success') {
                 await update({ reset: false });
-                message_default_answer_changes = { type: 'success', message: 'Successfully updated attendee information.' };
+                message_default_answer_changes = { type: 'success', message: m.attendees_successUpdate() };
             } else {
-                message_default_answer_changes = { type: 'error', message: 'Failed to update attendee information.' };
+                message_default_answer_changes = { type: 'error', message: m.attendees_errorUpdate() };
             }
         };
     };
@@ -224,18 +225,18 @@
             remove_attendee_modal = false;
         };
     };
-    
+
     let form_config = {
         hide_login_info: true,
     };
 
     const stringify_nationality = (value) => {
         if (value === '1') {
-            return 'Korean';
+            return m.nationality_korean();
         } else if (value === '2') {
-            return 'Non-Korean';
+            return m.nationality_nonKorean();
         }
-        return 'Not Specified';
+        return m.nationality_notSpecified();
     };
 
     let send_email_modal = $state(false);
@@ -251,14 +252,14 @@
                 send_email_modal = false;
                 message_send_email = {}
             } else {
-                message_send_email = { type: 'error', message: 'Failed to send emails.' };
+                message_send_email = { type: 'error', message: m.attendees_sendEmailError() };
             }
         };
     };
 
     let nametag_modal = $state(false);
     let selected_nametag = $state({});
-    let role = $state('Participant'); // Default role for nametag
+    let role = $state(m.attendees_participant()); // Default role for nametag
     const showNametagModal = async (id) => {
         const doc = new jsPDF({
             orientation: "portrait",
@@ -308,24 +309,24 @@
                 curr_y += (splitText.length * 12);
             }
         };
-        add_line(`Issue date: ${new Date().toLocaleDateString()}`, 'italic', 10, 10);
-        add_line(`Certificate of Attendance`, 'bold', 30);
+        add_line(`${m.attendees_certIssueDate()}: ${new Date().toLocaleDateString()}`, 'italic', 10, 10);
+        add_line(m.attendees_certTitle(), 'bold', 30);
         curr_y += 15;
-        add_line(`This is to certify that below person`);
+        add_line(m.attendees_certIntro());
         add_line(p.name, 'bold');
         add_line(p.institute, 'bold');
-        add_line(`has attended`);
+        add_line(m.attendees_certHasAttended());
         add_line(data.event.name, 'bold');
-        add_line(`on`);
+        add_line(m.attendees_certOn());
         add_line(data.event.start_date, 'bold');
-        add_line(`to`);
+        add_line(m.attendees_certTo());
         add_line(data.event.end_date, 'bold');
-        add_line(`held at`);
+        add_line(m.attendees_certHeldAt());
         add_line(data.event.venue, 'bold');
-        add_line(`as a participant.`);
+        add_line(m.attendees_certAsParticipant());
         curr_y += 20;
         add_line(data.event.organizers, 'bold');
-        add_line('This certificate was machine generated and is valid without a signature.', 'italic', 10, 287);
+        add_line(m.attendees_certFooter(), 'italic', 10, 287);
 
         selected_cert = doc.output('bloburi');
         cert_modal = true;
@@ -344,18 +345,18 @@
     {@html text.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}
 {/snippet}
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">Attendees</Heading>
-<p class="font-light mb-6">Below is the list of attendees for this event.</p>
+<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.attendees_title()}</Heading>
+<p class="font-light mb-6">{m.attendees_description()}</p>
 <div class="flex justify-end sm:flex-row flex-col">
     <div class="flex items-center gap-2">
-        <Button color="primary" size="sm" onclick={showSendEmailModal} disabled={selectedAttendees.length === 0}>Send Emails to Selected Attendees</Button>
-        <Button color="primary" size="sm" onclick={() => expand_attendees = !expand_attendees}>{expand_attendees ?  "Collapse" : "Expand"} Headers</Button>
-        <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>Export All Data as CSV</Button>
+        <Button color="primary" size="sm" onclick={showSendEmailModal} disabled={selectedAttendees.length === 0}>{m.attendees_sendEmailToSelected()}</Button>
+        <Button color="primary" size="sm" onclick={() => expand_attendees = !expand_attendees}>{expand_attendees ? m.attendees_collapse() : m.attendees_expand()} {m.attendees_headers()}</Button>
+        <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>{m.attendees_exportCSV()}</Button>
     </div>
 </div>
-<p class="mt-5 mb-3 text-sm text-right">{table_data_attendees.length} people registered to this event.</p>
-<Input type="text" placeholder="Role" bind:value={role} class="mb-6" /><br>
-<TableSearch placeholder="Search by First Name" hoverable={true} bind:inputValue={searchTermAttendee}>
+<p class="mt-5 mb-3 text-sm text-right">{table_data_attendees.length} {m.attendees_peopleRegistered()}</p>
+<Input type="text" placeholder={m.attendees_role()} bind:value={role} class="mb-6" /><br>
+<TableSearch placeholder={m.attendees_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermAttendee}>
     <TableHead>
         <TableHeadCell class="w-1">
             <Checkbox
@@ -372,21 +373,21 @@
                 }}
             />
         </TableHeadCell>
-        <TableHeadCell>ID</TableHeadCell>
-        <TableHeadCell>Name</TableHeadCell>
-        <TableHeadCell>Email</TableHeadCell>
-        <TableHeadCell>Nationality</TableHeadCell>
-        <TableHeadCell>Institute</TableHeadCell>
+        <TableHeadCell>{m.attendees_id()}</TableHeadCell>
+        <TableHeadCell>{m.attendees_name()}</TableHeadCell>
+        <TableHeadCell>{m.attendees_email()}</TableHeadCell>
+        <TableHeadCell>{m.attendees_nationality()}</TableHeadCell>
+        <TableHeadCell>{m.attendees_institute()}</TableHeadCell>
         {#if expand_attendees}
-            <TableHeadCell>Department</TableHeadCell>
-            <TableHeadCell>Job Title</TableHeadCell>
-            <TableHeadCell>Disability</TableHeadCell>
-            <TableHeadCell>Dietary</TableHeadCell>
+            <TableHeadCell>{m.attendees_department()}</TableHeadCell>
+            <TableHeadCell>{m.attendees_jobTitle()}</TableHeadCell>
+            <TableHeadCell>{m.attendees_disability()}</TableHeadCell>
+            <TableHeadCell>{m.attendees_dietary()}</TableHeadCell>
             {#each custom_headers_attendees as header}
                 <TableHeadCell>{@render process_spaces(header)}</TableHeadCell>
             {/each}
         {/if}
-        <TableHeadCell class="w-1">Actions</TableHeadCell>
+        <TableHeadCell class="w-1">{m.attendees_actions()}</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass="divide-y">
         {#each filteredAttendees as row}
@@ -434,17 +435,17 @@
             <TableBodyRow>
                 <TableBodyCell colspan={
                     expand_attendees ? custom_headers_attendees.length + 10 : 6
-                } class="text-center">No records</TableBodyCell>
+                } class="text-center">{m.attendees_noRecords()}</TableBodyCell>
             </TableBodyRow>
         {/if}
     </TableBody>
 </TableSearch>
 
 
-<Modal id="attendee_modal" size="xl" title="Attendee Details" bind:open={attendee_modal} outsideclose>
+<Modal id="attendee_modal" size="xl" title={m.attendees_detailsTitle()} bind:open={attendee_modal} outsideclose>
     <form method="post" action="?/update_attendee" use:enhance={afterSuccessfulSubmitDefaultAnswerChanges}>
         <input type="hidden" name="id" value={table_data_attendees[selected_idx].id} />
-        <Heading tag="h2" customSize="text-lg font-bold" class="pt-3 mb-6">Basic Information</Heading>
+        <Heading tag="h2" customSize="text-lg font-bold" class="pt-3 mb-6">{m.attendees_basicInformation()}</Heading>
         <RegistrationForm data={table_data_attendees[selected_idx]} config={form_config} />
         {#if message_default_answer_changes.type === 'success'}
             <Alert type="success" color="green">{message_default_answer_changes.message}</Alert>
@@ -452,21 +453,21 @@
             <Alert type="error" color="red">{message_default_answer_changes.message}</Alert>
         {/if}
         <div class="flex justify-center mt-6">
-            <Button color="primary" type="submit">Update Attendee Information</Button>
+            <Button color="primary" type="submit">{m.attendees_updateAttendee()}</Button>
         </div>
     </form>
-    <Heading tag="h2" customSize="text-lg font-bold" class="pt-3 mb-6">Answers to the Event Specific Questions</Heading>
+    <Heading tag="h2" customSize="text-lg font-bold" class="pt-3 mb-6">{m.attendees_answersTitle()}</Heading>
     <form method="post" action="?/update_answers" use:enhance={afterSuccessfulSubmitCustomAnswerChanges}>
         <div class="flex justify-center gap-2 mb-6">
-            <Button color="primary" onclick={resetCustomAnswerChanges}>Reset Changes</Button>
-            <Button type="submit" color="primary">Apply Changes</Button>
+            <Button color="primary" onclick={resetCustomAnswerChanges}>{m.attendees_resetChanges()}</Button>
+            <Button type="submit" color="primary">{m.attendees_applyChanges()}</Button>
         </div>
         <input type="hidden" name="attendee_id" value={table_data_attendees[selected_idx].id} />
         {#if custom_answers.length > 0}
             {#each custom_answers as answer, idx}
                 <Card size="none" class="mb-6">
                     <div class="mb-6">
-                        <Label for={`answer_reference_id_${idx}`} class="block mb-2">Reference Question</Label>
+                        <Label for={`answer_reference_id_${idx}`} class="block mb-2">{m.attendees_referenceQuestion()}</Label>
                         <Select id={`answer_reference_id_${idx}`} name="answer_reference_id[]" items={data.questions.map(q => ({
                             value: q.id,
                             name: q.question.question
@@ -478,22 +479,22 @@
                         }} value={answer.reference.id} />
                     </div>
                     <div class="mb-6">
-                        <Label for={`answer_question_${idx}`} class="block mb-2">Question</Label>
+                        <Label for={`answer_question_${idx}`} class="block mb-2">{m.attendees_question()}</Label>
                         <Textarea class="mb-2" id={`answer_question_${idx}`} name="answer_question[]" bind:value={answer.question} readonly={answer.reference.question !== ""} />
                     </div>
                     <div class="mb-6">
-                        <Label for={`answer_answer_${idx}`} class="block mb-2">Answer</Label>
+                        <Label for={`answer_answer_${idx}`} class="block mb-2">{m.attendees_answer()}</Label>
                         <Textarea id={`answer_answer_${idx}`} name="answer_answer[]" bind:value={answer.answer} />
                     </div>
                     <div class="flex justify-center gap-2">
                         <Button color="red" onclick={
                             () => custom_answers = custom_answers.filter((a, i) => i !== idx)
-                        }>Delete Answer</Button>
+                        }>{m.attendees_deleteAnswer()}</Button>
                     </div>
                 </Card>
             {/each}
         {:else}
-            <p class="text-center mb-6">This attendee has not answered any event specific questions.</p>
+            <p class="text-center mb-6">{m.attendees_noAnswers()}</p>
         {/if}
         <div class="flex justify-center gap-2 mb-6">
             <Button color="dark" onclick={addNewCustomAnswer}>+</Button>
@@ -506,49 +507,49 @@
             {/if}
         </div>
         <div class="flex justify-center gap-2">
-            <Button color="primary" onclick={resetCustomAnswerChanges}>Reset Changes</Button>
-            <Button type="submit" color="primary">Apply Changes</Button>
+            <Button color="primary" onclick={resetCustomAnswerChanges}>{m.attendees_resetChanges()}</Button>
+            <Button type="submit" color="primary">{m.attendees_applyChanges()}</Button>
         </div>
     </form>
 </Modal>
 
-<Modal id="remove_attendee_modal" size="sm" title="Are you sure?" bind:open={remove_attendee_modal} outsideclose>
+<Modal id="remove_attendee_modal" size="sm" title={m.attendees_removeTitle()} bind:open={remove_attendee_modal} outsideclose>
     <form method="post" action="?/deregister_attendee" use:enhance={afterSuccessfulDeregistration}>
         <input type="hidden" name="id" value={table_data_attendees[selected_idx].id} />
-        <p class="font-light mb-6">Are you sure you want to deregister this attendee?</p>
+        <p class="font-light mb-6">{m.attendees_removeConfirm()}</p>
         <div class="flex justify-center gap-2">
-            <Button color="red" type="submit">Deresigister</Button>
-            <Button color="dark" onclick={() => remove_attendee_modal = false}>Cancel</Button>
+            <Button color="red" type="submit">{m.attendees_deregister()}</Button>
+            <Button color="dark" onclick={() => remove_attendee_modal = false}>{m.attendees_cancel()}</Button>
         </div>
     </form>
 </Modal>
 
-<Modal id="send_email_modal" size="lg" title="Send Emails" bind:open={send_email_modal} outsideclose>
+<Modal id="send_email_modal" size="lg" title={m.attendees_sendEmails()} bind:open={send_email_modal} outsideclose>
     <form method="post" action="?/send_emails" use:enhance={afterSuccessfulSendEmails}>
         <div class="mb-6">
-            <Label for="to" class="block mb-2 text-black">To</Label>
+            <Label for="to" class="block mb-2 text-black">{m.attendees_to()}</Label>
             <Input id="to" name="to" type="text" value={selectedAttendees.map(id => table_data_attendees.find(a => a.id === id).email).join("; ")} readonly />
         </div>
         <div class="mb-6">
-            <Label for="subject" class="block mb-2">Subject</Label>
+            <Label for="subject" class="block mb-2">{m.attendees_subject()}</Label>
             <Input id="subject" name="subject" type="text" />
         </div>
         <div class="mb-6">
-            <Label for="body" class="block mb-2">Message</Label>
+            <Label for="body" class="block mb-2">{m.attendees_message()}</Label>
             <Textarea id="body" name="body" rows="10" />
         </div>
         {#if message_send_email.type === 'error'}
             <Alert type="error" color="red" class="mb-6">{message_send_email.message}</Alert>
         {/if}
         <div class="flex justify-center gap-2">
-            <Button color="primary" type="submit">Send Emails</Button>
+            <Button color="primary" type="submit">{m.attendees_sendEmails()}</Button>
         </div>
     </form>
 </Modal>
 
-<Modal id="nametag_modal" size="lg" title="Nametag" bind:open={nametag_modal} outsideclose>
-    <iframe id="nametag" class="w-full h-[500px]" src={selected_nametag} title="Nametag">
-        Your browser does not support iframes.
+<Modal id="nametag_modal" size="lg" title={m.attendees_nametag()} bind:open={nametag_modal} outsideclose>
+    <iframe id="nametag" class="w-full h-[500px]" src={selected_nametag} title={m.attendees_nametag()}>
+        {m.attendees_iframeNotSupported()}
     </iframe>
     <div class="flex justify-center mt-6 gap-2">
         <Button color="primary" onclick={() => {
@@ -556,14 +557,14 @@
             if (iframe) {
                 iframe.contentWindow.print();
             }
-        }}>Print</Button>
-        <Button color="dark" onclick={() => nametag_modal = false}>Close</Button>
+        }}>{m.attendees_print()}</Button>
+        <Button color="dark" onclick={() => nametag_modal = false}>{m.attendees_close()}</Button>
     </div>
 </Modal>
 
-<Modal id="cert_modal" size="lg" title="Certificate" bind:open={cert_modal} outsideclose>
-    <iframe id="cert" class="w-full h-[500px]" src={selected_cert} title="Certificate">
-        Your browser does not support iframes.
+<Modal id="cert_modal" size="lg" title={m.attendees_certificate()} bind:open={cert_modal} outsideclose>
+    <iframe id="cert" class="w-full h-[500px]" src={selected_cert} title={m.attendees_certificate()}>
+        {m.attendees_iframeNotSupported()}
     </iframe>
     <div class="flex justify-center mt-6 gap-2">
         <Button color="primary" onclick={() => {
@@ -571,7 +572,7 @@
             if (iframe) {
                 iframe.contentWindow.print();
             }
-        }}>Print</Button>
-        <Button color="dark" onclick={() => cert_modal = false}>Close</Button>
+        }}>{m.attendees_print()}</Button>
+        <Button color="dark" onclick={() => cert_modal = false}>{m.attendees_close()}</Button>
     </div>
 </Modal>

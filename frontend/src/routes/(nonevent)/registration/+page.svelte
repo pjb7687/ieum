@@ -9,18 +9,19 @@
     import * as yup from 'yup';
     import { Alert, Input, Textarea, Select, Button, Label, InputAddon, ButtonGroup, Heading, Card } from 'flowbite-svelte';
     import { UserCircleSolid } from 'flowbite-svelte-icons';
+    import * as m from '$lib/paraglide/messages.js';
 
     const schema = yup.object({
-        email: yup.string().email().required('Email is required.'),
-        password: yup.string().required('Password is required.').min(8, 'Password must be at least 8 characters.'),
-        confirm_password: yup.string().required('Passwords do not match.').oneOf([yup.ref('password'), null], 'Passwords do not match.'),
-        first_name: yup.string().required('First name is required.'),
-        last_name: yup.string().required('Last name is required.'),
+        email: yup.string().email().required(m.validation_emailRequired()),
+        password: yup.string().required(m.validation_passwordRequired()).min(8, m.validation_passwordMinLength()),
+        confirm_password: yup.string().required(m.validation_confirmPasswordRequired()).oneOf([yup.ref('password'), null], m.validation_passwordsMismatch()),
+        first_name: yup.string().required(m.validation_firstNameRequired()),
+        last_name: yup.string().required(m.validation_lastNameRequired()),
         middle_initial: yup.string().max(1),
-        nationality: yup.string().required('Nationality is required.'),
+        nationality: yup.string().required(m.validation_nationalityRequired()),
         job_title: yup.string(),
         department: yup.string(),
-        institute: yup.string().required('Institute is required.'),
+        institute: yup.string().required(m.validation_instituteRequired()),
         disability: yup.string(),
         dietary: yup.string(),
     });
@@ -60,11 +61,23 @@
     });
 </script>
 
-<Heading tag="h1" customSize="text-2xl font-bold" class="mb-3">Registration</Heading>
-<p class="mb-10 font-light">Please fill out the form below to register with us.</p>
-<form use:felteForm method="post">
-    <RegistrationForm errors={$errors} config={form_config} />
-    <p class="text-center">
-        <Button type="submit" size="xl" color="blue" disabled={$isSubmitting}>Register</Button>
-    </p>
-</form>
+<!-- Page Header Card -->
+<div class="relative rounded-lg shadow-sm py-16 px-8 mb-8 overflow-hidden" style="background-image: url('/bg-events.webp'); background-size: cover; background-position: center;">
+    <div class="absolute inset-0 bg-slate-900 opacity-60"></div>
+    <div class="relative z-10">
+        <h1 class="text-3xl font-bold text-white">{m.registration_title()}</h1>
+        <p class="text-slate-200 mt-2">{m.registration_description()}</p>
+    </div>
+</div>
+
+<!-- Form Card -->
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+    <form use:felteForm method="post">
+        <RegistrationForm errors={$errors} config={form_config} />
+        <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
+            <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>
+                {m.registration_submit()}
+            </Button>
+        </div>
+    </form>
+</div>

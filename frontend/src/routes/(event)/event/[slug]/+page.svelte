@@ -1,182 +1,224 @@
 <script>
     import { Button, Card, Heading } from 'flowbite-svelte';
-    import { MapPinAltSolid, FacebookSolid, TwitterSolid, LinkedinSolid, EnvelopeSolid } from 'flowbite-svelte-icons';
+    import {
+        MapPinAltSolid,
+        FacebookSolid,
+        TwitterSolid,
+        LinkedinSolid,
+        EnvelopeSolid,
+        UsersSolid,
+        CalendarMonthSolid,
+        ClockSolid,
+        FileLinesSolid
+    } from 'flowbite-svelte-icons';
+    import * as m from '$lib/paraglide/messages.js';
 
     let { data } = $props();
     let event = data.event;
     let user = data.user;
     let registered = data.registered;
+    let is_event_admin = data.is_event_admin;
+
+    // Check if registration is closed
+    let isRegistrationClosed = $derived.by(() => {
+        if (!event.registration_deadline) return false;
+        const deadline = new Date(event.registration_deadline);
+        const now = new Date();
+        return deadline < now;
+    });
+
+    // Get current page URL for sharing
+    let pageUrl = $state('');
+    $effect(() => {
+        if (typeof window !== 'undefined') {
+            pageUrl = window.location.href;
+        }
+    });
+
+    // Share text
+    const shareText = `${event.name} - ${event.start_date} to ${event.end_date} at ${event.venue}`;
+    const shareTitle = event.name;
+
+    // Share functions
+    function shareOnFacebook() {
+        const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+        window.open(url, '_blank', 'width=600,height=400');
+    }
+
+    function shareOnTwitter() {
+        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(pageUrl)}`;
+        window.open(url, '_blank', 'width=600,height=400');
+    }
+
+    function shareOnLinkedIn() {
+        const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
+        window.open(url, '_blank', 'width=600,height=400');
+    }
+
+    function shareViaEmail() {
+        const subject = encodeURIComponent(shareTitle);
+        const body = encodeURIComponent(`${shareText}\n\nLearn more: ${pageUrl}`);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
 </script>
 
-<!-- Hero Section -->
-<div class="relative flex justify-center items-center overflow-hidden h-[400px]">
-    <div class="absolute flex w-full h-full bg-darken">
-        <img alt={event.name} src="/bg-default.webp" class="absolute block !w-full h-full object-cover z-0">
-    </div>
-    <div class="relative container px-7">
-        <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">{event.name}</h1>
-    </div>
-</div>
-
-<!-- Main Content -->
 <div class="container mx-auto my-10 px-3 sm:px-7">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Page Header Card -->
+    <div class="relative rounded-lg shadow-sm py-16 px-8 mb-8 overflow-hidden" style="background-image: url('/bg-events.webp'); background-size: cover; background-position: center;">
+        <div class="absolute inset-0 bg-slate-900 opacity-60"></div>
+        <div class="relative z-10">
+            <h1 class="text-3xl font-bold text-white">{event.name}</h1>
+            <p class="text-slate-200 mt-2">
+                <a href="/events" class="hover:underline">{m.eventDetail_breadcrumbEvents()}</a>
+                <span class="mx-2">/</span>
+                <span class="text-white font-medium">{event.name}</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column - Main Content -->
-        <div class="lg:col-span-2 space-y-8">
-            <!-- About the Event -->
-            <Card>
-                <Heading tag="h2" class="mb-4">About the Event</Heading>
-                <div class="space-y-4 text-gray-700">
-                    <p><strong>Organizer:</strong> {event.organizers}</p>
-                    <p><strong>Venue:</strong> {event.venue}</p>
-                    <p><strong>Dates:</strong> {event.start_date} - {event.end_date}</p>
-                    {#if event.registration_deadline}
-                        <p><strong>Registration Deadline:</strong> {event.registration_deadline}</p>
-                    {/if}
-                    {#if event.abstract_deadline && event.accepts_abstract}
-                        <p><strong>Abstract Submission Deadline:</strong> {event.abstract_deadline}</p>
-                    {/if}
-                    {#if event.link_info}
-                        <p>
-                            <a href={event.link_info} target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
-                                Visit Event Website →
-                            </a>
-                        </p>
-                    {/if}
-                </div>
-            </Card>
-
-            <!-- Speakers Section (if available) -->
-            {#if data.speakers && data.speakers.length > 0}
-            <Card>
-                <Heading tag="h2" class="mb-6">Keynote Speakers</Heading>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {#each data.speakers.slice(0, 6) as speaker}
-                        <div class="text-center">
-                            <div class="w-24 h-24 mx-auto mb-3 rounded-full bg-gray-300 flex items-center justify-center text-2xl font-bold text-gray-600">
-                                {speaker.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <h3 class="font-semibold text-gray-900">{speaker.name}</h3>
-                            {#if speaker.affiliation}
-                                <p class="text-sm text-gray-600">{speaker.affiliation}</p>
-                            {/if}
-                            <p class="text-xs text-gray-500 mt-1 capitalize">{speaker.type.replace('_', ' ')}</p>
-                        </div>
-                    {/each}
-                </div>
-            </Card>
-            {/if}
-
-            <!-- Conference Schedule -->
-            <Card>
-                <Heading tag="h2" class="mb-4">Conference Schedule</Heading>
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Event Details -->
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
                 <div class="space-y-4">
-                    <div class="border-l-4 border-blue-600 pl-4">
-                        <p class="font-semibold text-gray-900">Day 1: {event.start_date}</p>
-                        <p class="text-gray-600 text-sm">Opening Ceremony & Sessions</p>
+                    <!-- Organizer -->
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <UsersSolid class="w-5 h-5 text-gray-500" />
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">{m.eventDetail_organizer()}</p>
+                            <p class="text-base text-gray-900">{event.organizers}</p>
+                        </div>
                     </div>
-                    {#if event.start_date !== event.end_date}
-                        <div class="border-l-4 border-blue-600 pl-4">
-                            <p class="font-semibold text-gray-900">Day 2: {event.end_date}</p>
-                            <p class="text-gray-600 text-sm">Workshops, Networking & Closing</p>
+
+                    <!-- Venue -->
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <MapPinAltSolid class="w-5 h-5 text-gray-500" />
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">{m.eventDetail_venue()}</p>
+                            <p class="text-base text-gray-900">{event.venue}</p>
+                        </div>
+                    </div>
+
+                    <!-- Dates -->
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <CalendarMonthSolid class="w-5 h-5 text-gray-500" />
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">{m.eventDetail_eventDates()}</p>
+                            <p class="text-base text-gray-900">{event.start_date} - {event.end_date}</p>
+                        </div>
+                    </div>
+
+                    {#if event.registration_deadline}
+                        <!-- Registration Deadline -->
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                <ClockSolid class="w-5 h-5 text-gray-500" />
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">{m.eventDetail_registrationDeadline()}</p>
+                                <p class="text-base text-gray-900">{event.registration_deadline}</p>
+                            </div>
+                        </div>
+                    {/if}
+
+                    {#if event.abstract_deadline && event.accepts_abstract}
+                        <!-- Abstract Submission Deadline -->
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                <FileLinesSolid class="w-5 h-5 text-gray-500" />
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">{m.eventDetail_abstractDeadline()}</p>
+                                <p class="text-base text-gray-900">{event.abstract_deadline}</p>
+                            </div>
                         </div>
                     {/if}
                 </div>
-            </Card>
+
+                {#if event.description}
+                    <div class="prose prose-sm max-w-none mt-6 pt-6 border-t border-gray-200">
+                        {@html event.description}
+                    </div>
+                {/if}
+            </div>
         </div>
 
         <!-- Right Column - Sidebar -->
         <div class="space-y-6">
             <!-- Registration Information -->
-            <Card class="bg-gray-50">
-                <Heading tag="h3" class="mb-4">Registration Information</Heading>
-
+            <div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-6">
                 {#if user && registered}
                     <div class="space-y-4">
                         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                            <p class="font-semibold">✓ You are registered!</p>
-                            <p class="text-sm mt-1">Thank you for joining us.</p>
+                            <p class="font-semibold">{m.eventDetail_registered()}</p>
+                            <p class="text-sm mt-1">{m.eventDetail_registeredThankYou()}</p>
                         </div>
                         {#if event.accepts_abstract}
                             <Button href="/event/{event.id}/abstract" color="primary" class="w-full">
-                                Submit an Abstract
+                                {m.eventDetail_submitAbstract()}
                             </Button>
                         {/if}
-                        <Button href="/event/{event.id}" color="alternative" class="w-full">
-                            View My Registration
+                        <Button href="/event/{event.id}/registration" color="alternative" class="w-full">
+                            {m.eventDetail_viewRegistration()}
                         </Button>
+                        {#if is_event_admin}
+                            <Button href="/event/{event.id}/admin" color="blue" class="w-full">
+                                {m.eventDetail_manageEvent()}
+                            </Button>
+                        {/if}
                     </div>
                 {:else}
                     <div class="space-y-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Capacity</p>
-                            <p class="text-2xl font-bold text-gray-900">{event.capacity} attendees</p>
-                        </div>
-
                         {#if event.registration_deadline}
                             <div>
-                                <p class="text-sm text-gray-600">Registration Deadline</p>
+                                <p class="text-sm text-gray-600">{m.eventDetail_registrationDeadline()}</p>
                                 <p class="font-semibold text-gray-900">{event.registration_deadline}</p>
                             </div>
                         {/if}
 
-                        {#if user}
+                        {#if isRegistrationClosed}
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                                <p class="font-semibold">{m.eventRegister_closed()}</p>
+                            </div>
+                        {:else if user}
                             <Button href="/event/{event.id}/register" color="primary" size="lg" class="w-full">
-                                Register Now
+                                {m.eventDetail_registerNow()}
                             </Button>
                         {:else}
                             <Button href="/login" color="primary" size="lg" class="w-full">
-                                Login to Register
+                                {m.eventDetail_loginToRegister()}
                             </Button>
                             <p class="text-xs text-center text-gray-600">
-                                Don't have an account?
-                                <a href="/registration" class="text-blue-600 hover:underline">Sign up here</a>
+                                {m.eventDetail_noAccount()}
+                                <a href="/registration" class="text-blue-600 hover:underline">{m.eventDetail_signUpHere()}</a>
                             </p>
                         {/if}
                     </div>
                 {/if}
-            </Card>
-
-            <!-- Location -->
-            <Card>
-                <Heading tag="h3" class="mb-3 flex items-center gap-2">
-                    <MapPinAltSolid class="w-5 h-5" />
-                    Location
-                </Heading>
-                <div class="space-y-3">
-                    <p class="text-gray-700">{event.venue}</p>
-                    <!-- Map placeholder -->
-                    <div class="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <p class="text-gray-500 text-sm">Map</p>
-                    </div>
-                </div>
-            </Card>
-
-            <!-- Share -->
-            <Card>
-                <Heading tag="h3" class="mb-3">Share</Heading>
+                <hr class="my-6" />
                 <div class="flex gap-3">
-                    <button class="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700">
+                    <button onclick={shareOnFacebook} class="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700" aria-label={m.eventDetail_shareOnFacebook()}>
                         <FacebookSolid class="w-5 h-5" />
                     </button>
-                    <button class="p-2 rounded-full bg-sky-500 text-white hover:bg-sky-600">
+                    <button onclick={shareOnTwitter} class="p-2 rounded-full bg-sky-500 text-white hover:bg-sky-600" aria-label={m.eventDetail_shareOnTwitter()}>
                         <TwitterSolid class="w-5 h-5" />
                     </button>
-                    <button class="p-2 rounded-full bg-blue-700 text-white hover:bg-blue-800">
+                    <button onclick={shareOnLinkedIn} class="p-2 rounded-full bg-blue-700 text-white hover:bg-blue-800" aria-label={m.eventDetail_shareOnLinkedIn()}>
                         <LinkedinSolid class="w-5 h-5" />
                     </button>
-                    <button class="p-2 rounded-full bg-gray-600 text-white hover:bg-gray-700">
+                    <button onclick={shareViaEmail} class="p-2 rounded-full bg-gray-600 text-white hover:bg-gray-700" aria-label={m.eventDetail_shareViaEmail()}>
                         <EnvelopeSolid class="w-5 h-5" />
                     </button>
                 </div>
-            </Card>
-
-            <!-- Contact Organizers -->
-            <Card>
-                <a href="mailto:contact@example.com" class="text-blue-600 hover:underline font-medium">
-                    Contact Organizers
-                </a>
-            </Card>
+            </div>
         </div>
     </div>
 </div>

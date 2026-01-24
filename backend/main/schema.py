@@ -30,6 +30,7 @@ class UserSchema(Schema):
     institute: str
     disability: str
     dietary: str
+    is_staff: bool
 
     @staticmethod
     def resolve_orcid(user: User) -> str:
@@ -49,6 +50,7 @@ class UserSchema(Schema):
 class EventSchema(Schema):
     id: int
     name: str
+    description: str
     link_info: str
     start_date: date
     end_date: date
@@ -69,6 +71,7 @@ class EmailTemplateSchema(Schema):
 class EventAdminSchema(Schema):
     id: int
     name: str
+    description: str
     link_info: str
     start_date: date
     end_date: date

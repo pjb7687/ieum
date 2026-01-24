@@ -129,6 +129,7 @@ def add_event(request):
     )
     event = Event.objects.create(
         name=data["name"],
+        description=data.get("description", ""),
         link_info=data["link_info"],
         start_date=data["start_date"],
         end_date=data["end_date"],
@@ -179,6 +180,7 @@ def update_event(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
     event.name = data["name"]
+    event.description = data.get("description", "")
     event.link_info = data["link_info"]
     event.start_date = data["start_date"]
     event.end_date = data["end_date"]
