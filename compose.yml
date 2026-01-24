@@ -46,8 +46,7 @@ services:
       - ACCOUNT_DEFAULT_HTTP_PROTOCOL=https
       - LOG_FILE=/app/backend.log
       - DEBUG=False
-    ports:
-      - "8090:8080"
+
     volumes:
       - static_data:/app/static
       - media_data:/app/media
