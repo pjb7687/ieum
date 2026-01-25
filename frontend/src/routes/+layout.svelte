@@ -64,6 +64,12 @@
 		localStorage.setItem('preferred-locale', newLocale);
 		document.documentElement.lang = newLocale;
 	}
+
+	// Compute the next parameter for login/registration
+	// If user is on email verification page, redirect to events page after login
+	let nextPath = $derived(
+		$page.url.pathname.includes('/verify-email') ? '/events' : $page.url.pathname
+	);
 </script>
 
 {#key currentLanguage}
@@ -126,7 +132,7 @@
 				<!-- Login and Register Buttons -->
 				<NavLi class="flex items-center gap-3">
 					<Button
-						href="/login?next={encodeURIComponent($page.url.pathname)}"
+						href="/login?next={encodeURIComponent(nextPath)}"
 						color="light"
 						size="sm"
 						class="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-medium px-4 py-1.5"
@@ -134,7 +140,7 @@
 						{m.nav_login()}
 					</Button>
 					<Button
-						href="/registration?next={encodeURIComponent($page.url.pathname)}"
+						href="/registration?next={encodeURIComponent(nextPath)}"
 						size="sm"
 						class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-1.5"
 					>

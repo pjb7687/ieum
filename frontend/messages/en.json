@@ -103,6 +103,12 @@
 	"forgotPassword_submit": "Reset Password",
 	"forgotPassword_successMessage": "An email has been sent. Please check your email to reset your password.",
 
+	"verifyEmail_title": "Verify Your Email",
+	"verifyEmail_description": "Click the button below to verify your email address and activate your account.",
+	"verifyEmail_submit": "Verify Email",
+	"verifyEmail_verifying": "Verifying...",
+	"verifyEmail_successMessage": "Your email has been successfully verified! Redirecting to events page...",
+
 	"admin_manageEvents_title": "Admin Page",
 	"admin_manageEvents_description": "You can manage events below.",
 	"admin_createEvent": "Create Event",

@@ -103,6 +103,12 @@
 	"forgotPassword_submit": "비밀번호 재설정",
 	"forgotPassword_successMessage": "이메일이 전송되었습니다. 이메일을 확인하여 비밀번호를 재설정해주세요.",
 
+	"verifyEmail_title": "이메일 인증",
+	"verifyEmail_description": "아래 버튼을 클릭하여 이메일 주소를 인증하고 계정을 활성화하세요.",
+	"verifyEmail_submit": "이메일 인증",
+	"verifyEmail_verifying": "인증 중...",
+	"verifyEmail_successMessage": "이메일이 성공적으로 인증되었습니다! 행사 페이지로 이동합니다...",
+
 	"admin_manageEvents_title": "관리자 페이지",
 	"admin_manageEvents_description": "아래에서 행사를 관리할 수 있습니다.",
 	"admin_createEvent": "행사 생성",

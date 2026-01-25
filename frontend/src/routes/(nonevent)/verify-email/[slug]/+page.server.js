@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { post } from '$lib/fetch';
 
 /** @type {import('./$types').PageServerLoad} */
@@ -15,7 +15,8 @@ export const actions = {
         const response = await post('_allauth/browser/v1/auth/email/verify', formdata, cookies);
         // 200: Email verified, 400: Input error, 401: Success but login required, 409: Already verified
         if (response.status === 200 || response.status === 401) {
-            return;
+            // Redirect to events page after successful verification
+            throw redirect(303, '/events');
         } else if (response.status === 400) {
             throw error(response.status, 'Oops! It seems to be an invalid or expired verification link.');
         } else if (response.status === 409) {
