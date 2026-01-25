@@ -8,6 +8,13 @@
 
 ---
 
+## Development Notes
+
+### Package Manager
+**IMPORTANT**: Use `pnpm` for all package management operations in the frontend directory. Do not use `npm`.
+
+---
+
 ## System Architecture
 
 ```

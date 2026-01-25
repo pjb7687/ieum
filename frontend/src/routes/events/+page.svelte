@@ -151,12 +151,24 @@
         return event.registration_deadline >= today;
     }
 
+    function isClosingSoon(event) {
+        if (!event.registration_deadline) return false;
+        const today = new Date();
+        const deadline = new Date(event.registration_deadline);
+        const daysUntilDeadline = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+        return daysUntilDeadline > 0 && daysUntilDeadline <= 7;
+    }
+
     function getStatusColor(event) {
-        return isEventOpen(event) ? 'text-green-600' : 'text-red-600';
+        if (!isEventOpen(event)) return 'text-red-600';
+        if (isClosingSoon(event)) return 'text-orange-600';
+        return 'text-green-600';
     }
 
     function getStatusText(event) {
-        return isEventOpen(event) ? m.events_registrationOpen() : m.events_registrationClosed();
+        if (!isEventOpen(event)) return m.events_registrationClosed();
+        if (isClosingSoon(event)) return m.events_registrationClosingSoon();
+        return m.events_registrationOpen();
     }
 
     // Highlight matched text in search results
@@ -182,7 +194,7 @@
         <!-- Left Sidebar - Filters -->
         <div class="lg:col-span-1">
             <div class="sticky top-8">
-                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-6">
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8 space-y-6">
                     <!-- Keyword Search -->
                     <div>
                         <Label class="mb-2 text-sm font-semibold text-gray-700">{m.events_search()}</Label>
@@ -257,7 +269,7 @@
 
         <!-- Right Content - Events List -->
         <div class="lg:col-span-3">
-            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
                 {#if loading}
                     <div class="text-center py-16">
                         <Spinner size="12" />
@@ -270,50 +282,57 @@
                         <p class="text-gray-600">{m.events_noResultsDesc()}</p>
                     </div>
                 {:else}
-                    <div class="space-y-6">
+                    <div class="space-y-8">
                         {#each events as event}
-                            <div class="py-4 border-b border-gray-200 last:border-b-0">
-                                <div class="flex justify-between items-start mb-3">
-                                    <a href="/event/{event.id}" class="text-2xl font-bold text-gray-900 underline hover:text-gray-700">
+                            <div class="pb-8 border-b border-gray-200 last:border-b-0 last:pb-0">
+                                <!-- Event Title and Status -->
+                                <div class="flex justify-between items-start gap-4 mb-4">
+                                    <a href="/event/{event.id}" class="text-2xl font-bold text-gray-900 hover:underline">
                                         {@html highlightText(event.name, searchKeyword)}
                                     </a>
-                                    <span class={`flex items-center gap-1 text-sm font-semibold ${getStatusColor(event)}`}>
-                                        {#if isEventOpen(event)}
-                                            <CheckCircleSolid class="w-4 h-4" />
-                                        {:else}
+                                    <span class={`flex items-center gap-1.5 text-sm font-semibold whitespace-nowrap ${getStatusColor(event)}`}>
+                                        {#if !isEventOpen(event)}
                                             <ClockOutline class="w-4 h-4" />
+                                        {:else if isClosingSoon(event)}
+                                            <ClockOutline class="w-4 h-4" />
+                                        {:else}
+                                            <CheckCircleSolid class="w-4 h-4" />
                                         {/if}
                                         {getStatusText(event)}
                                     </span>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                                    <div class="flex items-start gap-2">
-                                        <CalendarMonthOutline class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <p class="font-medium text-gray-900">{m.events_dates()}</p>
-                                            <p>{event.start_date} - {event.end_date}</p>
+                                <!-- Event Details Grid -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Dates -->
+                                    <div class="flex items-start gap-3">
+                                        <CalendarMonthOutline class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                                        <div class="flex-1">
+                                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_dates()}</p>
+                                            <p class="text-sm text-gray-900 font-medium">{event.start_date} - {event.end_date}</p>
                                             {#if event.registration_deadline}
-                                                <p class="text-xs mt-1">
-                                                    {m.events_registrationDeadline()}: {event.registration_deadline}
+                                                <p class="text-xs text-gray-600 mt-1.5">
+                                                    <span class="font-medium">{m.events_registrationDeadline()}:</span> {event.registration_deadline}
                                                 </p>
                                             {/if}
                                         </div>
                                     </div>
 
-                                    <div class="flex items-start gap-2">
-                                        <MapPinAltSolid class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <p class="font-medium text-gray-900">{m.events_location()}</p>
-                                            <p>{@html highlightText(event.venue, searchKeyword)}</p>
+                                    <!-- Location -->
+                                    <div class="flex items-start gap-3">
+                                        <MapPinAltSolid class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                                        <div class="flex-1">
+                                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_location()}</p>
+                                            <p class="text-sm text-gray-900 font-medium">{@html highlightText(event.venue, searchKeyword)}</p>
                                         </div>
                                     </div>
 
-                                    <div class="flex items-start gap-2">
-                                        <UserCircleOutline class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <p class="font-medium text-gray-900">{m.events_organizer()}</p>
-                                            <p>{@html highlightText(event.organizers, searchKeyword)}</p>
+                                    <!-- Organizer -->
+                                    <div class="flex items-start gap-3 md:col-span-2">
+                                        <UserCircleOutline class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                                        <div class="flex-1">
+                                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_organizer()}</p>
+                                            <p class="text-sm text-gray-900 font-medium">{@html highlightText(event.organizers, searchKeyword)}</p>
                                         </div>
                                     </div>
                                 </div>

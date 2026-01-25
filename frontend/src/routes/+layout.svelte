@@ -4,9 +4,6 @@
 	import {
 		Navbar,
 		NavBrand,
-		NavLi,
-		NavUl,
-		NavHamburger,
 		Avatar,
 		Dropdown,
 		DropdownHeader,
@@ -75,19 +72,16 @@
 {#key currentLanguage}
 <div class="min-h-screen bg-slate-50">
 <Navbar class="border-b border-gray-200 bg-white py-2">
-	<div class="container mx-auto flex flex-wrap items-center justify-between px-4">
+	<div class="container mx-auto flex items-center justify-between px-4">
 		<!-- Logo -->
 		<NavBrand href="/" class="flex items-center">
 			<img src="/logo.webp" class="h-10 sm:h-12" alt="Logo" />
 		</NavBrand>
 
-		<!-- Mobile menu button -->
-		<NavHamburger class="md:hidden" />
-
 		<!-- Right side: Language selector and Auth buttons -->
-		<NavUl class="md:flex md:items-center md:gap-3">
+		<div class="flex flex-row items-center gap-3">
 			<!-- Language Selector -->
-			<NavLi class="relative">
+			<div class="relative">
 				<button class="flex items-center gap-1 text-gray-700 hover:text-gray-900 px-2 py-1.5">
 					<GlobeOutline class="w-5 h-5" />
 					<span class="text-sm font-medium">{currentLanguage.toUpperCase()}</span>
@@ -101,18 +95,15 @@
 						</DropdownItem>
 					{/each}
 				</Dropdown>
-			</NavLi>
+			</div>
 
 			{#if data.user}
 				<!-- User Profile Dropdown -->
-				<NavLi class="relative">
+				<div class="relative">
 					<button class="flex items-center gap-2">
 						<Avatar size="sm" class="cursor-pointer">
 							{data.user.first_name.charAt(0)}{data.user.last_name.charAt(0)}
 						</Avatar>
-						<span class="text-gray-700 font-medium hidden md:block text-sm">
-							{data.user.first_name}
-						</span>
 					</button>
 					<Dropdown placement="bottom-end" bind:open={profileDropdownOpen}>
 						<DropdownHeader>
@@ -127,10 +118,10 @@
 						<DropdownDivider />
 						<DropdownItem href="/logout" data-sveltekit-reload onclick={() => profileDropdownOpen = false}>{m.nav_signOut()}</DropdownItem>
 					</Dropdown>
-				</NavLi>
+				</div>
 			{:else}
 				<!-- Login and Register Buttons -->
-				<NavLi class="flex items-center gap-3">
+				<div class="flex items-center gap-3">
 					<Button
 						href="/login?next={encodeURIComponent(nextPath)}"
 						color="light"
@@ -146,9 +137,9 @@
 					>
 						{m.nav_register()}
 					</Button>
-				</NavLi>
+				</div>
 			{/if}
-		</NavUl>
+		</div>
 	</div>
 </Navbar>
 
@@ -170,7 +161,7 @@
 					© {new Date().getFullYear()} {m.footer_copyright()}
 				</p>
 				<p class="text-xs text-gray-500 mt-1">
-					{m.footer_poweredBy()}
+					Powered by <a href="https://github.com/pjb7687/ieum" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">IEUM</a>
 				</p>
 			</div>
 		</div>

@@ -7,6 +7,10 @@ const ALLOWED_HOST = process.env.ALLOWED_HOST || 'localhost'
 export default defineConfig({
 	server: {
 		allowedHosts: [ALLOWED_HOST, ],
+		watch: {
+			// Watch the messages directory for changes
+			ignored: ['!**/messages/**']
+		}
 	},
 	plugins: [
 		paraglide({

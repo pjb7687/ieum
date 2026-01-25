@@ -3,7 +3,7 @@
     import {
         MapPinAltSolid,
         FacebookSolid,
-        TwitterSolid,
+        XSolid,
         LinkedinSolid,
         EnvelopeSolid,
         UsersSolid,
@@ -45,8 +45,8 @@
         window.open(url, '_blank', 'width=600,height=400');
     }
 
-    function shareOnTwitter() {
-        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(pageUrl)}`;
+    function shareOnX() {
+        const url = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(pageUrl)}`;
         window.open(url, '_blank', 'width=600,height=400');
     }
 
@@ -82,49 +82,41 @@
         <div class="lg:col-span-2 space-y-6">
             <!-- Event Details -->
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
-                <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Organizer -->
                     <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 mt-0.5">
-                            <UsersSolid class="w-5 h-5 text-gray-500" />
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">{m.eventDetail_organizer()}</p>
-                            <p class="text-base text-gray-900">{event.organizers}</p>
+                        <UsersSolid class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                        <div class="flex-1">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_organizer()}</p>
+                            <p class="text-sm text-gray-900 font-medium">{event.organizers}</p>
                         </div>
                     </div>
 
                     <!-- Venue -->
                     <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 mt-0.5">
-                            <MapPinAltSolid class="w-5 h-5 text-gray-500" />
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">{m.eventDetail_venue()}</p>
-                            <p class="text-base text-gray-900">{event.venue}</p>
+                        <MapPinAltSolid class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                        <div class="flex-1">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_venue()}</p>
+                            <p class="text-sm text-gray-900 font-medium">{event.venue}</p>
                         </div>
                     </div>
 
                     <!-- Dates -->
                     <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 mt-0.5">
-                            <CalendarMonthSolid class="w-5 h-5 text-gray-500" />
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">{m.eventDetail_eventDates()}</p>
-                            <p class="text-base text-gray-900">{event.start_date} - {event.end_date}</p>
+                        <CalendarMonthSolid class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <div class="flex-1">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_eventDates()}</p>
+                            <p class="text-sm text-gray-900 font-medium">{event.start_date} - {event.end_date}</p>
                         </div>
                     </div>
 
                     {#if event.registration_deadline}
                         <!-- Registration Deadline -->
                         <div class="flex items-start gap-3">
-                            <div class="flex-shrink-0 mt-0.5">
-                                <ClockSolid class="w-5 h-5 text-gray-500" />
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">{m.eventDetail_registrationDeadline()}</p>
-                                <p class="text-base text-gray-900">{event.registration_deadline}</p>
+                            <ClockSolid class="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                            <div class="flex-1">
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_registrationDeadline()}</p>
+                                <p class="text-sm text-gray-900 font-medium">{event.registration_deadline}</p>
                             </div>
                         </div>
                     {/if}
@@ -132,12 +124,10 @@
                     {#if event.abstract_deadline && event.accepts_abstract}
                         <!-- Abstract Submission Deadline -->
                         <div class="flex items-start gap-3">
-                            <div class="flex-shrink-0 mt-0.5">
-                                <FileLinesSolid class="w-5 h-5 text-gray-500" />
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">{m.eventDetail_abstractDeadline()}</p>
-                                <p class="text-base text-gray-900">{event.abstract_deadline}</p>
+                            <FileLinesSolid class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                            <div class="flex-1">
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_abstractDeadline()}</p>
+                                <p class="text-sm text-gray-900 font-medium">{event.abstract_deadline}</p>
                             </div>
                         </div>
                     {/if}
@@ -214,8 +204,8 @@
                     <button onclick={shareOnFacebook} class="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700" aria-label={m.eventDetail_shareOnFacebook()}>
                         <FacebookSolid class="w-5 h-5" />
                     </button>
-                    <button onclick={shareOnTwitter} class="p-2 rounded-full bg-sky-500 text-white hover:bg-sky-600" aria-label={m.eventDetail_shareOnTwitter()}>
-                        <TwitterSolid class="w-5 h-5" />
+                    <button onclick={shareOnX} class="p-2 rounded-full bg-black text-white hover:bg-gray-800" aria-label={m.eventDetail_shareOnX()}>
+                        <XSolid class="w-5 h-5" />
                     </button>
                     <button onclick={shareOnLinkedIn} class="p-2 rounded-full bg-blue-700 text-white hover:bg-blue-800" aria-label={m.eventDetail_shareOnLinkedIn()}>
                         <LinkedinSolid class="w-5 h-5" />

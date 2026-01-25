@@ -18,6 +18,7 @@
 	"events_noResults": "No events found",
 	"events_noResultsDesc": "Try adjusting your filters to see more results.",
 	"events_registrationOpen": "Registration Open",
+	"events_registrationClosingSoon": "Closing Soon",
 	"events_registrationClosed": "Registration Closed",
 	"events_dates": "Dates",
 	"events_location": "Location",
@@ -31,7 +32,6 @@
 	"events_allYears": "All Years",
 
 	"footer_copyright": "All rights reserved.",
-	"footer_poweredBy": "Powered by IEUM",
 
 	"common_submit": "Submit",
 	"common_cancel": "Cancel",
@@ -401,7 +401,7 @@
 	"eventDetail_noAccount": "Don't have an account?",
 	"eventDetail_signUpHere": "Sign up here",
 	"eventDetail_shareOnFacebook": "Share on Facebook",
-	"eventDetail_shareOnTwitter": "Share on Twitter",
+	"eventDetail_shareOnX": "Share on X",
 	"eventDetail_shareOnLinkedIn": "Share on LinkedIn",
 	"eventDetail_shareViaEmail": "Share via Email",
 	"eventDetail_manageEvent": "Manage Event",

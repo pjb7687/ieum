@@ -18,6 +18,7 @@
 	"events_noResults": "행사를 찾을 수 없습니다",
 	"events_noResultsDesc": "필터 조건을 조정하여 다시 검색해보세요.",
 	"events_registrationOpen": "등록 가능",
+	"events_registrationClosingSoon": "마감 임박",
 	"events_registrationClosed": "등록 마감",
 	"events_dates": "일정",
 	"events_location": "장소",
@@ -31,7 +32,6 @@
 	"events_allYears": "전체 연도",
 
 	"footer_copyright": "All rights reserved.",
-	"footer_poweredBy": "Powered by IEUM",
 
 	"common_submit": "제출",
 	"common_cancel": "취소",
@@ -401,7 +401,7 @@
 	"eventDetail_noAccount": "계정이 없으신가요?",
 	"eventDetail_signUpHere": "여기에서 가입하세요",
 	"eventDetail_shareOnFacebook": "Facebook에서 공유",
-	"eventDetail_shareOnTwitter": "Twitter에서 공유",
+	"eventDetail_shareOnX": "X에서 공유",
 	"eventDetail_shareOnLinkedIn": "LinkedIn에서 공유",
 	"eventDetail_shareViaEmail": "이메일로 공유",
 	"eventDetail_manageEvent": "행사 관리",
