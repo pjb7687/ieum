@@ -60,6 +60,7 @@
 	"form_firstName": "First Name",
 	"form_middleInitial": "Middle Initial",
 	"form_lastName": "Last Name",
+	"form_koreanName": "Name (Korean)",
 	"form_nationality": "Nationality",
 	"form_nationalityKorean": "Korean",
 	"form_nationalityNonKorean": "Non-Korean",

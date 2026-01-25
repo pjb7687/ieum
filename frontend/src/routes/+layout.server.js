@@ -1,5 +1,5 @@
 import { get } from '$lib/fetch';
-import { fail, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 
 const ORCID_CLIENT_ID = process.env.ORCID_CLIENT_ID;
 const ADMIN_PAGE_NAME = process.env.ADMIN_PAGE_NAME || 'admin';

@@ -31,6 +31,7 @@ class UserSchema(Schema):
     email: str
     first_name: str
     middle_initial: str
+    korean_name: str
     last_name: str
     name: str
     orcid: str

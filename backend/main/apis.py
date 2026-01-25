@@ -70,13 +70,14 @@ def update_user(request):
     user = request.user
     user.first_name = data["first_name"]
     user.last_name = data["last_name"]
-    user.middle_initial = data["middle_initial"]
-    user.nationality = data["nationality"]
-    user.job_title = data["job_title"]
-    user.department = data["department"]
+    user.middle_initial = data.get("middle_initial", "")
+    user.korean_name = data.get("korean_name", "")
+    user.nationality = int(data["nationality"])
+    user.job_title = data.get("job_title", "")
+    user.department = data.get("department", "")
     user.institute = data["institute"]
-    user.disability = data["disability"]
-    user.dietary = data["dietary"]
+    user.disability = data.get("disability", "")
+    user.dietary = data.get("dietary", "")
     user.save()
     return user
 

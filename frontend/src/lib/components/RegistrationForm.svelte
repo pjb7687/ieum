@@ -6,6 +6,7 @@
   export let data = {
     first_name: '',
     middle_initial: '',
+    korean_name: '',
     last_name: '',
     nationality: undefined,
     institute: '',
@@ -129,6 +130,22 @@
 {/if}
 {/if}
 
+<div class="mb-6">
+  <Label for="nationality" class="block mb-2">{m.form_nationality()}*</Label>
+  <Select id="nationality" name="nationality" bind:value={data.nationality} items={
+    [
+      { value: "1", name: m.form_nationalityKorean() },
+      { value: "2", name: m.form_nationalityNonKorean() },
+      { value: "3", name: m.form_nationalityPreferNot() },
+    ]
+  } />
+  {#if errors.nationality}
+    <Alert type="error" color="red" class="mb-6 mt-3">
+      <p class="text-sm">{errors.nationality}</p>
+    </Alert>
+  {/if}
+</div>
+
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
   <div class="mb-6">
     <Label for="first_name" class="block mb-2">{m.form_firstName()}*</Label>
@@ -154,21 +171,17 @@
   </div>
 </div>
 
+{#if data.nationality === 1 || data.nationality === "1"}
 <div class="mb-6">
-  <Label for="nationality" class="block mb-2">{m.form_nationality()}*</Label>
-  <Select id="nationality" name="nationality" bind:value={data.nationality} items={
-    [
-      { value: "1", name: m.form_nationalityKorean() },
-      { value: "2", name: m.form_nationalityNonKorean() },
-      { value: "3", name: m.form_nationalityPreferNot() },
-    ]
-  } />
-  {#if errors.nationality}
+  <Label for="korean_name" class="block mb-2">{m.form_koreanName()}</Label>
+  <Input id="korean_name" name="korean_name" bind:value={data.korean_name} />
+  {#if errors.korean_name}
     <Alert type="error" color="red" class="mb-6 mt-3">
-      <p class="text-sm">{errors.nationality}</p>
+      <p class="text-sm">{errors.korean_name}</p>
     </Alert>
   {/if}
 </div>
+{/if}
 
 <!-- Additional Information -->
 <hr class="my-8 border-gray-200" />

@@ -16,10 +16,17 @@ export async function load({ parent, request }) {
 export const actions = {
     update: async ({ cookies, request }) => {
         let formdata = await request.formData()
-        const response = await post('api/me', formdata, cookies);
+
+        // Convert FormData to JSON object
+        const data = {};
+        for (const [key, value] of formdata.entries()) {
+            data[key] = value;
+        }
+
+        const response = await post('api/me', data, cookies);
 
         if (!response.ok || response.status !== 200) {
-            throw error(response.status, { message: 'Server error. It this persists, please contact the admininistrator.' });
+            throw error(response.status, { message: 'Server error. If this persists, please contact the administrator.' });
         }
     }
 };

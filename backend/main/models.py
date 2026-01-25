@@ -22,6 +22,7 @@ class User(AbstractUser):
         (3, 'Prefer not to respond'),
     ]
     middle_initial = models.CharField(max_length=1, blank=True)
+    korean_name = models.CharField(max_length=1000, blank=True)
     nationality = models.IntegerField(choices=NATIONALITY_CHOICES, default=1)
     job_title = models.CharField(max_length=1000, blank=True)
     institute = models.CharField(max_length=1000)
