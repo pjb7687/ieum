@@ -96,7 +96,7 @@
         {/if}
         <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
             <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>{m.profile_updateInfo()}</Button>
-            <Button on:click={() => goto(page_data.next)} size="lg" color="alternative">{m.common_goBack()}</Button>
+            <Button onclick={() => goto(page_data.next)} size="lg" color="alternative">{m.common_goBack()}</Button>
         </div>
     </form>
 </div>

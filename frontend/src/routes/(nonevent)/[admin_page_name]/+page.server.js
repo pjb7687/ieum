@@ -21,7 +21,8 @@ export async function load({ parent, params, cookies }) {
     };
 
     data.admin = {
-        events: await get_data_or_404('events')
+        events: await get_data_or_404('events'),
+        users: await get_data_or_404('users')
     };
 
     return data;
@@ -42,6 +43,26 @@ export const actions = {
         let formdata = await request.formData();
         let id = formdata.get('id');
         const response = await post(`api/admin/event/${id}/delete`, {}, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'toggle_user_active': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        let user_id = formdata.get('user_id');
+        const response = await post(`api/admin/user/${user_id}/toggle-active`, {}, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'toggle_user_verified': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        let user_id = formdata.get('user_id');
+        const response = await post(`api/admin/user/${user_id}/toggle-verified`, {}, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
         } else {

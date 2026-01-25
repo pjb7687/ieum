@@ -27,6 +27,7 @@
 	];
 
 	let currentLanguage = $state(languageTag());
+	let profileDropdownOpen = $state(false);
 
 	onMount(() => {
 		// Set up callback to update state when language changes
@@ -87,7 +88,7 @@
 				</button>
 				<Dropdown>
 					{#each languages as lang}
-						<DropdownItem on:click={() => switchLanguage(lang.code)}>
+						<DropdownItem onclick={() => switchLanguage(lang.code)}>
 							<span class="flex items-center gap-2">
 								{lang.name}
 							</span>
@@ -107,14 +108,18 @@
 							{data.user.first_name}
 						</span>
 					</button>
-					<Dropdown placement="bottom-end">
+					<Dropdown placement="bottom-end" bind:open={profileDropdownOpen}>
 						<DropdownHeader>
 							<span class="block text-sm font-semibold">{data.user.first_name} {data.user.last_name}</span>
 							<span class="block truncate text-sm text-gray-500">{data.user.email}</span>
 						</DropdownHeader>
-						<DropdownItem href="/profile">{m.nav_myProfile()}</DropdownItem>
+						<DropdownItem href="/profile" onclick={() => profileDropdownOpen = false}>{m.nav_myProfile()}</DropdownItem>
+						{#if data.user.is_staff}
+							<DropdownDivider />
+							<DropdownItem href="/{data.admin_page_name}" onclick={() => profileDropdownOpen = false}>{m.nav_adminPage()}</DropdownItem>
+						{/if}
 						<DropdownDivider />
-						<DropdownItem href="/logout" data-sveltekit-reload>{m.nav_signOut()}</DropdownItem>
+						<DropdownItem href="/logout" data-sveltekit-reload onclick={() => profileDropdownOpen = false}>{m.nav_signOut()}</DropdownItem>
 					</Dropdown>
 				</NavLi>
 			{:else}

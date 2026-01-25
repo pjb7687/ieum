@@ -19,6 +19,15 @@
         filtered_events = data.admin.events.filter((item) => item.name.toLowerCase().indexOf(search_term.toLowerCase()) !== -1);
     });
 
+    let user_search_term = $state('');
+    let filtered_users = $state([]);
+    $effect(() => {
+        filtered_users = data.admin.users.filter((user) =>
+            user.name.toLowerCase().indexOf(user_search_term.toLowerCase()) !== -1 ||
+            user.email.toLowerCase().indexOf(user_search_term.toLowerCase()) !== -1
+        );
+    });
+
     const afterDelete = () => {
         return async ({ result, action, update }) => {
             if (result.type === "success") {
@@ -127,3 +136,50 @@
         </div>
     </form>
 </Modal>
+
+<!-- User Management Section -->
+<div class="mt-8 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+    <h2 class="text-2xl font-bold mb-6">{m.admin_manageUsers_title()}</h2>
+
+    <TableSearch placeholder={m.admin_searchUsers()} bind:inputValue={user_search_term} hoverable={true}>
+        <TableHead>
+            <TableHeadCell>{m.admin_tableId()}</TableHeadCell>
+            <TableHeadCell>{m.admin_tableUserName()}</TableHeadCell>
+            <TableHeadCell>{m.admin_tableEmail()}</TableHeadCell>
+            <TableHeadCell>{m.admin_tableJoinDate()}</TableHeadCell>
+            <TableHeadCell>{m.admin_tableActiveStatus()}</TableHeadCell>
+            <TableHeadCell>{m.admin_tableVerifiedStatus()}</TableHeadCell>
+        </TableHead>
+        <TableBody>
+            {#each filtered_users as user}
+                <TableBodyRow>
+                    <TableBodyCell>{user.id}</TableBodyCell>
+                    <TableBodyCell>{user.name}</TableBodyCell>
+                    <TableBodyCell>{user.email}</TableBodyCell>
+                    <TableBodyCell>{new Date(user.date_joined).toLocaleDateString()}</TableBodyCell>
+                    <TableBodyCell>
+                        <form method="post" action="?/toggle_user_active" use:enhance>
+                            <input type="hidden" name="user_id" value={user.id} />
+                            <Button size="xs" color={user.is_active ? 'green' : 'red'} type="submit" disabled={user.id === data.user.id}>
+                                {user.is_active ? m.admin_userActive() : m.admin_userInactive()}
+                            </Button>
+                        </form>
+                    </TableBodyCell>
+                    <TableBodyCell>
+                        <form method="post" action="?/toggle_user_verified" use:enhance>
+                            <input type="hidden" name="user_id" value={user.id} />
+                            <Button size="xs" color={user.email_verified ? 'green' : 'red'} type="submit">
+                                {user.email_verified ? m.admin_userVerified() : m.admin_userUnverified()}
+                            </Button>
+                        </form>
+                    </TableBodyCell>
+                </TableBodyRow>
+            {/each}
+            {#if filtered_users.length === 0}
+                <TableBodyRow>
+                    <TableBodyCell colspan="6" class="text-center">{m.admin_noUsersFound()}</TableBodyCell>
+                </TableBodyRow>
+            {/if}
+        </TableBody>
+    </TableSearch>
+</div>

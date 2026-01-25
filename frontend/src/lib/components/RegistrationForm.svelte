@@ -89,11 +89,11 @@
   <ButtonGroup class="w-full">
     <Input id="orcid" name="orcid" bind:value={data.orcid} disabled />
       {#if data.orcid}
-      <Button on:click={unlink_orcid} class="w-40" style="background-color: #A6CE39; color: white;">
+      <Button onclick={unlink_orcid} class="w-40" style="background-color: #A6CE39; color: white;">
         {m.form_unlinkOrcid()}
       </Button>
       {:else}
-      <Button on:click={link_orcid} class="w-40" style="background-color: #A6CE39; color: white;">
+      <Button onclick={link_orcid} class="w-40" style="background-color: #A6CE39; color: white;">
         {m.form_linkOrcid()}
       </Button>
       {/if}

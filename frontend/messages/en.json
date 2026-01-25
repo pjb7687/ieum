@@ -3,6 +3,7 @@
 	"nav_register": "Register",
 	"nav_signOut": "Sign Out",
 	"nav_myProfile": "My Profile",
+	"nav_adminPage": "Admin Page",
 
 	"events_browse": "Browse Events",
 	"events_discover": "Discover and register for upcoming conferences and events.",
@@ -41,6 +42,7 @@
 	"common_error": "An error occurred",
 	"common_success": "Success",
 	"common_goBack": "Go back",
+	"common_ok": "OK",
 
 	"profile_title": "My Info",
 	"profile_description": "You can update your information here.",
@@ -88,6 +90,9 @@
 	"login_orcidButton": "Or, click here to login via",
 	"login_forgotPassword": "Forgot your password?",
 	"login_orcidNotLinked": "ORCID is not linked to any account. Please link ORCID after login.",
+	"login_emailNotDelivered": "Email not delivered?",
+	"login_resendVerificationLink": "Resend verification email",
+	"login_verificationEmailSent": "Verification email sent successfully. Please check your mailbox.",
 
 	"login_createAccountTitle": "Create a registration account",
 	"login_createAccountDescription": "New with us? Create an account to proceed.",
@@ -98,7 +103,7 @@
 	"forgotPassword_submit": "Reset Password",
 	"forgotPassword_successMessage": "An email has been sent. Please check your email to reset your password.",
 
-	"admin_manageEvents_title": "Manage Events",
+	"admin_manageEvents_title": "Admin Page",
 	"admin_manageEvents_description": "You can manage events below.",
 	"admin_createEvent": "Create Event",
 	"admin_searchEvents": "Search events",
@@ -112,6 +117,18 @@
 	"admin_remove": "Remove",
 	"admin_createEventTitle": "Create Event",
 	"admin_create": "Create",
+	"admin_manageUsers_title": "Manage Users",
+	"admin_searchUsers": "Search users",
+	"admin_tableUserName": "Name",
+	"admin_tableEmail": "Email",
+	"admin_tableJoinDate": "Join Date",
+	"admin_tableActiveStatus": "Active",
+	"admin_tableVerifiedStatus": "Verified",
+	"admin_userActive": "Active",
+	"admin_userInactive": "Inactive",
+	"admin_userVerified": "Verified",
+	"admin_userUnverified": "Unverified",
+	"admin_noUsersFound": "No users found.",
 
 	"eventForm_eventName": "Event Name",
 	"eventForm_eventPageUrl": "Event Page URL",

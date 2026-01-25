@@ -11,6 +11,16 @@ class LoginSchema(Schema):
     email: str
     password: str
 
+class ResendVerificationSchema(Schema):
+    email: str
+    verification_key: str
+
+class GenerateVerificationKeySchema(Schema):
+    email: str
+
+class VerificationKeyResponseSchema(Schema):
+    key: str
+
 class MessageSchema(Schema):
     code: str
     message: str = ""
@@ -31,6 +41,9 @@ class UserSchema(Schema):
     disability: str
     dietary: str
     is_staff: bool
+    is_active: bool
+    date_joined: str
+    email_verified: bool
 
     @staticmethod
     def resolve_orcid(user: User) -> str:
@@ -38,7 +51,7 @@ class UserSchema(Schema):
         if linked_accounts.count() > 0:
             return linked_accounts[0].uid
         return ""
-    
+
     @staticmethod
     def resolve_name(user: User) -> str:
         name = user.first_name
@@ -46,6 +59,18 @@ class UserSchema(Schema):
             name += " " + user.middle_initial
         name += " " + user.last_name
         return name
+
+    @staticmethod
+    def resolve_date_joined(user: User) -> str:
+        return user.date_joined.isoformat()
+
+    @staticmethod
+    def resolve_email_verified(user: User) -> bool:
+        from allauth.account.models import EmailAddress
+        email_address = EmailAddress.objects.filter(user=user, primary=True).first()
+        if email_address:
+            return email_address.verified
+        return False
 
 class EventSchema(Schema):
     id: int
@@ -59,6 +84,12 @@ class EventSchema(Schema):
     registration_deadline: Union[date, None]
     accepts_abstract: bool
     abstract_deadline: Union[date, None]
+
+class PaginatedEventsSchema(Schema):
+    events: List[EventSchema]
+    total: int
+    offset: int
+    limit: int
     
 class VenueSchema(Schema):
     short_name: str

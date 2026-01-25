@@ -3,6 +3,7 @@
 	"nav_register": "회원가입",
 	"nav_signOut": "로그아웃",
 	"nav_myProfile": "내 프로필",
+	"nav_adminPage": "관리자 페이지",
 
 	"events_browse": "행사 목록",
 	"events_discover": "다양한 학술 행사를 찾아보고 등록하세요.",
@@ -41,6 +42,7 @@
 	"common_error": "오류가 발생했습니다",
 	"common_success": "성공",
 	"common_goBack": "뒤로가기",
+	"common_ok": "확인",
 
 	"profile_title": "내 정보",
 	"profile_description": "여기에서 정보를 업데이트할 수 있습니다.",
@@ -88,6 +90,9 @@
 	"login_orcidButton": "또는, ORCID로 로그인하려면 여기를 클릭하세요",
 	"login_forgotPassword": "비밀번호를 잊으셨나요?",
 	"login_orcidNotLinked": "ORCID가 계정에 연결되어 있지 않습니다. 로그인 후 ORCID를 연결해주세요.",
+	"login_emailNotDelivered": "이메일이 도착하지 않았나요?",
+	"login_resendVerificationLink": "인증 이메일 재전송",
+	"login_verificationEmailSent": "인증 이메일이 성공적으로 전송되었습니다. 메일함을 확인해주세요.",
 
 	"login_createAccountTitle": "회원가입",
 	"login_createAccountDescription": "처음 방문하셨나요? 계정을 만들어 시작하세요.",
@@ -98,7 +103,7 @@
 	"forgotPassword_submit": "비밀번호 재설정",
 	"forgotPassword_successMessage": "이메일이 전송되었습니다. 이메일을 확인하여 비밀번호를 재설정해주세요.",
 
-	"admin_manageEvents_title": "행사 관리",
+	"admin_manageEvents_title": "관리자 페이지",
 	"admin_manageEvents_description": "아래에서 행사를 관리할 수 있습니다.",
 	"admin_createEvent": "행사 생성",
 	"admin_searchEvents": "행사 검색",
@@ -112,6 +117,18 @@
 	"admin_remove": "삭제",
 	"admin_createEventTitle": "행사 생성",
 	"admin_create": "생성",
+	"admin_manageUsers_title": "사용자 관리",
+	"admin_searchUsers": "사용자 검색",
+	"admin_tableUserName": "이름",
+	"admin_tableEmail": "이메일",
+	"admin_tableJoinDate": "가입일",
+	"admin_tableActiveStatus": "활성",
+	"admin_tableVerifiedStatus": "인증",
+	"admin_userActive": "활성",
+	"admin_userInactive": "비활성",
+	"admin_userVerified": "인증됨",
+	"admin_userUnverified": "미인증",
+	"admin_noUsersFound": "사용자가 없습니다.",
 
 	"eventForm_eventName": "행사명",
 	"eventForm_eventPageUrl": "행사 페이지 URL",

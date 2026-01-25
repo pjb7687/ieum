@@ -179,3 +179,16 @@ class EmailTemplate(models.Model):
     """
     subject = models.CharField(max_length=1000)
     body = models.TextField()
+
+class EmailVerificationKey(models.Model):
+    """
+    Temporary verification keys for email verification resend
+    """
+    email = models.EmailField()
+    verification_key = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['email', 'verification_key']),
+        ]

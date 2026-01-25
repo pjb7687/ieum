@@ -51,6 +51,10 @@ def ensure_event_staff(func):
 
 @api.get("/me", response=UserSchema)
 def get_user(request):
+    # Clean up any verification keys for this user's email when they successfully authenticate
+    from main.models import EmailVerificationKey
+    EmailVerificationKey.objects.filter(email=request.user.email).delete()
+
     return request.user
 
 @api.post("/me", response=UserSchema)
@@ -87,10 +91,43 @@ def get_admin_events(request):
     events = Event.objects.all()
     return events
 
-@api.get("/events", response=List[EventSchema], auth=None)
-def get_events(request):
+@api.get("/events", response=PaginatedEventsSchema, auth=None)
+def get_events(request, offset: int = 0, limit: int = 20, year: str = None, search: str = None, showOnlyOpen: bool = False):
+    from django.db.models import Q
+
     events = Event.objects.all()
-    return events
+
+    # Apply filters
+    if year and year != 'all':
+        events = events.filter(start_date__year=int(year))
+
+    if search:
+        events = events.filter(
+            Q(name__icontains=search) |
+            Q(venue__icontains=search) |
+            Q(organizers__icontains=search)
+        )
+
+    if showOnlyOpen:
+        from datetime import datetime
+        today = datetime.now().date()
+        events = events.filter(Q(registration_deadline__isnull=True) | Q(registration_deadline__gte=today))
+
+    # Sort by start_date descending
+    events = events.order_by('-start_date')
+
+    # Get total count before pagination
+    total = events.count()
+
+    # Apply pagination
+    events = events[offset:offset + limit]
+
+    return {
+        "events": list(events),
+        "total": total,
+        "offset": offset,
+        "limit": limit
+    }
 
 @ensure_staff
 @api.post("/admin/event/add", response=MessageSchema)
@@ -678,6 +715,162 @@ def vote_abstract(request, event_id: int):
     for abstract_id in data["voted_abstracts"]:
         vote.voted_abstracts.add(Abstract.objects.get(id=abstract_id))
     return {"code": "success", "message": "Votes submitted."}
+
+@ensure_staff
+@api.get("/admin/users", response=List[UserSchema])
+def get_all_users(request):
+    return User.objects.all().order_by('-date_joined')
+
+@ensure_staff
+@api.post("/admin/user/{user_id}/toggle-active", response=MessageSchema)
+def toggle_user_active(request, user_id: int):
+    # Prevent users from deactivating themselves
+    if request.user.id == user_id:
+        return api.create_response(
+            request,
+            {"code": "self_action_denied", "message": "You cannot deactivate yourself."},
+            status=400,
+        )
+
+    try:
+        user = User.objects.get(id=user_id)
+        user.is_active = not user.is_active
+        user.save()
+        status = "activated" if user.is_active else "deactivated"
+        return {"code": "success", "message": f"User {status} successfully."}
+    except User.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "User not found."},
+            status=404,
+        )
+
+@ensure_staff
+@api.post("/admin/user/{user_id}/toggle-verified", response=MessageSchema)
+def toggle_user_verified(request, user_id: int):
+    from allauth.account.models import EmailAddress
+    try:
+        user = User.objects.get(id=user_id)
+        email_address = EmailAddress.objects.filter(user=user, primary=True).first()
+        if email_address:
+            email_address.verified = not email_address.verified
+            email_address.save()
+            status = "verified" if email_address.verified else "unverified"
+            return {"code": "success", "message": f"User email {status} successfully."}
+        else:
+            return api.create_response(
+                request,
+                {"code": "not_found", "message": "Email address not found."},
+                status=404,
+            )
+    except User.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "User not found."},
+            status=404,
+        )
+
+@api.post("/generate-verification-key", response=VerificationKeyResponseSchema, auth=None)
+def generate_verification_key(request, data: GenerateVerificationKeySchema):
+    import secrets
+    from datetime import timedelta
+    from django.utils import timezone
+    from allauth.account.models import EmailAddress
+    from main.models import EmailVerificationKey
+
+    email = data.email
+
+    try:
+        user = User.objects.get(email__iexact=email)
+        email_address = EmailAddress.objects.filter(user=user, email__iexact=email).first()
+
+        # If not found, try getting the primary email
+        if not email_address:
+            email_address = EmailAddress.objects.filter(user=user, primary=True).first()
+
+        if email_address and not email_address.verified:
+            # Generate random alphanumeric key
+            verification_key = secrets.token_urlsafe(32)
+
+            # Delete any existing keys for this email older than 1 hour
+            one_hour_ago = timezone.now() - timedelta(hours=1)
+            EmailVerificationKey.objects.filter(email=email, created_at__lt=one_hour_ago).delete()
+
+            # Delete any existing keys for this email to prevent duplicates
+            EmailVerificationKey.objects.filter(email=email).delete()
+
+            # Store in database
+            EmailVerificationKey.objects.create(
+                email=email,
+                verification_key=verification_key
+            )
+
+            return {"key": verification_key}
+        else:
+            # Email is verified or not found, return empty key
+            return {"key": ""}
+    except User.DoesNotExist:
+        return {"key": ""}
+
+@api.post("/resend-verification", response=MessageSchema, auth=None)
+def resend_verification_email(request, data: ResendVerificationSchema):
+    from datetime import timedelta
+    from django.utils import timezone
+    from allauth.account.models import EmailAddress
+    from allauth.account.utils import send_email_confirmation
+    from main.models import EmailVerificationKey
+
+    email = data.email
+    verification_key = data.verification_key
+
+    # Verify the key from database
+    try:
+        # Keys older than 1 hour are considered expired
+        one_hour_ago = timezone.now() - timedelta(hours=1)
+        key_record = EmailVerificationKey.objects.filter(
+            email=email,
+            verification_key=verification_key,
+            created_at__gte=one_hour_ago
+        ).first()
+
+        if not key_record:
+            return api.create_response(
+                request,
+                {"code": "invalid_key", "message": "Invalid or expired verification key."},
+                status=401,
+            )
+
+        user = User.objects.get(email=email)
+        email_address = EmailAddress.objects.filter(user=user, email=email).first()
+
+        if email_address and not email_address.verified:
+            # Use allauth's internal function to send verification email
+            send_email_confirmation(request, user)
+
+            # Delete the used key
+            key_record.delete()
+
+            return {"code": "success", "message": "Verification email sent successfully."}
+        elif email_address and email_address.verified:
+            # Clean up the key
+            key_record.delete()
+            return api.create_response(
+                request,
+                {"code": "already_verified", "message": "Email is already verified."},
+                status=400,
+            )
+        else:
+            return api.create_response(
+                request,
+                {"code": "not_found", "message": "Email address not found."},
+                status=404,
+            )
+    except User.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "User not found."},
+            status=404,
+        )
 
 @ensure_event_staff
 @api.get("/users", response=List[UserSchema])

@@ -11,10 +11,8 @@
 
     let { data } = $props();
 
-    function sortAttendeesById(a, b) {
-        return a.id - b.id;
-    }
-    data.onsite_attendees.sort(sortAttendeesById);
+    // Create a sorted derived value for attendees
+    let sortedAttendees = $derived([...sortedAttendees].sort((a, b) => a.id - b.id));
 
     const exportAttendeesAsCSV = () => {
         const csv = [
@@ -25,7 +23,7 @@
                 "Institute",
                 "Job Title"
             ],
-            ...data.onsite_attendees.map(row => [
+            ...sortedAttendees.map(row => [
                 row.id,
                 row.first_name,
                 row.middle_initial,
@@ -50,7 +48,7 @@
     let filteredAttendees = $state([]);
     let selectedAttendees = $state([]);
     $effect(() => {
-        filteredAttendees = data.onsite_attendees.filter((item) => item.name.toLowerCase().includes(searchTermAttendee.toLowerCase()))
+        filteredAttendees = sortedAttendees.filter((item) => item.name.toLowerCase().includes(searchTermAttendee.toLowerCase()))
     });
 
     let attendee_modal = $state(false);
@@ -58,12 +56,12 @@
 
     let selected_idx = $state(null);
     const showAttenteeModal = (id) => {
-        selected_idx = data.onsite_attendees.findIndex(item => item.id === id);
+        selected_idx = sortedAttendees.findIndex(item => item.id === id);
         attendee_modal = true;
     };
 
     const showRemoveAttenteeModal = (id) => {
-        selected_idx = data.onsite_attendees.findIndex(item => item.id === id);
+        selected_idx = sortedAttendees.findIndex(item => item.id === id);
         remove_attendee_modal = true;
     };
 
@@ -96,7 +94,7 @@
             unit: "mm",
             format: [90, 100]
         });
-        let p = data.onsite_attendees.find(a => a.id === id);
+        let p = sortedAttendees.find(a => a.id === id);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(30);
         let splitName = doc.splitTextToSize(p.name, 80);
@@ -120,7 +118,7 @@
             unit: "mm",
             format: [210, 297]
         });
-        let p = data.onsite_attendees.find(a => a.id === id);
+        let p = sortedAttendees.find(a => a.id === id);
         let curr_y = 45;
         const add_line = (text, font_weight, font_size, y) => {
             doc.setFont("helvetica", font_weight?font_weight:'normal');
@@ -168,7 +166,7 @@
         <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>{m.onsiteAttendees_exportCSV()}</Button>
     </div>
 </div>
-<p class="mt-5 mb-3 text-sm text-right">{data.onsite_attendees.length} {m.onsiteAttendees_peopleRegistered()}</p>
+<p class="mt-5 mb-3 text-sm text-right">{sortedAttendees.length} {m.onsiteAttendees_peopleRegistered()}</p>
 <TableSearch placeholder={m.onsiteAttendees_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermAttendee}>
     <TableHead>
         <TableHeadCell class="w-1">
@@ -234,8 +232,8 @@
 
 <Modal id="attendee_modal" size="xl" title={m.onsiteAttendees_detailsTitle()} bind:open={attendee_modal} outsideclose>
     <form method="post" action="?/update_onsite_attendee" use:enhance={afterSuccessfulSubmit}>
-        <input type="hidden" name="id" value={data.onsite_attendees[selected_idx].id} />
-        <OnSiteRegistrationForm data={data.onsite_attendees[selected_idx]} />
+        <input type="hidden" name="id" value={sortedAttendees[selected_idx].id} />
+        <OnSiteRegistrationForm data={sortedAttendees[selected_idx]} />
         {#if message_update.type === 'success'}
             <Alert type="success" color="green">{message_update.message}</Alert>
         {:else if message_update.type === 'error'}
@@ -249,7 +247,7 @@
 
 <Modal id="remove_attendee_modal" size="sm" title={m.onsiteAttendees_removeTitle()} bind:open={remove_attendee_modal} outsideclose>
     <form method="post" action="?/remove_onsite_attendee" use:enhance={afterSuccessfulDeregistration}>
-        <input type="hidden" name="id" value={data.onsite_attendees[selected_idx].id} />
+        <input type="hidden" name="id" value={sortedAttendees[selected_idx].id} />
         <p class="font-light mb-6">{m.onsiteAttendees_removeConfirm()}</p>
         <div class="flex justify-center gap-2">
             <Button color="red" type="submit">{m.onsiteAttendees_remove()}</Button>

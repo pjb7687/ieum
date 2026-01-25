@@ -39,11 +39,6 @@ export async function load({ cookies }) {
         }
     }
 
-    const response_events = await get('api/events');
-    if (response_events.ok && response_events.status === 200) {
-        rtn.events = response_events.data;
-    }
-
     rtn.orcid_client_id = ORCID_CLIENT_ID;
     rtn.csrf_token = response_csrftoken.data.csrftoken;
 

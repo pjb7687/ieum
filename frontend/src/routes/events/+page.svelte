@@ -1,72 +1,148 @@
 <script>
-    import { Input, Label, Button, Checkbox, Select } from 'flowbite-svelte';
+    import { Input, Label, Button, Checkbox, Spinner } from 'flowbite-svelte';
     import { SearchOutline, CalendarMonthOutline, MapPinAltSolid, UserCircleOutline, CheckCircleSolid, ClockOutline } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
+    import { onMount } from 'svelte';
+    import { browser } from '$app/environment';
 
     let { data } = $props();
-    let events = $state(data.events || []);
+
+    // Events state - initialize from server data once
+    let events = $state(data.eventsData?.events || []);
+    let total = $state(data.eventsData?.total || 0);
+    let offset = $state(data.eventsData?.events?.length || 0);
+    let hasMore = $derived(events.length < total);
+    let loading = $state(false);
+    let loadingMore = $state(false);
 
     // Filter state
     let searchKeyword = $state('');
-    let startDate = $state('');
-    let endDate = $state('');
     let showOnlyOpen = $state(false);
     let selectedYear = $state('all');
 
-    // Get available years from events
-    let availableYears = $derived(() => {
-        const years = new Set();
-        events.forEach(event => {
-            if (event.start_date) {
-                const year = event.start_date.split('-')[0];
-                years.add(year);
-            }
-        });
-        return Array.from(years).sort((a, b) => b - a); // Sort descending
+    // Debounce timer for search
+    let searchTimer;
+
+    // Year navigation
+    const currentYear = new Date().getFullYear();
+    let yearOffset = $state(0);
+
+    // Get years to display (3 years centered on current + offset)
+    let displayYears = $derived(() => {
+        const centerYear = currentYear + yearOffset;
+        return [centerYear - 1, centerYear, centerYear + 1];
     });
 
-    // Filtered events
-    let filteredEvents = $derived(() => {
-        let result = events;
+    function selectYear(year) {
+        selectedYear = year.toString();
+        loadEvents(true);
+    }
 
-        // Year filter
-        if (selectedYear !== 'all') {
-            result = result.filter(event => {
-                if (event.start_date) {
-                    const year = event.start_date.split('-')[0];
-                    return year === selectedYear;
+    function navigateYears(direction) {
+        yearOffset += direction;
+    }
+
+    // Load events from API
+    async function loadEvents(reset = false) {
+        if (loading || loadingMore) return;
+
+        if (reset) {
+            loading = true;
+            offset = 0;
+        } else {
+            loadingMore = true;
+        }
+
+        try {
+            const queryParams = new URLSearchParams({
+                offset: reset ? '0' : offset.toString(),
+                limit: '20',
+            });
+
+            if (selectedYear !== 'all') queryParams.append('year', selectedYear);
+            if (searchKeyword.trim()) queryParams.append('search', searchKeyword.trim());
+            if (showOnlyOpen) queryParams.append('showOnlyOpen', 'true');
+
+            const response = await fetch(`/api/events?${queryParams.toString()}`);
+            if (response.ok) {
+                const data = await response.json();
+
+                if (reset) {
+                    events = data.events;
+                    offset = data.events.length;
+                } else {
+                    events = [...events, ...data.events];
+                    offset += data.events.length;
                 }
-                return false;
+
+                total = data.total;
+            }
+        } catch (error) {
+            console.error('Failed to load events:', error);
+        } finally {
+            loading = false;
+            loadingMore = false;
+        }
+    }
+
+    // Handle search with debounce
+    function handleSearchChange() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            loadEvents(true);
+        }, 500);
+    }
+
+    // Handle checkbox change
+    function handleCheckboxChange() {
+        loadEvents(true);
+    }
+
+    // Clear all filters
+    function clearFilters() {
+        searchKeyword = '';
+        showOnlyOpen = false;
+        selectedYear = 'all';
+        yearOffset = 0;
+        loadEvents(true);
+    }
+
+    // Infinite scroll handler
+    let scrollContainer;
+
+    function handleScroll() {
+        if (!scrollContainer || loading || loadingMore || !hasMore) return;
+
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+        const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+
+        // Load more when scrolled to 80%
+        if (scrollPercentage > 0.8) {
+            loadEvents(false);
+        }
+    }
+
+    onMount(() => {
+        if (browser) {
+            // Find the scrollable container (window or specific element)
+            window.addEventListener('scroll', () => {
+                if (loading || loadingMore || !hasMore) return;
+
+                const scrollHeight = document.documentElement.scrollHeight;
+                const scrollTop = window.scrollY;
+                const clientHeight = window.innerHeight;
+                const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+
+                // Load more when scrolled to 80%
+                if (scrollPercentage > 0.8) {
+                    loadEvents(false);
+                }
             });
         }
 
-        // Keyword filter
-        if (searchKeyword.trim()) {
-            const keyword = searchKeyword.toLowerCase();
-            result = result.filter(event =>
-                event.name.toLowerCase().includes(keyword) ||
-                event.venue.toLowerCase().includes(keyword) ||
-                event.organizers.toLowerCase().includes(keyword)
-            );
-        }
-
-        // Date filter
-        if (startDate) {
-            result = result.filter(event => event.start_date >= startDate);
-        }
-        if (endDate) {
-            result = result.filter(event => event.end_date <= endDate);
-        }
-
-        // Open/Close filter
-        if (showOnlyOpen) {
-            const today = new Date().toISOString().split('T')[0];
-            result = result.filter(event =>
-                (!event.registration_deadline || event.registration_deadline >= today)
-            );
-        }
-
-        return result;
+        return () => {
+            clearTimeout(searchTimer);
+        };
     });
 
     function isEventOpen(event) {
@@ -81,6 +157,14 @@
 
     function getStatusText(event) {
         return isEventOpen(event) ? m.events_registrationOpen() : m.events_registrationClosed();
+    }
+
+    // Highlight matched text in search results
+    function highlightText(text, keyword) {
+        if (!keyword || !keyword.trim()) return text;
+
+        const regex = new RegExp(`(${keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
     }
 </script>
 
@@ -106,6 +190,7 @@
                             <Input
                                 type="text"
                                 bind:value={searchKeyword}
+                                oninput={handleSearchChange}
                                 placeholder={m.events_searchPlaceholder()}
                                 class="pl-10"
                             />
@@ -113,39 +198,55 @@
                         </div>
                     </div>
 
-                    <!-- Date Range Filter -->
+                    <!-- Year Selector -->
                     <div>
-                        <Label class="mb-2 text-sm font-semibold text-gray-700">{m.events_dateRange()}</Label>
-                        <div class="space-y-2">
-                            <div>
-                                <Label class="mb-1 text-xs text-gray-600">{m.events_dateFrom()}</Label>
-                                <Input type="date" bind:value={startDate} />
+                        <Label class="mb-3 text-sm font-semibold text-gray-700">{m.events_year()}</Label>
+                        <div class="flex items-center justify-between gap-2">
+                            <button
+                                type="button"
+                                onclick={() => navigateYears(-1)}
+                                class="p-1 hover:bg-gray-100 rounded transition-colors"
+                                aria-label="Previous years"
+                            >
+                                <span class="text-gray-600 font-bold text-lg">&lt;</span>
+                            </button>
+                            <div class="flex items-center gap-2 flex-1 justify-center">
+                                {#each displayYears() as year}
+                                    <button
+                                        type="button"
+                                        onclick={() => selectYear(year)}
+                                        class={`px-3 py-1 text-sm rounded transition-colors cursor-pointer
+                                            ${selectedYear === year.toString() ? 'bg-blue-600 text-white font-bold' : 'hover:bg-gray-100 text-gray-600'}
+                                            ${year === currentYear && selectedYear !== year.toString() ? 'font-bold text-gray-900' : ''}
+                                        `}
+                                    >
+                                        {year}
+                                    </button>
+                                {/each}
                             </div>
-                            <div>
-                                <Label class="mb-1 text-xs text-gray-600">{m.events_dateTo()}</Label>
-                                <Input type="date" bind:value={endDate} />
-                            </div>
+                            <button
+                                type="button"
+                                onclick={() => navigateYears(1)}
+                                class="p-1 hover:bg-gray-100 rounded transition-colors"
+                                aria-label="Next years"
+                            >
+                                <span class="text-gray-600 font-bold text-lg">&gt;</span>
+                            </button>
                         </div>
                     </div>
 
                     <!-- Status Filter -->
                     <div>
                         <Label class="mb-2 text-sm font-semibold text-gray-700">{m.events_status()}</Label>
-                        <Checkbox bind:checked={showOnlyOpen}>{m.events_showOnlyOpen()}</Checkbox>
+                        <Checkbox bind:checked={showOnlyOpen} onchange={handleCheckboxChange}>{m.events_showOnlyOpen()}</Checkbox>
                     </div>
 
                     <!-- Clear Filters -->
-                    {#if searchKeyword || startDate || endDate || showOnlyOpen || selectedYear !== 'all'}
+                    {#if searchKeyword || showOnlyOpen || selectedYear !== 'all'}
                         <Button
                             color="light"
                             class="w-full"
-                            on:click={() => {
-                                searchKeyword = '';
-                                startDate = '';
-                                endDate = '';
-                                showOnlyOpen = false;
-                                selectedYear = 'all';
-                            }}
+                            onclick={clearFilters}
                         >
                             {m.events_clearFilters()}
                         </Button>
@@ -156,26 +257,13 @@
 
         <!-- Right Content - Events List -->
         <div class="lg:col-span-3">
-            <!-- Year Selector -->
-            <div class="mb-4 flex items-center gap-4">
-                <Label class="text-sm font-semibold text-gray-700 whitespace-nowrap">{m.events_year()}:</Label>
-                <Select bind:value={selectedYear} class="w-48">
-                    <option value="all">{m.events_allYears()}</option>
-                    {#each availableYears() as year}
-                        <option value={year}>{year}</option>
-                    {/each}
-                </Select>
-            </div>
-
-            {#if data.user && data.user.is_staff}
-                <div class="mb-4">
-                    <Button href="/{data.admin_page_name}" size="lg" color="primary">
-                        {m.events_manageEvents()}
-                    </Button>
-                </div>
-            {/if}
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-                {#if filteredEvents().length === 0}
+                {#if loading}
+                    <div class="text-center py-16">
+                        <Spinner size="12" />
+                        <p class="text-gray-600 mt-4">Loading events...</p>
+                    </div>
+                {:else if events.length === 0}
                     <div class="text-center py-16">
                         <CalendarMonthOutline class="w-16 h-16 mx-auto text-gray-400 mb-4" />
                         <h3 class="text-xl font-semibold text-gray-900 mb-2">{m.events_noResults()}</h3>
@@ -183,11 +271,11 @@
                     </div>
                 {:else}
                     <div class="space-y-6">
-                        {#each filteredEvents() as event}
+                        {#each events as event}
                             <div class="py-4 border-b border-gray-200 last:border-b-0">
                                 <div class="flex justify-between items-start mb-3">
                                     <a href="/event/{event.id}" class="text-2xl font-bold text-gray-900 underline hover:text-gray-700">
-                                        {event.name}
+                                        {@html highlightText(event.name, searchKeyword)}
                                     </a>
                                     <span class={`flex items-center gap-1 text-sm font-semibold ${getStatusColor(event)}`}>
                                         {#if isEventOpen(event)}
@@ -217,7 +305,7 @@
                                         <MapPinAltSolid class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                                         <div>
                                             <p class="font-medium text-gray-900">{m.events_location()}</p>
-                                            <p>{event.venue}</p>
+                                            <p>{@html highlightText(event.venue, searchKeyword)}</p>
                                         </div>
                                     </div>
 
@@ -225,14 +313,26 @@
                                         <UserCircleOutline class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                                         <div>
                                             <p class="font-medium text-gray-900">{m.events_organizer()}</p>
-                                            <p>{event.organizers}</p>
+                                            <p>{@html highlightText(event.organizers, searchKeyword)}</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         {/each}
-                </div>
-            {/if}
+
+                        <!-- Load More Indicator -->
+                        {#if loadingMore}
+                            <div class="text-center py-8">
+                                <Spinner size="8" />
+                                <p class="text-gray-600 mt-2 text-sm">Loading more events...</p>
+                            </div>
+                        {:else if hasMore}
+                            <div class="text-center py-8">
+                                <p class="text-gray-500 text-sm">Scroll down to load more events</p>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
             </div>
         </div>
     </div>

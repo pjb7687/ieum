@@ -182,6 +182,7 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_SUBJECT_PREFIX = os.environ.get('EMAIL_PREFIX', '')
 
 EMAIL_FROM = os.environ.get('EMAIL_FROM', None)
+DEFAULT_FROM_EMAIL = EMAIL_FROM  # Django uses DEFAULT_FROM_EMAIL for sending emails
 EMAIL_HOST = os.environ.get('EMAIL_HOST', None)
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', None)
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', None)
