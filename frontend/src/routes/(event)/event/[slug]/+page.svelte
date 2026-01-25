@@ -193,12 +193,12 @@
                                 {m.eventDetail_registerNow()}
                             </Button>
                         {:else}
-                            <Button href="/login" color="primary" size="lg" class="w-full">
+                            <Button href="/login?next={encodeURIComponent(`/event/${event.id}`)}" color="primary" size="lg" class="w-full">
                                 {m.eventDetail_loginToRegister()}
                             </Button>
                             <p class="text-xs text-center text-gray-600">
                                 {m.eventDetail_noAccount()}
-                                <a href="/registration" class="text-blue-600 hover:underline">{m.eventDetail_signUpHere()}</a>
+                                <a href="/registration?next={encodeURIComponent(`/event/${event.id}`)}" class="text-blue-600 hover:underline">{m.eventDetail_signUpHere()}</a>
                             </p>
                         {/if}
                     </div>

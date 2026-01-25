@@ -13,7 +13,7 @@ export async function load({ parent, params, cookies }) {
             rtn.abstract = response_abstract.data;
         }
     } else {
-        return redirect(303, `/event/${params.slug}/login`);
+        return redirect(303, `/login?next=${encodeURIComponent(`/event/${params.slug}/abstract`)}`);
     }
 
     return rtn;

@@ -15,7 +15,7 @@ export async function load({ parent, params, cookies }) {
             error(500, "Internal Server Error");
         }
     } else {
-        return redirect(303, `/event/${params.slug}/login`);
+        return redirect(303, `/login?next=${encodeURIComponent(`/event/${params.slug}/register`)}`);
     }
 
     return rtn;

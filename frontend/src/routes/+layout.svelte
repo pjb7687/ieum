@@ -17,6 +17,7 @@
 	import { GlobeOutline } from "flowbite-svelte-icons";
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
 	import { languageTag, setLanguageTag, onSetLanguageTag } from '$lib/paraglide/runtime.js';
 	import * as m from '$lib/paraglide/messages.js';
 
@@ -120,7 +121,7 @@
 				<!-- Login and Register Buttons -->
 				<NavLi class="flex items-center gap-3">
 					<Button
-						href="/login"
+						href="/login?next={encodeURIComponent($page.url.pathname)}"
 						color="light"
 						size="sm"
 						class="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-medium px-4 py-1.5"
@@ -128,7 +129,7 @@
 						{m.nav_login()}
 					</Button>
 					<Button
-						href="/registration"
+						href="/registration?next={encodeURIComponent($page.url.pathname)}"
 						size="sm"
 						class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-1.5"
 					>

@@ -5,7 +5,8 @@ import { redirect, error } from '@sveltejs/kit';
 export async function load({ parent, request, params, cookies }) {
     let rtn = await parent();
     if (!rtn.user && !request.url.includes('admin')){
-        return redirect(303, `/event/${params.slug}/login`);
+        const url = new URL(request.url);
+        return redirect(303, `/login?next=${encodeURIComponent(url.pathname)}`);
     }
 
     if (rtn.user) {

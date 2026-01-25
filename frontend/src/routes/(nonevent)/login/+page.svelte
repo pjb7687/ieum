@@ -1,7 +1,4 @@
 <script>
-    import { enhance } from '$app/forms';
-    import { goto, invalidateAll } from '$app/navigation';
-
     import { A, Card, Button, Heading, Indicator, Label, Input, Checkbox, Select, Alert } from 'flowbite-svelte';
     import { onMount } from 'svelte';
     import * as m from '$lib/paraglide/messages.js';
@@ -14,26 +11,14 @@
         return s[0].toUpperCase() + s.slice(1);
     }
 
-    let isLoggingIn = $state(false);
-    const handleLogin = () => {
-      if (isLoggingIn) return;
-      isLoggingIn = true;
-      return async ({ result, update }) => {
-        if (result.type === 'success') {
-            // Redirect to homepage after login
-            goto('/', { invalidateAll: true });
-        } else {
-            isLoggingIn = false;
-            await update();
-        }
-      };
-    };
-
     const login_orcid = () => {
+        const next = data.next || '/';
+        const callback_url = `/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`;
+
         let formdata = {
             provider: 'orcid',
             process: 'login',
-            callback_url: '/login',
+            callback_url: callback_url,
             csrfmiddlewaretoken: data.csrf_token,
         };
         // create a form element
@@ -61,12 +46,13 @@
         <div class="p-8 flex flex-col space-y-8 border-l border-b">
             <h3 class="text-xl font-medium text-gray-900 dark:text-white">{m.login_createAccountTitle()}</h3>
             <p class="text-sm !mt-2">{m.login_createAccountDescription()}</p>
-            <Button class="w-full" href="/registration?next=/login">{m.login_createAccountButton()}</Button>
+            <Button class="w-full" href="/registration?next={encodeURIComponent(data.next || '/')}">{m.login_createAccountButton()}</Button>
         </div>
         <div class="border-l border-b p-8">
             <h3 class="text-xl font-medium text-gray-900 dark:text-white">{m.login_title()}</h3>
             <p class="text-sm !mt-2">{m.login_description()}</p>
-            <form method="POST" action="?/login" use:enhance={handleLogin} class="space-y-4 mt-6">
+            <form method="POST" action="?/login" class="space-y-4 mt-6">
+                <input type="hidden" name="next" value={data.next || '/'} />
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">{m.form_email()}*</label>
                     <Input id="email" name="username" type="email" required class="mt-1" />
@@ -81,11 +67,11 @@
                 {#if data.sociallogin_error}
                 <Alert color="red" class="mb-4" dismissable>{m.login_orcidNotLinked()}</Alert>
                 {/if}
-                <Button type="submit" color="primary" class="w-full" disabled={isLoggingIn}>{m.login_submit()}</Button>
+                <Button type="submit" color="primary" class="w-full">{m.login_submit()}</Button>
                 <Button on:click={login_orcid}
-                    color="none" class="w-full py-0" style="color: #555;" disabled={isLoggingIn}>{m.login_orcidButton()}<i class="ai ai-orcid ai-2x ml-1" style="color: #A6CE39;"></i></Button>
+                    color="none" class="w-full py-0" style="color: #555;">{m.login_orcidButton()}<i class="ai ai-orcid ai-2x ml-1" style="color: #A6CE39;"></i></Button>
                 <p class="text-sm font-bold text-gray-600 text-center mb-0">
-                    <a href="/forgot-password?next=/login" class="text-sm text-blue-500">{m.login_forgotPassword()}</a><br>
+                    <a href="/forgot-password?next={encodeURIComponent(data.next || '/')}" class="text-sm text-blue-500">{m.login_forgotPassword()}</a><br>
                 </p>
             </form>
         </div>
