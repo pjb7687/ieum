@@ -201,6 +201,12 @@
                                 <a href="/registration?next={encodeURIComponent(`/event/${event.id}`)}" class="text-blue-600 hover:underline">{m.eventDetail_signUpHere()}</a>
                             </p>
                         {/if}
+
+                        {#if is_event_admin}
+                            <Button href="/event/{event.id}/admin" color="primary" size="lg" class="w-full">
+                                {m.eventDetail_manageEvent()}
+                            </Button>
+                        {/if}
                     </div>
                 {/if}
                 <hr class="my-6" />
