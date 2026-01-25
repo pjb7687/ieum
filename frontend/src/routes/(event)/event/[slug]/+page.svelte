@@ -102,35 +102,23 @@
                     </div>
 
                     <!-- Dates -->
-                    <div class="flex items-start gap-3">
+                    <div class="flex items-start gap-3 md:col-span-2">
                         <CalendarMonthSolid class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                         <div class="flex-1">
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_eventDates()}</p>
                             <p class="text-sm text-gray-900 font-medium">{event.start_date} - {event.end_date}</p>
+                            {#if event.registration_deadline}
+                                <p class="text-xs text-gray-600 mt-1.5">
+                                    <span class="font-medium">{m.eventDetail_registrationDeadline()}:</span> {event.registration_deadline}
+                                </p>
+                            {/if}
+                            {#if event.abstract_deadline && event.accepts_abstract}
+                                <p class="text-xs text-gray-600 mt-1.5">
+                                    <span class="font-medium">{m.eventDetail_abstractDeadline()}:</span> {event.abstract_deadline}
+                                </p>
+                            {/if}
                         </div>
                     </div>
-
-                    {#if event.registration_deadline}
-                        <!-- Registration Deadline -->
-                        <div class="flex items-start gap-3">
-                            <ClockSolid class="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
-                            <div class="flex-1">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_registrationDeadline()}</p>
-                                <p class="text-sm text-gray-900 font-medium">{event.registration_deadline}</p>
-                            </div>
-                        </div>
-                    {/if}
-
-                    {#if event.abstract_deadline && event.accepts_abstract}
-                        <!-- Abstract Submission Deadline -->
-                        <div class="flex items-start gap-3">
-                            <FileLinesSolid class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                            <div class="flex-1">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_abstractDeadline()}</p>
-                                <p class="text-sm text-gray-900 font-medium">{event.abstract_deadline}</p>
-                            </div>
-                        </div>
-                    {/if}
                 </div>
 
                 {#if event.description}
@@ -167,13 +155,6 @@
                     </div>
                 {:else}
                     <div class="space-y-4">
-                        {#if event.registration_deadline}
-                            <div>
-                                <p class="text-sm text-gray-600">{m.eventDetail_registrationDeadline()}</p>
-                                <p class="font-semibold text-gray-900">{event.registration_deadline}</p>
-                            </div>
-                        {/if}
-
                         {#if isRegistrationClosed}
                             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                                 <p class="font-semibold">{m.eventRegister_closed()}</p>
