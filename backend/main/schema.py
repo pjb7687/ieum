@@ -95,6 +95,7 @@ class EventSchema(Schema):
     venue_latitude: Union[float, None]
     venue_longitude: Union[float, None]
     organizers: str
+    main_languages: List[str]
     registration_deadline: Union[date, None]
     accepts_abstract: bool
     abstract_deadline: Union[date, None]
@@ -126,6 +127,7 @@ class EventAdminSchema(Schema):
     venue_latitude: Union[float, None]
     venue_longitude: Union[float, None]
     organizers: str
+    main_languages: List[str]
     registration_deadline: Union[date, None]
     capacity: int
     accepts_abstract: bool

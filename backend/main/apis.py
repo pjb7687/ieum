@@ -239,6 +239,17 @@ def add_event(request):
             {"code": "missing_fields", "message": "Please fill all required fields."},
             status=400,
         )
+
+    # Parse and validate main_languages
+    main_languages_value = data.get("main_languages", [])
+    if isinstance(main_languages_value, str):
+        main_languages = json.loads(main_languages_value) if main_languages_value else []
+    else:
+        main_languages = main_languages_value
+
+    # Set default to English if not provided
+    if not main_languages:
+        main_languages = ['en']
     email_template_registration = EmailTemplate.objects.create(
         subject=settings.ACCOUNT_EMAIL_SUBJECT_PREFIX+"Registration Confirmation for {{ event.name }}",
         body="Dear {{ attendee.first_name }},\n\n"
@@ -264,14 +275,20 @@ def add_event(request):
             "Warm regards,\n"
             "{{ event.organizers }}"
     )
+
     event = Event.objects.create(
         name=data["name"],
         description=data.get("description", ""),
+        category=data.get("category", "conference"),
         link_info=data["link_info"],
         start_date=data["start_date"],
         end_date=data["end_date"],
         venue=data["venue"],
+        venue_address=data.get("venue_address", ""),
+        venue_latitude=float(data["venue_latitude"]) if data.get("venue_latitude") else None,
+        venue_longitude=float(data["venue_longitude"]) if data.get("venue_longitude") else None,
         organizers=data["organizers"],
+        main_languages=main_languages,
         registration_deadline=data["registration_deadline"] if data["registration_deadline"] else None,
         capacity=data["capacity"],
         accepts_abstract=data["accepts_abstract"] == "true",
@@ -327,6 +344,14 @@ def update_event(request, event_id: int):
     event.venue_latitude = float(data["venue_latitude"]) if data.get("venue_latitude") else None
     event.venue_longitude = float(data["venue_longitude"]) if data.get("venue_longitude") else None
     event.organizers = data["organizers"]
+    # Parse main_languages if it's a JSON string, otherwise use the array directly
+    main_languages_value = data.get("main_languages", [])
+    if isinstance(main_languages_value, str):
+        main_languages = json.loads(main_languages_value) if main_languages_value else []
+    else:
+        main_languages = main_languages_value
+    # Set default to English if empty
+    event.main_languages = main_languages if main_languages else ['en']
     event.registration_deadline = data["registration_deadline"] if data["registration_deadline"] else None
     event.capacity = data["capacity"]
     event.accepts_abstract = data["accepts_abstract"] == "true"

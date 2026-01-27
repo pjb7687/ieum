@@ -1,5 +1,5 @@
 <script>
-    import { Label, Input, Select } from 'flowbite-svelte';
+    import { Label, Input, Select, Checkbox } from 'flowbite-svelte';
     import * as m from '$lib/paraglide/messages.js';
     import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
     import VenueSelector from '$lib/components/VenueSelector.svelte';
@@ -13,6 +13,7 @@
         venue_address: '',
         venue_latitude: null,
         venue_longitude: null,
+        main_languages: [],
         start_date: '',
         end_date: '',
         deadline: '',
@@ -30,6 +31,7 @@
     let venue_address = $state(data.venue_address);
     let venue_latitude = $state(data.venue_latitude);
     let venue_longitude = $state(data.venue_longitude);
+    let main_languages = $state(data.main_languages || []);
     let accepts_abstract = $state(data.accepts_abstract);
 
     // Keep properties in sync with data object
@@ -40,8 +42,18 @@
         data.venue_address = venue_address;
         data.venue_latitude = venue_latitude;
         data.venue_longitude = venue_longitude;
+        data.main_languages = main_languages;
         data.accepts_abstract = accepts_abstract;
     });
+
+    // Helper functions for language checkboxes
+    function toggleLanguage(lang) {
+        if (main_languages.includes(lang)) {
+            main_languages = main_languages.filter(l => l !== lang);
+        } else {
+            main_languages = [...main_languages, lang];
+        }
+    }
 </script>
 
 <div class="mb-6">
@@ -75,6 +87,27 @@
 <div class="mb-6">
     <Label for="organizers" class="block mb-2">{m.eventForm_organizer()}*</Label>
     <Input type="text" id="organizers" name="organizers" value={data.organizers} />
+</div>
+<div class="mb-6">
+    <Label class="block mb-2">{m.eventForm_mainLanguages()}*</Label>
+    <div class="flex gap-4">
+        <Checkbox
+            checked={main_languages.includes('ko')}
+            on:change={() => toggleLanguage('ko')}
+        >
+            {m.language_korean()}
+        </Checkbox>
+        <Checkbox
+            checked={main_languages.includes('en')}
+            on:change={() => toggleLanguage('en')}
+        >
+            {m.language_english()}
+        </Checkbox>
+    </div>
+    {#if main_languages.length === 0}
+        <p class="text-sm text-red-600 mt-2">{m.eventForm_mainLanguagesRequired()}</p>
+    {/if}
+    <input type="hidden" name="main_languages" value={JSON.stringify(main_languages)} />
 </div>
 <div class="mb-6">
     <VenueSelector

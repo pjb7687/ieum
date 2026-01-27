@@ -5,9 +5,11 @@
 
     import EventAdminForm from '$lib/components/EventAdminForm.svelte';
 
-    export let data = {};
-    export let success = "";
-    export let failure = "";
+    let { data = {} } = $props();
+
+    let success = $state("");
+    let failure = $state("");
+    let eventFormData = $state(data.event);
 
     const afterSubmit = () => {
         return async ({ result, action, update }) => {
@@ -21,12 +23,30 @@
             }
         }
     };
+
+    function handleSubmit(event) {
+        // Validate main_languages before submission
+        if (!eventFormData.main_languages || eventFormData.main_languages.length === 0) {
+            event.preventDefault();
+            failure = m.eventForm_mainLanguagesRequired();
+            success = "";
+            // Scroll to the error message
+            const errorElement = document.querySelector('.text-red-600');
+            if (errorElement) {
+                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return false;
+        }
+        // Clear any previous error messages
+        failure = "";
+        success = "";
+    }
 </script>
 
 <Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.eventInfo_title()}</Heading>
 <p class="font-light mb-6">{m.eventInfo_description()}</p>
-<form method="POST" action="?/update_event" use:enhance={afterSubmit}>
-    <EventAdminForm data={data.event} />
+<form method="POST" action="?/update_event" use:enhance={afterSubmit} on:submit={handleSubmit}>
+    <EventAdminForm bind:data={eventFormData} />
     <div class="mb-6">
         {#if success}
             <Alert color="green">{success}</Alert>

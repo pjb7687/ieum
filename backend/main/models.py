@@ -116,6 +116,7 @@ class Event(models.Model):
     venue_latitude = models.FloatField(blank=True, null=True)  # Latitude for map
     venue_longitude = models.FloatField(blank=True, null=True)  # Longitude for map
     organizers = models.CharField(max_length=1000)
+    main_languages = models.JSONField(default=lambda: ['en'])  # Array of language codes: ['ko', 'en']
     registration_deadline = models.DateField(blank=True, null=True)
     capacity = models.IntegerField()
     accepts_abstract = models.BooleanField(default=False)

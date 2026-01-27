@@ -55,17 +55,73 @@
     
     let create_modal = $state(false);
     let create_error = $state('');
+    let newEventData = $state({
+        name: '',
+        description: '',
+        category: 'conference',
+        organizers: '',
+        venue: '',
+        venue_address: '',
+        venue_latitude: null,
+        venue_longitude: null,
+        main_languages: ['en'],
+        start_date: '',
+        end_date: '',
+        registration_deadline: '',
+        capacity: 0,
+        accepts_abstract: false,
+        abstract_deadline: '',
+        capacity_abstract: 0,
+        max_votes: 2,
+    });
+
     const afterCreate = () => {
         return async ({ result, action, update }) => {
             if (result.type === "success") {
                 await update();
                 create_modal = false;
                 create_error = '';
+                // Reset form data
+                newEventData = {
+                    name: '',
+                    description: '',
+                    category: 'conference',
+                    organizers: '',
+                    venue: '',
+                    venue_address: '',
+                    venue_latitude: null,
+                    venue_longitude: null,
+                    main_languages: ['en'],
+                    start_date: '',
+                    end_date: '',
+                    registration_deadline: '',
+                    capacity: 0,
+                    accepts_abstract: false,
+                    abstract_deadline: '',
+                    capacity_abstract: 0,
+                    max_votes: 2,
+                };
             } else {
                 create_error = result.error.message;
             }
         }
     };
+
+    function handleCreateSubmit(event) {
+        // Validate main_languages before submission
+        if (!newEventData.main_languages || newEventData.main_languages.length === 0) {
+            event.preventDefault();
+            create_error = m.eventForm_mainLanguagesRequired();
+            // Scroll to the error message
+            const errorElement = document.querySelector('#create_modal .text-red-600');
+            if (errorElement) {
+                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return false;
+        }
+        // Clear any previous error messages
+        create_error = '';
+    }
 
     // Institution management
     let selected_institution = $state(null);
@@ -173,8 +229,8 @@
 </Modal>
 
 <Modal id="create_modal" size="xl" title={m.admin_createEventTitle()} bind:open={create_modal} outsideclose>
-    <form method="post" action="?/create_event" use:enhance={afterCreate}>
-        <EventAdminForm />
+    <form method="post" action="?/create_event" use:enhance={afterCreate} on:submit={handleCreateSubmit}>
+        <EventAdminForm bind:data={newEventData} />
         {#if create_error}
             <Alert color="red" class="mb-6">{create_error}</Alert>
         {/if}
