@@ -1,6 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+def default_main_languages():
+    return ['en']
+
 class Institution(models.Model):
     """
     Institution model - stores institution names in both English and Korean
@@ -59,6 +62,7 @@ class Attendee(models.Model):
     first_name = models.CharField(max_length=1000)
     middle_initial = models.CharField(max_length=1, blank=True)
     last_name = models.CharField(max_length=1000)
+    korean_name = models.CharField(max_length=1000, blank=True)
     nationality = models.IntegerField()
     institute = models.CharField(max_length=1000)
     department = models.CharField(max_length=1000, blank=True)
@@ -116,7 +120,7 @@ class Event(models.Model):
     venue_latitude = models.FloatField(blank=True, null=True)  # Latitude for map
     venue_longitude = models.FloatField(blank=True, null=True)  # Longitude for map
     organizers = models.CharField(max_length=1000)
-    main_languages = models.JSONField(default=lambda: ['en'])  # Array of language codes: ['ko', 'en']
+    main_languages = models.JSONField(default=default_main_languages)  # Array of language codes: ['ko', 'en']
     registration_deadline = models.DateField(blank=True, null=True)
     capacity = models.IntegerField()
     accepts_abstract = models.BooleanField(default=False)

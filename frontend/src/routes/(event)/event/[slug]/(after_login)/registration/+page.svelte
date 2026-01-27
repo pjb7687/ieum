@@ -2,11 +2,17 @@
     import { Button, Alert } from 'flowbite-svelte';
     import { UserCircleSolid, FileLinesSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
+    import { languageTag } from '$lib/paraglide/runtime.js';
 
     let { data } = $props();
     let event = data.event;
     let attendee = data.attendee;
     let my_abstract = data.my_abstract;
+
+    // Display based on UI language
+    const currentLang = languageTag();
+    const showKoreanName = currentLang === 'ko';
+    const showEnglishName = currentLang === 'en';
 
     // Helper to get nationality display text
     function getNationalityText(nationality) {
@@ -50,27 +56,35 @@
                     <h2 class="text-xl font-bold text-gray-900">{m.myRegistration_personalInfo()}</h2>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pl-8">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">{m.form_firstName()}</p>
-                        <p class="text-base text-gray-900">{attendee.first_name}</p>
-                    </div>
-                    {#if attendee.middle_initial}
+                    {#if showEnglishName}
                         <div>
-                            <p class="text-sm font-medium text-gray-500">{m.form_middleInitial()}</p>
-                            <p class="text-base text-gray-900">{attendee.middle_initial}</p>
+                            <p class="text-sm font-medium text-gray-500">{m.form_firstName()}</p>
+                            <p class="text-base text-gray-900">{attendee.first_name}</p>
+                        </div>
+                        {#if attendee.middle_initial}
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">{m.form_middleInitial()}</p>
+                                <p class="text-base text-gray-900">{attendee.middle_initial}</p>
+                            </div>
+                        {/if}
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">{m.form_lastName()}</p>
+                            <p class="text-base text-gray-900">{attendee.last_name}</p>
                         </div>
                     {/if}
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">{m.form_lastName()}</p>
-                        <p class="text-base text-gray-900">{attendee.last_name}</p>
-                    </div>
+                    {#if showKoreanName && attendee.korean_name}
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">{m.form_koreanName()}</p>
+                            <p class="text-base text-gray-900">{attendee.korean_name}</p>
+                        </div>
+                    {/if}
                     <div>
                         <p class="text-sm font-medium text-gray-500">{m.form_nationality()}</p>
                         <p class="text-base text-gray-900">{getNationalityText(attendee.nationality)}</p>
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-500">{m.form_institute()}</p>
-                        <p class="text-base text-gray-900">{attendee.institute}</p>
+                        <p class="text-base text-gray-900">{showKoreanName && attendee.institute_ko ? attendee.institute_ko : attendee.institute}</p>
                     </div>
                     {#if attendee.department}
                         <div>

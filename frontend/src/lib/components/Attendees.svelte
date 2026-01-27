@@ -6,6 +6,7 @@
     import { UserAddSolid, UserEditSolid, UserRemoveSolid, TextSizeOutline, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
     import { jsPDF } from "jspdf";
     import * as m from '$lib/paraglide/messages.js';
+    import { languageTag } from '$lib/paraglide/runtime.js';
 
     import RegistrationForm from './RegistrationForm.svelte';
 
@@ -13,6 +14,26 @@
 
     function sortAttendeesById(a, b) {
         return a.id - b.id;
+    }
+
+    function getDisplayName(item) {
+        // Display name based on UI language
+        const currentLang = languageTag();
+        if (currentLang === 'ko') {
+            // If UI is Korean, prefer Korean name
+            return item.korean_name || item.name;
+        }
+        // If UI is English or default, show English name
+        return item.name;
+    }
+
+    function getDisplayInstitute(item) {
+        // Display institute based on UI language
+        const currentLang = languageTag();
+        if (currentLang === 'ko' && item.institute_ko) {
+            return item.institute_ko;
+        }
+        return item.institute;
     }
 
     function transformToTableFormat(attendees) {
@@ -34,13 +55,16 @@
             // Create a row with empty strings for each question
             const row = {
                 id: item.id,
-                name: item.name,
+                name: getDisplayName(item),
                 first_name: item.first_name,
                 middle_initial: item.middle_initial,
                 last_name: item.last_name,
+                korean_name: item.korean_name,
                 email: item.user.email,
                 nationality: item.nationality.toString(),
-                institute: item.institute,
+                institute: getDisplayInstitute(item),
+                institute_en: item.institute,
+                institute_ko: item.institute_ko,
                 department: item.department,
                 job_title: item.job_title,
                 disability: item.disability,
@@ -74,34 +98,38 @@
     }
 
     const exportAttendeesAsCSV = () => {
-        const csv = [
-            [   m.attendees_id(),
-                m.attendees_firstName(),
-                m.attendees_middleInitial(),
-                m.attendees_lastName(),
-                m.attendees_email(),
-                m.attendees_nationality(),
-                m.attendees_institute(),
-                m.attendees_department(),
-                m.attendees_jobTitle(),
-                m.attendees_disability(),
-                m.attendees_dietary(),
-                ...custom_headers_attendees.map(q => q.replace(/\n/, ' ').replace(/\s+/g, ' '))],
-            ...table_data_attendees.map(row => [
-                row.id,
-                row.first_name,
-                row.middle_initial,
-                row.last_name,
-                row.email,
-                stringify_nationality(row.nationality),
-                row.institute,
-                row.department,
-                row.job_title,
-                row.disability,
-                row.dietary,
-                ...row.custom_answers.map(answer => answer ? answer.answer.replace(/^- /, '').replace(/\n- /g, '; ') : "")
-            ])
-        ].map(row => row.map(item => `"${item}"`).join(',')).join('\n');
+        const currentLang = languageTag();
+        const isKorean = currentLang === 'ko';
+
+        // Build headers based on UI language
+        const headers = [
+            m.attendees_id(),
+            ...(isKorean ? [m.attendees_koreanName()] : [m.attendees_firstName(), m.attendees_middleInitial(), m.attendees_lastName()]),
+            m.attendees_email(),
+            m.attendees_nationality(),
+            m.attendees_institute(),
+            m.attendees_department(),
+            m.attendees_jobTitle(),
+            m.attendees_disability(),
+            m.attendees_dietary(),
+            ...custom_headers_attendees.map(q => q.replace(/\n/, ' ').replace(/\s+/g, ' '))
+        ];
+
+        // Build data rows based on UI language
+        const dataRows = table_data_attendees.map(row => [
+            row.id,
+            ...(isKorean ? [row.korean_name || row.name] : [row.first_name, row.middle_initial, row.last_name]),
+            row.email,
+            stringify_nationality(row.nationality),
+            row.institute,
+            row.department,
+            row.job_title,
+            row.disability,
+            row.dietary,
+            ...row.custom_answers.map(answer => answer ? answer.answer.replace(/^- /, '').replace(/\n- /g, '; ') : "")
+        ]);
+
+        const csv = [headers, ...dataRows].map(row => row.map(item => `"${item}"`).join(',')).join('\n');
 
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -379,6 +407,7 @@
         <TableHeadCell>{m.attendees_nationality()}</TableHeadCell>
         <TableHeadCell>{m.attendees_institute()}</TableHeadCell>
         {#if expand_attendees}
+            <TableHeadCell>{m.attendees_koreanName()}</TableHeadCell>
             <TableHeadCell>{m.attendees_department()}</TableHeadCell>
             <TableHeadCell>{m.attendees_jobTitle()}</TableHeadCell>
             <TableHeadCell>{m.attendees_disability()}</TableHeadCell>
@@ -405,6 +434,7 @@
                 <TableBodyCell>{stringify_nationality(row.nationality)}</TableBodyCell>
                 <TableBodyCell>{row.institute}</TableBodyCell>
                 {#if expand_attendees}
+                    <TableBodyCell>{row.korean_name}</TableBodyCell>
                     <TableBodyCell>{row.department}</TableBodyCell>
                     <TableBodyCell>{row.job_title}</TableBodyCell>
                     <TableBodyCell>{row.disability}</TableBodyCell>
@@ -434,7 +464,7 @@
         {#if filteredAttendees.length === 0}
             <TableBodyRow>
                 <TableBodyCell colspan={
-                    expand_attendees ? custom_headers_attendees.length + 10 : 6
+                    expand_attendees ? custom_headers_attendees.length + 11 : 6
                 } class="text-center">{m.attendees_noRecords()}</TableBodyCell>
             </TableBodyRow>
         {/if}

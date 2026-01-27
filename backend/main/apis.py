@@ -446,9 +446,10 @@ def update_attendee(request, event_id: int, attendee_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
     attendee = Attendee.objects.get(id=attendee_id, event=event)
-    attendee.first_name = data["first_name"]
-    attendee.middle_initial = data["middle_initial"]
-    attendee.last_name = data["last_name"]
+    attendee.first_name = data.get("first_name", "")
+    attendee.middle_initial = data.get("middle_initial", "")
+    attendee.last_name = data.get("last_name", "")
+    attendee.korean_name = data.get("korean_name", "")
     attendee.nationality = data["nationality"]
 
     # Auto-create institution if it doesn't exist
@@ -459,10 +460,10 @@ def update_attendee(request, event_id: int, attendee_id: int):
     )
     attendee.institute = institution.name_en
 
-    attendee.department = data["department"]
-    attendee.job_title = data["job_title"]
-    attendee.disability = data["disability"]
-    attendee.dietary = data["dietary"]
+    attendee.department = data.get("department", "")
+    attendee.job_title = data.get("job_title", "")
+    attendee.disability = data.get("disability", "")
+    attendee.dietary = data.get("dietary", "")
     attendee.save()
     return {"code": "success", "message": "Successfully updated."}
 
@@ -538,15 +539,16 @@ def register_event(request, event_id: int):
     attendee = Attendee.objects.create(
         user=user,
         event=event,
-        first_name=data["first_name"],
-        middle_initial=data["middle_initial"],
-        last_name=data["last_name"],
+        first_name=data.get("first_name", ""),
+        middle_initial=data.get("middle_initial", ""),
+        last_name=data.get("last_name", ""),
+        korean_name=data.get("korean_name", ""),
         nationality=data["nationality"],
         institute=institution.name_en,
-        department=data["department"],
-        job_title=data["job_title"],
-        disability=data["disability"],
-        dietary=data["dietary"]
+        department=data.get("department", ""),
+        job_title=data.get("job_title", ""),
+        disability=data.get("disability", ""),
+        dietary=data.get("dietary", "")
     )
 
     for q in event.custom_questions.all():
