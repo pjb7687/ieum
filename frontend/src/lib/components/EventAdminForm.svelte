@@ -61,8 +61,9 @@
     <Input type="text" id="name" name="name" value={data.name} />
 </div>
 <div class="mb-6">
-    <Label for="link_info" class="block mb-2">{m.eventForm_eventPageUrl()}*</Label>
-    <Input type="text" id="link_info" name="link_info" value={data.link_info} />
+    <Label for="link_info" class="block mb-2">{m.eventForm_eventPageUrl()}</Label>
+    <Input type="text" id="link_info" name="link_info" value={data.link_info} placeholder="https://example.com/event" />
+    <span class="text-sm">* {m.eventForm_eventPageUrlHelp()}</span>
 </div>
 <div class="mb-6">
     <MarkdownEditor

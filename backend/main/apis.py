@@ -233,7 +233,7 @@ def get_events(request, offset: int = 0, limit: int = 20, year: str = None, sear
 @api.post("/admin/event/add", response=MessageSchema)
 def add_event(request):
     data = json.loads(request.body)
-    if not data["name"] or not data["link_info"] or not data["organizers"] or not data["venue"] or not data["start_date"] or not data["end_date"] or not data["capacity"]:
+    if not data["name"] or not data["organizers"] or not data["venue"] or not data["start_date"] or not data["end_date"] or not data["capacity"]:
         return api.create_response(
             request,
             {"code": "missing_fields", "message": "Please fill all required fields."},
@@ -276,11 +276,14 @@ def add_event(request):
             "{{ event.organizers }}"
     )
 
+    # Use provided link_info or default to empty (will be set after event creation)
+    link_info = data.get("link_info", "").strip()
+
     event = Event.objects.create(
         name=data["name"],
         description=data.get("description", ""),
         category=data.get("category", "conference"),
-        link_info=data["link_info"],
+        link_info=link_info if link_info else "temp",  # Temporary value
         start_date=data["start_date"],
         end_date=data["end_date"],
         venue=data["venue"],
@@ -295,6 +298,11 @@ def add_event(request):
         email_template_registration=email_template_registration,
         email_template_abstract_submission=email_template_abstract_submission,
     )
+
+    # Set default link_info if not provided
+    if not link_info:
+        event.link_info = f"{settings.HEADLESS_URL_ROOT}/event/{event.id}"
+        event.save()
 
     if data["accepts_abstract"] == "true":
         event.abstract_deadline = data["abstract_deadline"]
@@ -336,7 +344,9 @@ def update_event(request, event_id: int):
     event.name = data["name"]
     event.description = data.get("description", "")
     event.category = data.get("category", "conference")
-    event.link_info = data["link_info"]
+    # Set default link_info if not provided or empty
+    link_info = data.get("link_info", "").strip()
+    event.link_info = link_info if link_info else f"{settings.HEADLESS_URL_ROOT}/event/{event.id}"
     event.start_date = data["start_date"]
     event.end_date = data["end_date"]
     event.venue = data["venue"]
