@@ -339,8 +339,8 @@
 	"attendees_iframeNotSupported": "브라우저가 iframe을 지원하지 않습니다.",
 	"attendees_print": "인쇄",
 	"attendees_close": "닫기",
-	"nationality_korean": "한국인",
-	"nationality_nonKorean": "외국인",
+	"nationality_korean": "한국",
+	"nationality_nonKorean": "해외 국적자",
 	"nationality_notSpecified": "명시되지 않음",
 
 	"onsiteAttendees_title": "현장 참가자",
