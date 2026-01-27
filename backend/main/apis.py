@@ -318,6 +318,7 @@ def update_event(request, event_id: int):
     event = Event.objects.get(id=event_id)
     event.name = data["name"]
     event.description = data.get("description", "")
+    event.category = data.get("category", "conference")
     event.link_info = data["link_info"]
     event.start_date = data["start_date"]
     event.end_date = data["end_date"]

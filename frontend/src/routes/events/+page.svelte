@@ -278,6 +278,24 @@
                     <div class="space-y-8">
                         {#each allEvents as event}
                             <div class="pb-8 border-b border-gray-200 last:border-b-0 last:pb-0">
+                                <!-- Event Category -->
+                                {#if event.category}
+                                    <div class="mb-2">
+                                        <span class="inline-block text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                                            {#if event.category === 'workshop'}
+                                                {m.eventCategory_workshop()}
+                                            {:else if event.category === 'hackathon'}
+                                                {m.eventCategory_hackathon()}
+                                            {:else if event.category === 'symposium'}
+                                                {m.eventCategory_symposium()}
+                                            {:else if event.category === 'meeting'}
+                                                {m.eventCategory_meeting()}
+                                            {:else if event.category === 'conference'}
+                                                {m.eventCategory_conference()}
+                                            {/if}
+                                        </span>
+                                    </div>
+                                {/if}
                                 <!-- Event Title and Status -->
                                 <div class="flex justify-between items-start gap-4 mb-4">
                                     <a href="/event/{event.id}" class="text-2xl font-bold text-gray-900 hover:underline">

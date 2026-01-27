@@ -86,6 +86,7 @@ class EventSchema(Schema):
     id: int
     name: str
     description: str
+    category: str
     link_info: str
     start_date: date
     end_date: date
@@ -116,6 +117,7 @@ class EventAdminSchema(Schema):
     id: int
     name: str
     description: str
+    category: str
     link_info: str
     start_date: date
     end_date: date

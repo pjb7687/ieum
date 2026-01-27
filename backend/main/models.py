@@ -97,9 +97,18 @@ class Event(models.Model):
     """
     Event model
     """
+    CATEGORY_CHOICES = [
+        ('workshop', 'Workshop'),
+        ('hackathon', 'Hackathon'),
+        ('symposium', 'Symposium'),
+        ('meeting', 'Meeting'),
+        ('conference', 'Conference'),
+    ]
+
     link_info = models.URLField(blank=True)
     name = models.CharField(max_length=1000)
     description = models.TextField(blank=True)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='conference')
     start_date = models.DateField()
     end_date = models.DateField()
     venue = models.CharField(max_length=1000)  # Venue display name

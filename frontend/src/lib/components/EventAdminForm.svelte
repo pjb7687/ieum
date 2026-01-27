@@ -7,6 +7,7 @@
     let { data = $bindable({
         name: '',
         description: '',
+        category: 'conference',
         organizers: '',
         venue: '',
         venue_address: '',
@@ -24,6 +25,7 @@
 
     // Create local reactive state for properties to enable two-way binding
     let description = $state(data.description);
+    let category = $state(data.category);
     let venue = $state(data.venue);
     let venue_address = $state(data.venue_address);
     let venue_latitude = $state(data.venue_latitude);
@@ -33,6 +35,7 @@
     // Keep properties in sync with data object
     $effect(() => {
         data.description = description;
+        data.category = category;
         data.venue = venue;
         data.venue_address = venue_address;
         data.venue_latitude = venue_latitude;
@@ -58,6 +61,16 @@
         placeholder={m.eventForm_descriptionPlaceholder()}
         rows={8}
     />
+</div>
+<div class="mb-6">
+    <Label for="category" class="block mb-2">{m.eventForm_category()}*</Label>
+    <Select id="category" name="category" bind:value={category} items={[
+        { value: 'workshop', name: m.eventCategory_workshop() },
+        { value: 'hackathon', name: m.eventCategory_hackathon() },
+        { value: 'symposium', name: m.eventCategory_symposium() },
+        { value: 'meeting', name: m.eventCategory_meeting() },
+        { value: 'conference', name: m.eventCategory_conference() }
+    ]} />
 </div>
 <div class="mb-6">
     <Label for="organizers" class="block mb-2">{m.eventForm_organizer()}*</Label>
