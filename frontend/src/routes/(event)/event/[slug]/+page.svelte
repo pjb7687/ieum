@@ -114,12 +114,22 @@
             <!-- Event Details -->
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Organizer -->
+                    <!-- Dates -->
                     <div class="flex items-start gap-3">
-                        <UsersSolid class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                        <CalendarMonthSolid class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                         <div class="flex-1">
-                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_organizer()}</p>
-                            <p class="text-sm text-gray-900 font-medium">{event.organizers}</p>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_eventDates()}</p>
+                            <p class="text-sm text-gray-900 font-medium">{event.start_date} - {event.end_date}</p>
+                            {#if event.registration_deadline}
+                                <p class="text-xs text-gray-600 mt-1.5">
+                                    <span class="font-medium">{m.eventDetail_registrationDeadline()}:</span> {event.registration_deadline}
+                                </p>
+                            {/if}
+                            {#if event.abstract_deadline && event.accepts_abstract}
+                                <p class="text-xs text-gray-600 mt-1.5">
+                                    <span class="font-medium">{m.eventDetail_abstractDeadline()}:</span> {event.abstract_deadline}
+                                </p>
+                            {/if}
                         </div>
                     </div>
 
@@ -135,22 +145,12 @@
                         </div>
                     </div>
 
-                    <!-- Dates -->
+                    <!-- Organizer -->
                     <div class="flex items-start gap-3 md:col-span-2">
-                        <CalendarMonthSolid class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <UsersSolid class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
                         <div class="flex-1">
-                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_eventDates()}</p>
-                            <p class="text-sm text-gray-900 font-medium">{event.start_date} - {event.end_date}</p>
-                            {#if event.registration_deadline}
-                                <p class="text-xs text-gray-600 mt-1.5">
-                                    <span class="font-medium">{m.eventDetail_registrationDeadline()}:</span> {event.registration_deadline}
-                                </p>
-                            {/if}
-                            {#if event.abstract_deadline && event.accepts_abstract}
-                                <p class="text-xs text-gray-600 mt-1.5">
-                                    <span class="font-medium">{m.eventDetail_abstractDeadline()}:</span> {event.abstract_deadline}
-                                </p>
-                            {/if}
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_organizer()}</p>
+                            <p class="text-sm text-gray-900 font-medium">{event.organizers}</p>
                         </div>
                     </div>
                 </div>
