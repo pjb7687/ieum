@@ -17,7 +17,6 @@
   let mapContainer;
   let map;
   let marker;
-  let autocompleteService;
   let searchInput = $state('');
   let predictions = $state([]);
   let showPredictions = $state(false);
@@ -88,9 +87,6 @@
         mapId: 'VENUE_SELECTOR_MAP',
       });
 
-      // Initialize autocomplete service
-      autocompleteService = new google.maps.places.AutocompleteService();
-
       // Add marker if coordinates exist
       if (venueLatitude && venueLongitude) {
         marker = new google.maps.marker.AdvancedMarkerElement({
@@ -111,35 +107,39 @@
     }
   }
 
-  function handleSearchInput() {
+  async function handleSearchInput() {
     if (!searchInput || searchInput.length < 3) {
       predictions = [];
       showPredictions = false;
       return;
     }
 
-    if (!autocompleteService) return;
+    try {
+      const request = {
+        input: searchInput,
+        includedPrimaryTypes: ['establishment'],
+      };
 
-    autocompleteService.getPlacePredictions(
-      { input: searchInput },
-      (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          predictions = results;
-          showPredictions = true;
-        } else {
-          predictions = [];
-          showPredictions = false;
-        }
+      const { suggestions } = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+
+      if (suggestions && suggestions.length > 0) {
+        predictions = suggestions;
+        showPredictions = true;
+      } else {
+        predictions = [];
+        showPredictions = false;
       }
-    );
+    } catch (error) {
+      console.error('Error fetching autocomplete suggestions:', error);
+      predictions = [];
+      showPredictions = false;
+    }
   }
 
-  async function selectPlace(prediction) {
+  async function selectPlace(suggestion) {
     try {
-      // Use new Place API
-      const place = new google.maps.places.Place({
-        id: prediction.place_id,
-      });
+      // Get the place from the suggestion
+      const place = suggestion.placePrediction.toPlace();
 
       // Fetch place details
       await place.fetchFields({
@@ -147,7 +147,7 @@
       });
 
       // Update venue data
-      venueName = place.displayName || prediction.structured_formatting.main_text || '';
+      venueName = place.displayName || suggestion.placePrediction.text?.text || '';
       venueAddress = place.formattedAddress || '';
       venueLatitude = place.location.lat();
       venueLongitude = place.location.lng();
@@ -296,14 +296,14 @@
 
       {#if showPredictions && predictions.length > 0}
         <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {#each predictions as prediction}
+          {#each predictions as suggestion}
             <button
               type="button"
               class="w-full text-left px-4 py-2 hover:bg-gray-100 border-b border-gray-200 last:border-b-0"
-              onclick={() => selectPlace(prediction)}
+              onclick={() => selectPlace(suggestion)}
             >
-              <div class="font-medium text-sm">{prediction.structured_formatting.main_text}</div>
-              <div class="text-xs text-gray-600">{prediction.structured_formatting.secondary_text}</div>
+              <div class="font-medium text-sm">{suggestion.placePrediction.mainText?.text || suggestion.placePrediction.text?.text || ''}</div>
+              <div class="text-xs text-gray-600">{suggestion.placePrediction.secondaryText?.text || ''}</div>
             </button>
           {/each}
         </div>

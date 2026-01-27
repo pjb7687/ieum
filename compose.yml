@@ -57,7 +57,10 @@ services:
     restart: always
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
     environment:
       - ALLOWED_HOST=${HOST}
       - ORCID_CLIENT_ID=${ORCID_CLIENT_ID}
