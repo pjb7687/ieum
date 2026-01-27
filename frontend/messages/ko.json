@@ -103,6 +103,7 @@
 	"validation_passwordsMismatch": "비밀번호가 일치하지 않습니다.",
 	"validation_firstNameRequired": "이름을 입력해주세요.",
 	"validation_lastNameRequired": "성을 입력해주세요.",
+	"validation_koreanNameRequired": "한글 이름을 입력해주세요.",
 	"validation_nationalityRequired": "국적을 선택해주세요.",
 	"validation_instituteRequired": "소속 기관을 입력해주세요.",
 	"validation_jobTitleRequired": "직위를 입력해주세요.",
@@ -456,7 +457,8 @@
 	"venue_viewOnMaps": "Google 지도에서 보기",
 
 	"eventRegister_title": "행사 등록",
-	"eventRegister_description": "다음 행사에 등록합니다:",
+	"eventRegister_description": "다음 행사에 등록합니다.",
+	"eventRegister_eventName": "행사명:",
 	"eventRegister_eventDates": "기간:",
 	"eventRegister_to": "~",
 	"eventRegister_instructions": "등록을 위해 아래 양식을 작성해 주세요. 일부 필드는 회원 정보를 통해 자동으로 입력되었습니다.",

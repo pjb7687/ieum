@@ -20,28 +20,58 @@
     let now = new Date();
     let institutions = $state(data.institutions || []);
 
+    // Determine which languages are included in the event
+    const hasEnglish = event.main_languages && event.main_languages.includes('en');
+    const hasKorean = event.main_languages && event.main_languages.includes('ko');
+
     let form_config = {
         hide_login_info: true,
+        show_english_name: hasEnglish,
+        show_korean_name: hasKorean,
+        allow_korean_institute: hasKorean,
     };
-    
+
     const koreanRegex = /[\u3131-\u3163\uac00-\ud7a3]/;
     const rejectKorean = (value) => {
         if (!value) return true;
         return !koreanRegex.test(value);
     };
 
-    const schema = yup.object({
-        first_name: yup.string().required(m.validation_firstNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
-        last_name: yup.string().required(m.validation_lastNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
-        middle_initial: yup.string().max(1).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
-        korean_name: yup.string(),
+    // Build dynamic validation schema based on event languages
+    const schemaFields = {
         nationality: yup.string().required(),
         job_title: yup.string().required(m.validation_jobTitleRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
         department: yup.string().test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
-        institute: yup.string().required(m.validation_instituteRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
         disability: yup.string().test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
         dietary: yup.string().test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
-    });
+    };
+
+    // Add English name fields if event includes English
+    if (hasEnglish) {
+        schemaFields.first_name = yup.string().required(m.validation_firstNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
+        schemaFields.last_name = yup.string().required(m.validation_lastNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
+        schemaFields.middle_initial = yup.string().max(1).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
+    }
+
+    // Add Korean name field if event includes Korean
+    if (hasKorean) {
+        schemaFields.korean_name = yup.string();
+        // If only Korean (not English), make Korean name required
+        if (!hasEnglish) {
+            schemaFields.korean_name = yup.string().required(m.validation_koreanNameRequired());
+        }
+    }
+
+    // Add institute field with conditional Korean validation
+    if (hasKorean) {
+        // Allow Korean characters in institute name
+        schemaFields.institute = yup.string().required(m.validation_instituteRequired());
+    } else {
+        // Reject Korean characters in institute name
+        schemaFields.institute = yup.string().required(m.validation_instituteRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
+    }
+
+    const schema = yup.object(schemaFields);
 
     let me = data.user;
     let error_message = $state('');
@@ -118,8 +148,19 @@
         <!-- Registration Form -->
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
             <div class="mb-8">
+                <p class="text-gray-700 mb-2">
+                    {m.eventRegister_description()}
+                </p>
+                <ul class="list-disc ml-8 mb-4 text-gray-700 space-y-1">
+                    <li>
+                        <span class="font-medium">{m.eventRegister_eventName()}</span> {event.name}
+                    </li>
+                    <li>
+                        <span class="font-medium">{m.eventRegister_eventDates()}</span> {event.start_date} {m.eventRegister_to()} {event.end_date}
+                    </li>
+                </ul>
                 <p class="text-gray-700 mb-4">
-                    {m.eventRegister_description()} <span class="font-semibold">{event.name}</span> {m.eventRegister_eventDates()} {event.start_date} {m.eventRegister_to()} {event.end_date}. {m.eventRegister_instructions()}
+                    {m.eventRegister_instructions()}
                 </p>
                 <Alert color="yellow" class="mb-0">
                     {m.eventRegister_warning()}
