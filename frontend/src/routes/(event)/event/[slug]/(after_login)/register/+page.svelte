@@ -40,10 +40,12 @@
     // Build dynamic validation schema based on event languages
     const schemaFields = {
         nationality: yup.string().required(),
-        job_title: yup.string().required(m.validation_jobTitleRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
-        department: yup.string().test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
-        disability: yup.string().test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
-        dietary: yup.string().test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
+        // All personal info fields allow all languages (set by institution modal or user input)
+        job_title: yup.string().required(m.validation_jobTitleRequired()),
+        department: yup.string(),
+        institute: yup.string().required(m.validation_instituteRequired()),
+        disability: yup.string(),
+        dietary: yup.string(),
     };
 
     // Add English name fields if event includes English
@@ -60,15 +62,6 @@
         if (!hasEnglish) {
             schemaFields.korean_name = yup.string().required(m.validation_koreanNameRequired());
         }
-    }
-
-    // Add institute field with conditional Korean validation
-    if (hasKorean) {
-        // Allow Korean characters in institute name
-        schemaFields.institute = yup.string().required(m.validation_instituteRequired());
-    } else {
-        // Reject Korean characters in institute name
-        schemaFields.institute = yup.string().required(m.validation_instituteRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
     }
 
     const schema = yup.object(schemaFields);
