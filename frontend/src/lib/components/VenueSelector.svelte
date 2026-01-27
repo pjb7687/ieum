@@ -18,7 +18,6 @@
   let map;
   let marker;
   let autocompleteService;
-  let placesService;
   let searchInput = $state('');
   let predictions = $state([]);
   let showPredictions = $state(false);
@@ -89,9 +88,8 @@
         mapId: 'VENUE_SELECTOR_MAP',
       });
 
-      // Initialize autocomplete and places services
+      // Initialize autocomplete service
       autocompleteService = new google.maps.places.AutocompleteService();
-      placesService = new google.maps.places.PlacesService(map);
 
       // Add marker if coordinates exist
       if (venueLatitude && venueLongitude) {
@@ -136,50 +134,54 @@
     );
   }
 
-  function selectPlace(prediction) {
-    if (!placesService) return;
+  async function selectPlace(prediction) {
+    try {
+      // Use new Place API
+      const place = new google.maps.places.Place({
+        id: prediction.place_id,
+      });
 
-    placesService.getDetails(
-      { placeId: prediction.place_id },
-      (place, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
-          // Update venue data
-          venueName = place.name || prediction.structured_formatting.main_text || '';
-          venueAddress = place.formatted_address || '';
-          venueLatitude = place.geometry.location.lat();
-          venueLongitude = place.geometry.location.lng();
+      // Fetch place details
+      await place.fetchFields({
+        fields: ['displayName', 'formattedAddress', 'location'],
+      });
 
-          // Update map
-          map.setCenter(place.geometry.location);
-          map.setZoom(15);
+      // Update venue data
+      venueName = place.displayName || prediction.structured_formatting.main_text || '';
+      venueAddress = place.formattedAddress || '';
+      venueLatitude = place.location.lat();
+      venueLongitude = place.location.lng();
 
-          // Update or create marker
-          if (marker) {
-            marker.position = place.geometry.location;
-          } else {
-            marker = new google.maps.marker.AdvancedMarkerElement({
-              position: place.geometry.location,
-              map: map,
-              gmpDraggable: true,
-            });
+      // Update map
+      map.setCenter(place.location);
+      map.setZoom(15);
 
-            marker.addListener('dragend', (event) => {
-              venueLatitude = event.latLng.lat();
-              venueLongitude = event.latLng.lng();
-              reverseGeocode(venueLatitude, venueLongitude);
-            });
-          }
+      // Update or create marker
+      if (marker) {
+        marker.position = place.location;
+      } else {
+        marker = new google.maps.marker.AdvancedMarkerElement({
+          position: place.location,
+          map: map,
+          gmpDraggable: true,
+        });
 
-          // Clear search input and hide predictions
-          searchInput = '';
-          predictions = [];
-          showPredictions = false;
-          loadError = '';
-        } else {
-          loadError = 'Failed to get place details. Please try again.';
-        }
+        marker.addListener('dragend', (event) => {
+          venueLatitude = event.latLng.lat();
+          venueLongitude = event.latLng.lng();
+          reverseGeocode(venueLatitude, venueLongitude);
+        });
       }
-    );
+
+      // Clear search input and hide predictions
+      searchInput = '';
+      predictions = [];
+      showPredictions = false;
+      loadError = '';
+    } catch (error) {
+      console.error('Error getting place details:', error);
+      loadError = 'Failed to get place details. Please try again.';
+    }
   }
 
   function reverseGeocode(lat, lng) {
