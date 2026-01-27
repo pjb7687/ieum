@@ -22,7 +22,8 @@ export async function load({ parent, params, cookies }) {
 
     data.admin = {
         events: await get_data_or_404('events'),
-        users: await get_data_or_404('users')
+        users: await get_data_or_404('users'),
+        institutions: await get_data_or_404('institutions')
     };
 
     return data;
@@ -63,6 +64,43 @@ export const actions = {
         let formdata = await request.formData();
         let user_id = formdata.get('user_id');
         const response = await post(`api/admin/user/${user_id}/toggle-verified`, {}, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'create_institution': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const data = {
+            name_en: formdata.get('name_en'),
+            name_ko: formdata.get('name_ko') || ''
+        };
+        const response = await post('api/institutions', data, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'update_institution': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        let id = formdata.get('id');
+        const data = {
+            name_en: formdata.get('name_en'),
+            name_ko: formdata.get('name_ko') || ''
+        };
+        const response = await post(`api/admin/institution/${id}/update`, data, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'delete_institution': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        let id = formdata.get('id');
+        const response = await post(`api/admin/institution/${id}/delete`, {}, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
         } else {

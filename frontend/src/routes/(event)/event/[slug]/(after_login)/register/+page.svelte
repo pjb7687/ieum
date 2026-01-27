@@ -18,8 +18,9 @@
     let event = data.event;
     let deadline = event.registration_deadline ? new Date(event.registration_deadline) : new Date(event.start_date);
     let now = new Date();
-    
-    let form_config = { 
+    let institutions = $state(data.institutions || []);
+
+    let form_config = {
         hide_login_info: true,
     };
     
@@ -124,7 +125,7 @@
             </div>
 
             <form use:felteForm method="post" class="space-y-6">
-                <RegistrationForm data={$formData} errors={$errors} config={form_config} />
+                <RegistrationForm data={$formData} errors={$errors} config={form_config} bind:institutions />
 
                 {#if data.questions.length > 0}
                     <div class="pt-6 border-t border-gray-200">

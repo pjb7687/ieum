@@ -4,7 +4,7 @@ from ninja import Schema
 from typing import List, Union
 from datetime import date
 
-from main.models import User, Attendee, Abstract, OnSiteAttendee
+from main.models import User, Attendee, Abstract, OnSiteAttendee, Institution
 from main.utils import docx_to_html, odt_to_html
 
 class LoginSchema(Schema):
@@ -24,6 +24,15 @@ class VerificationKeyResponseSchema(Schema):
 class MessageSchema(Schema):
     code: str
     message: str = ""
+
+class InstitutionSchema(Schema):
+    id: int
+    name_en: str
+    name_ko: str
+
+class InstitutionCreateSchema(Schema):
+    name_en: str
+    name_ko: str = ""
 
 class UserSchema(Schema):
     id: int

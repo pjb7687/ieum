@@ -1,6 +1,7 @@
 <script>
   import { Heading, Input, ButtonGroup, InputAddon, Button, Textarea, Select, Label, Alert } from 'flowbite-svelte';
   import * as m from '$lib/paraglide/messages.js';
+  import InstitutionLookup from '$lib/components/InstitutionLookup.svelte';
 
   // Props to accept form data and errors from parent
   export let data = {
@@ -21,6 +22,7 @@
   };
   export let errors = {};
   export let config = {};
+  export let institutions = [];
 
   function link_orcid() {
     let data = {
@@ -187,13 +189,7 @@
 <hr class="my-8 border-gray-200" />
 <Heading tag="h2" customSize="text-lg font-bold" class="mb-6">{m.form_additionalInfo()}</Heading>
 <div class="mb-6">
-  <Label for="institute" class="block mb-2">{m.form_institute()}*</Label>
-  <Input id="institute" name="institute" bind:value={data.institute} />
-  {#if errors.institute}
-    <Alert type="error" color="red" class="mb-6 mt-3">
-      <p class="text-sm">{errors.institute}</p>
-    </Alert>
-  {/if}
+  <InstitutionLookup bind:value={data.institute} error={errors.institute} required={true} bind:institutions />
 </div>
 
 <div class="mb-6">

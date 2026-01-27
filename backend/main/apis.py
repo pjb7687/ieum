@@ -15,7 +15,7 @@ from django.template import Template, Context
 
 from django.conf import settings
 
-from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee
+from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution
 from main.schema import *
 
 from .tasks import send_mail
@@ -75,7 +75,15 @@ def update_user(request):
     user.nationality = int(data["nationality"])
     user.job_title = data.get("job_title", "")
     user.department = data.get("department", "")
-    user.institute = data["institute"]
+
+    # Auto-create institution if it doesn't exist
+    institute_name = data["institute"]
+    institution, _ = Institution.objects.get_or_create(
+        name_en=institute_name,
+        defaults={'name_ko': ''}
+    )
+    user.institute = institution.name_en
+
     user.disability = data.get("disability", "")
     user.dietary = data.get("dietary", "")
     user.save()
@@ -85,6 +93,97 @@ def update_user(request):
 def get_csrf_token(request):
     token = get_token(request)
     return {"csrftoken": token}
+
+@api.get("/institutions", response=List[InstitutionSchema])
+def search_institutions(request, search: str = ""):
+    from django.db.models import Q
+
+    institutions = Institution.objects.all()
+
+    if search:
+        institutions = institutions.filter(
+            Q(name_en__icontains=search) | Q(name_ko__icontains=search)
+        )
+
+    return list(institutions[:50])  # Limit to 50 results
+
+@api.post("/institutions", response=InstitutionSchema)
+def create_institution(request, data: InstitutionCreateSchema):
+
+    # Check if institution already exists
+    existing = Institution.objects.filter(name_en=data.name_en).first()
+    if existing:
+        return existing
+
+    institution = Institution.objects.create(
+        name_en=data.name_en,
+        name_ko=data.name_ko
+    )
+    return institution
+
+@ensure_staff
+@api.get("/admin/institutions", response=List[InstitutionSchema])
+def get_admin_institutions(request, offset: int = 0, limit: int = 100, search: str = ""):
+    from django.db.models import Q
+
+    institutions = Institution.objects.all()
+
+    if search:
+        institutions = institutions.filter(
+            Q(name_en__icontains=search) | Q(name_ko__icontains=search)
+        )
+
+    institutions = institutions.order_by('name_en')
+    total = institutions.count()
+    institutions = institutions[offset:offset + limit]
+
+    return list(institutions)
+
+@ensure_staff
+@api.get("/admin/institution/{institution_id}", response=InstitutionSchema)
+def get_admin_institution(request, institution_id: int):
+
+    try:
+        institution = Institution.objects.get(id=institution_id)
+        return institution
+    except Institution.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "Institution not found"},
+            status=404,
+        )
+
+@ensure_staff
+@api.post("/admin/institution/{institution_id}/update", response=InstitutionSchema)
+def update_institution(request, institution_id: int, data: InstitutionCreateSchema):
+
+    try:
+        institution = Institution.objects.get(id=institution_id)
+        institution.name_en = data.name_en
+        institution.name_ko = data.name_ko
+        institution.save()
+        return institution
+    except Institution.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "Institution not found"},
+            status=404,
+        )
+
+@ensure_staff
+@api.post("/admin/institution/{institution_id}/delete", response=MessageSchema)
+def delete_institution(request, institution_id: int):
+
+    try:
+        institution = Institution.objects.get(id=institution_id)
+        institution.delete()
+        return {"code": "success", "message": "Institution deleted successfully"}
+    except Institution.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "Institution not found"},
+            status=404,
+        )
 
 @ensure_staff
 @api.get("/admin/events", response=List[EventAdminSchema])
@@ -322,7 +421,15 @@ def update_attendee(request, event_id: int, attendee_id: int):
     attendee.middle_initial = data["middle_initial"]
     attendee.last_name = data["last_name"]
     attendee.nationality = data["nationality"]
-    attendee.institute = data["institute"]
+
+    # Auto-create institution if it doesn't exist
+    institute_name = data["institute"]
+    institution, _ = Institution.objects.get_or_create(
+        name_en=institute_name,
+        defaults={'name_ko': ''}
+    )
+    attendee.institute = institution.name_en
+
     attendee.department = data["department"]
     attendee.job_title = data["job_title"]
     attendee.disability = data["disability"]
@@ -391,7 +498,14 @@ def register_event(request, event_id: int):
                         {"code": "missing_answer", "message": "Please select an option for the question: "+ q.question['question']},
                         status=400,
                     )
-    
+
+    # Auto-create institution if it doesn't exist
+    institute_name = data["institute"]
+    institution, _ = Institution.objects.get_or_create(
+        name_en=institute_name,
+        defaults={'name_ko': ''}
+    )
+
     attendee = Attendee.objects.create(
         user=user,
         event=event,
@@ -399,7 +513,7 @@ def register_event(request, event_id: int):
         middle_initial=data["middle_initial"],
         last_name=data["last_name"],
         nationality=data["nationality"],
-        institute=data["institute"],
+        institute=institution.name_en,
         department=data["department"],
         job_title=data["job_title"],
         disability=data["disability"],
@@ -921,12 +1035,21 @@ def get_email_templates(request, event_id: int):
 def register_on_site(request, event_id: int):
     event = Event.objects.get(id=event_id)
     data = json.loads(request.body)
+    # Auto-create institution if it doesn't exist
+    institute_name = data.get("institute", "")
+    if institute_name:
+        institution, _ = Institution.objects.get_or_create(
+            name_en=institute_name,
+            defaults={'name_ko': ''}
+        )
+        institute_name = institution.name_en
+
     oa = OnSiteAttendee.objects.create(
         event=event,
         first_name=data.get("first_name"),
         middle_initial=data.get("middle_initial"),
         last_name=data.get("last_name"),
-        institute=data.get("institute"),
+        institute=institute_name,
         job_title=data.get("job_title", "")
     )
     return {"code": "success", "message": "Successfully registered on-site.", "id": oa.id}
@@ -954,7 +1077,18 @@ def update_on_site_attendee(request, event_id: int, onsite_id: int):
     oa.first_name = data.get("first_name")
     oa.middle_initial = data.get("middle_initial")
     oa.last_name = data.get("last_name")
-    oa.institute = data.get("institute")
+
+    # Auto-create institution if it doesn't exist
+    institute_name = data.get("institute", "")
+    if institute_name:
+        institution, _ = Institution.objects.get_or_create(
+            name_en=institute_name,
+            defaults={'name_ko': ''}
+        )
+        oa.institute = institution.name_en
+    else:
+        oa.institute = institute_name
+
     oa.job_title = data.get("job_title")
     oa.save()
     return {"code": "success", "message": "On-site attendee updated."}

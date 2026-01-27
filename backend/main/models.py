@@ -1,6 +1,20 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+class Institution(models.Model):
+    """
+    Institution model - stores institution names in both English and Korean
+    """
+    name_en = models.CharField(max_length=1000, unique=True)
+    name_ko = models.CharField(max_length=1000, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name_en']
+
+    def __str__(self):
+        return f"{self.name_en} ({self.name_ko})" if self.name_ko else self.name_en
+
 class User(AbstractUser):
     """
     User model
