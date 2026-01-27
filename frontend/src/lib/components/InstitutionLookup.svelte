@@ -2,9 +2,48 @@
   import { Input, Label, Alert, Modal, Button, ButtonGroup } from 'flowbite-svelte';
   import { SearchOutline } from 'flowbite-svelte-icons';
   import * as m from '$lib/paraglide/messages.js';
+  import { languageTag } from '$lib/paraglide/runtime.js';
   import { enhance } from '$app/forms';
 
   let { value = $bindable(''), error = null, required = false, institutions = $bindable([]) } = $props();
+
+  // Get display name based on current language
+  function getDisplayName(institution) {
+    const lang = languageTag();
+    if (lang === 'ko' && institution.name_ko) {
+      return institution.name_ko;
+    }
+    return institution.name_en;
+  }
+
+  // Get secondary name for display (opposite of primary)
+  function getSecondaryName(institution) {
+    const lang = languageTag();
+    if (lang === 'ko' && institution.name_ko) {
+      return institution.name_en; // Show English as secondary when Korean is primary
+    }
+    return institution.name_ko; // Show Korean as secondary when English is primary
+  }
+
+  // Update value to match current language when language changes
+  $effect(() => {
+    if (!value || institutions.length === 0) {
+      return;
+    }
+
+    // Try to find matching institution by either name
+    const matchingInstitution = institutions.find(inst =>
+      inst.name_en === value || inst.name_ko === value
+    );
+
+    if (matchingInstitution) {
+      const langAppropriateValue = getDisplayName(matchingInstitution);
+      // Only update if different to avoid infinite loops
+      if (value !== langAppropriateValue) {
+        value = langAppropriateValue;
+      }
+    }
+  });
 
   let modal_open = $state(false);
   let modal_step = $state('search'); // 'search' or 'create'
@@ -45,7 +84,7 @@
   }
 
   function selectInstitution(institution) {
-    value = institution.name_en;
+    value = getDisplayName(institution);
     modal_open = false;
     modal_step = 'search';
     search_query = '';
@@ -58,7 +97,7 @@
         // Add the new institution to the list
         institutions.push(result.data.institution);
         // Set the value to the new institution
-        value = result.data.institution.name_en;
+        value = getDisplayName(result.data.institution);
         // Close modal and reset
         modal_open = false;
         modal_step = 'search';
@@ -144,9 +183,9 @@
               class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
               onclick={() => selectInstitution(suggestion)}
             >
-              <div class="font-medium text-gray-900">{suggestion.name_en}</div>
-              {#if suggestion.name_ko}
-                <div class="text-sm text-gray-600 mt-1">{suggestion.name_ko}</div>
+              <div class="font-medium text-gray-900">{getDisplayName(suggestion)}</div>
+              {#if getSecondaryName(suggestion)}
+                <div class="text-sm text-gray-600 mt-1">{getSecondaryName(suggestion)}</div>
               {/if}
             </button>
           {/each}
