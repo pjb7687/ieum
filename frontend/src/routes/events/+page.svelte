@@ -317,6 +317,9 @@
                                         <div class="flex-1">
                                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_location()}</p>
                                             <p class="text-sm text-gray-900 font-medium">{@html highlightText(event.venue, searchKeyword)}</p>
+                                            {#if event.venue_address}
+                                                <p class="text-xs text-gray-600 mt-1">{@html highlightText(event.venue_address, searchKeyword)}</p>
+                                            {/if}
                                         </div>
                                     </div>
 

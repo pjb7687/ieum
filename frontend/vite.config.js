@@ -12,6 +12,10 @@ export default defineConfig({
 			ignored: ['!**/messages/**']
 		}
 	},
+	define: {
+		// Expose environment variables to the client
+		'import.meta.env.GOOGLE_MAPS_API_KEY': JSON.stringify(process.env.GOOGLE_MAPS_API_KEY)
+	},
 	plugins: [
 		paraglide({
 			project: './project.inlang',

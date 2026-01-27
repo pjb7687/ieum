@@ -43,6 +43,8 @@
 	"common_success": "성공",
 	"common_goBack": "뒤로가기",
 	"common_ok": "확인",
+	"common_clear": "지우기",
+	"common_confirm": "확인",
 
 	"profile_title": "내 정보",
 	"profile_description": "여기에서 정보를 업데이트할 수 있습니다.",
@@ -77,6 +79,17 @@
 	"form_jobTitle": "직위",
 	"form_disability": "장애 정보",
 	"form_dietary": "식이 정보",
+	"form_venueName": "장소명",
+	"form_venueNamePlaceholder": "장소명을 입력하세요",
+	"form_venueAddress": "장소 주소",
+	"form_venueAddressPlaceholder": "전체 주소",
+	"form_selectLocation": "위치 선택",
+	"form_selectVenueLocation": "장소 위치 선택",
+	"form_searchAddress": "주소 검색",
+	"form_searchAddressPlaceholder": "장소나 주소를 검색하세요...",
+	"form_searchAddressHint": "장소, 주소 또는 랜드마크를 검색하세요",
+	"form_dragMarkerHint": "마커를 드래그하여 위치를 조정할 수 있습니다",
+	"form_coordinates": "좌표",
 
 	"registration_title": "회원가입",
 	"registration_description": "회원으로 가입하시면 행사에 쉽게 등록하실 수 있고 이메일 알림을 받으실 수 있습니다.",
@@ -426,6 +439,9 @@
 	"eventDetail_shareOnLinkedIn": "LinkedIn에서 공유",
 	"eventDetail_shareViaEmail": "이메일로 공유",
 	"eventDetail_manageEvent": "행사 관리",
+	"eventDetail_location": "위치",
+
+	"venue_viewOnMaps": "Google 지도에서 보기",
 
 	"eventRegister_title": "행사 등록",
 	"eventRegister_description": "다음 행사에 등록하시려고 합니다:",

@@ -2,12 +2,16 @@
     import { Label, Input, Select } from 'flowbite-svelte';
     import * as m from '$lib/paraglide/messages.js';
     import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
+    import VenueSelector from '$lib/components/VenueSelector.svelte';
 
     let { data = $bindable({
         name: '',
         description: '',
         organizers: '',
         venue: '',
+        venue_address: '',
+        venue_latitude: null,
+        venue_longitude: null,
         start_date: '',
         end_date: '',
         deadline: '',
@@ -18,12 +22,22 @@
         max_votes: 2,
     }) } = $props();
 
-    // Create local reactive state for description to enable two-way binding
+    // Create local reactive state for properties to enable two-way binding
     let description = $state(data.description);
+    let venue = $state(data.venue);
+    let venue_address = $state(data.venue_address);
+    let venue_latitude = $state(data.venue_latitude);
+    let venue_longitude = $state(data.venue_longitude);
+    let accepts_abstract = $state(data.accepts_abstract);
 
-    // Keep description in sync with data object
+    // Keep properties in sync with data object
     $effect(() => {
         data.description = description;
+        data.venue = venue;
+        data.venue_address = venue_address;
+        data.venue_latitude = venue_latitude;
+        data.venue_longitude = venue_longitude;
+        data.accepts_abstract = accepts_abstract;
     });
 </script>
 
@@ -50,8 +64,13 @@
     <Input type="text" id="organizers" name="organizers" value={data.organizers} />
 </div>
 <div class="mb-6">
-    <Label for="venue" class="block mb-2">{m.eventForm_venue()}*</Label>
-    <Input type="text" id="venue" name="venue" value={data.venue} />
+    <VenueSelector
+        bind:venueName={venue}
+        bind:venueAddress={venue_address}
+        bind:venueLatitude={venue_latitude}
+        bind:venueLongitude={venue_longitude}
+        required={true}
+    />
 </div>
 <div class="mb-6">
     <Label for="start_date" class="block mb-2">{m.eventForm_dates()}*</Label>
@@ -79,12 +98,12 @@
 </div>
 <div class="mb-6">
     <Label for="accepts_abstract" class="block mb-2">{m.eventForm_enableAbstract()}</Label>
-    <Select id="accepts_abstract" name="accepts_abstract" bind:value={data.accepts_abstract} items={[
+    <Select id="accepts_abstract" name="accepts_abstract" bind:value={accepts_abstract} items={[
         { value: true, name: m.eventForm_yes() },
         { value: false, name: m.eventForm_no() }
     ]} />
 </div>
-{#if data.accepts_abstract}
+{#if accepts_abstract}
 <div class="mb-6">
     <Label for="abstract_deadline" class="block mb-2">{m.eventForm_abstractDeadline()}</Label>
     <Input type="date" id="abstract_deadline" name="abstract_deadline" value={data.abstract_deadline} />

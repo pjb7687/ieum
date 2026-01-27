@@ -102,7 +102,10 @@ class Event(models.Model):
     description = models.TextField(blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    venue = models.CharField(max_length=1000)
+    venue = models.CharField(max_length=1000)  # Venue display name
+    venue_address = models.CharField(max_length=1000, blank=True)  # Full address
+    venue_latitude = models.FloatField(blank=True, null=True)  # Latitude for map
+    venue_longitude = models.FloatField(blank=True, null=True)  # Longitude for map
     organizers = models.CharField(max_length=1000)
     registration_deadline = models.DateField(blank=True, null=True)
     capacity = models.IntegerField()

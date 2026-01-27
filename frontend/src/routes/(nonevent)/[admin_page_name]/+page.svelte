@@ -129,7 +129,14 @@
                     <TableBodyCell>
                         <a href={`/event/${event.id}`}>{event.name}</a>
                     </TableBodyCell>
-                    <TableBodyCell>{event.venue}</TableBodyCell>
+                    <TableBodyCell>
+                        <div>
+                            <div class="font-medium">{event.venue}</div>
+                            {#if event.venue_address}
+                                <div class="text-sm text-gray-600">{event.venue_address}</div>
+                            {/if}
+                        </div>
+                    </TableBodyCell>
                     <TableBodyCell>
                         <div class="flex justify-center gap-2">
                             <Button color="none" size="none" href={`/event/${event.id}/admin`}>

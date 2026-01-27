@@ -322,6 +322,9 @@ def update_event(request, event_id: int):
     event.start_date = data["start_date"]
     event.end_date = data["end_date"]
     event.venue = data["venue"]
+    event.venue_address = data.get("venue_address", "")
+    event.venue_latitude = float(data["venue_latitude"]) if data.get("venue_latitude") else None
+    event.venue_longitude = float(data["venue_longitude"]) if data.get("venue_longitude") else None
     event.organizers = data["organizers"]
     event.registration_deadline = data["registration_deadline"] if data["registration_deadline"] else None
     event.capacity = data["capacity"]

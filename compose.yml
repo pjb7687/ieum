@@ -63,6 +63,7 @@ services:
       - ORCID_CLIENT_ID=${ORCID_CLIENT_ID}
       - ORCID_CLIENT_SECRET=${ORCID_CLIENT_SECRET}
       - ADMIN_PAGE_NAME=${ADMIN_PAGE_NAME}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       - NODE_ENV=production
       - DEBUG=False
     restart: always

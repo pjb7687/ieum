@@ -43,6 +43,8 @@
 	"common_success": "Success",
 	"common_goBack": "Go back",
 	"common_ok": "OK",
+	"common_clear": "Clear",
+	"common_confirm": "Confirm",
 
 	"profile_title": "My Info",
 	"profile_description": "You can update your information here.",
@@ -77,6 +79,17 @@
 	"form_jobTitle": "Job Title",
 	"form_disability": "Disability Information",
 	"form_dietary": "Dietary Information",
+	"form_venueName": "Venue Name",
+	"form_venueNamePlaceholder": "Enter venue name",
+	"form_venueAddress": "Venue Address",
+	"form_venueAddressPlaceholder": "Full address",
+	"form_selectLocation": "Select Location",
+	"form_selectVenueLocation": "Select Venue Location",
+	"form_searchAddress": "Search Address",
+	"form_searchAddressPlaceholder": "Search for a place or address...",
+	"form_searchAddressHint": "Type to search for venues, addresses, or landmarks",
+	"form_dragMarkerHint": "You can drag the marker to fine-tune the location",
+	"form_coordinates": "Coordinates",
 
 	"registration_title": "Registration",
 	"registration_description": "Become a member for easy event registration and email notifications.",
@@ -426,6 +439,9 @@
 	"eventDetail_shareOnLinkedIn": "Share on LinkedIn",
 	"eventDetail_shareViaEmail": "Share via Email",
 	"eventDetail_manageEvent": "Manage Event",
+	"eventDetail_location": "Location",
+
+	"venue_viewOnMaps": "View on Google Maps",
 
 	"eventRegister_title": "Event Registration",
 	"eventRegister_description": "You are registering for the event",

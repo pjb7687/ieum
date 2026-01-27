@@ -13,7 +13,10 @@
     } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
     import { marked } from 'marked';
-    import DOMPurify from 'dompurify';
+    import { browser } from '$app/environment';
+    import VenueMapWidget from '$lib/components/VenueMapWidget.svelte';
+
+    let DOMPurify;
 
     // Configure marked options for consistent rendering
     marked.setOptions({
@@ -27,11 +30,24 @@
     let registered = data.registered;
     let is_event_admin = data.is_event_admin;
 
+    // Import DOMPurify only in browser
+    $effect(() => {
+        if (browser && !DOMPurify) {
+            import('dompurify').then(module => {
+                DOMPurify = module.default;
+            });
+        }
+    });
+
     // Parse and sanitize markdown description
     let descriptionHtml = $derived.by(() => {
         if (!event.description) return '';
         const html = marked.parse(event.description);
-        return DOMPurify.sanitize(html);
+        // Only sanitize in browser, marked already escapes dangerous content
+        if (browser && DOMPurify) {
+            return DOMPurify.sanitize(html);
+        }
+        return html;
     });
 
     // Check if registration is closed
@@ -113,6 +129,9 @@
                         <div class="flex-1">
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_venue()}</p>
                             <p class="text-sm text-gray-900 font-medium">{event.venue}</p>
+                            {#if event.venue_address}
+                                <p class="text-xs text-gray-600 mt-1">{event.venue_address}</p>
+                            {/if}
                         </div>
                     </div>
 
@@ -211,6 +230,14 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Location Map -->
+            <VenueMapWidget
+                venueName={event.venue}
+                venueAddress={event.venue_address}
+                venueLatitude={event.venue_latitude}
+                venueLongitude={event.venue_longitude}
+            />
         </div>
     </div>
 </div>
