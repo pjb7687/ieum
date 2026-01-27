@@ -22,7 +22,7 @@
         middle_initial: yup.string().max(1),
         korean_name: yup.string(),
         nationality: yup.string().required(),
-        job_title: yup.string(),
+        job_title: yup.string().required(m.validation_jobTitleRequired()),
         department: yup.string(),
         institute: yup.string().required('Institute is required.'),
         orcid: yup.string(),

@@ -198,8 +198,13 @@
 </div>
 
 <div class="mb-6">
-  <Label for="job_title" class="block mb-2">{m.form_jobTitle()}</Label>
+  <Label for="job_title" class="block mb-2">{m.form_jobTitle()}*</Label>
   <Input id="job_title" name="job_title" bind:value={data.job_title} />
+  {#if errors.job_title}
+    <Alert type="error" color="red" class="mb-6 mt-3">
+      <p class="text-sm">{errors.job_title}</p>
+    </Alert>
+  {/if}
 </div>
 
 <div class="mb-6">

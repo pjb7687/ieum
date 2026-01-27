@@ -91,6 +91,7 @@
 	"validation_lastNameRequired": "Last name is required.",
 	"validation_nationalityRequired": "Nationality is required.",
 	"validation_instituteRequired": "Institute is required.",
+	"validation_jobTitleRequired": "Position is required.",
 
 	"login_title": "Sign in to your account",
 	"login_description": "Please log in to access your account.",

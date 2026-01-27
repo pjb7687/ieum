@@ -74,7 +74,7 @@
 	"form_createInstitution": "기관 생성",
 	"form_institutionSearchHint": "기관을 검색하려면 최소 2자 이상 입력하세요",
 	"form_department": "부서",
-	"form_jobTitle": "직함",
+	"form_jobTitle": "직위",
 	"form_disability": "장애 정보",
 	"form_dietary": "식이 정보",
 
@@ -91,6 +91,7 @@
 	"validation_lastNameRequired": "성을 입력해주세요.",
 	"validation_nationalityRequired": "국적을 선택해주세요.",
 	"validation_instituteRequired": "소속 기관을 입력해주세요.",
+	"validation_jobTitleRequired": "직위를 입력해주세요.",
 
 	"login_title": "계정 로그인",
 	"login_description": "계정에 로그인해주세요.",
@@ -200,7 +201,7 @@
 
 	"eventQuestions_title": "행사 전용 질문",
 	"eventQuestions_description": "행사 전용 질문을 아래에서 사용자 정의할 수 있습니다. 다음 정보는 기본적으로 수집됩니다:",
-	"eventQuestions_defaultInfo": "이름, 중간 이니셜, 성, 국적, 소속 기관, 부서, 직함, 장애 정보, 식이 정보",
+	"eventQuestions_defaultInfo": "이름, 중간 이니셜, 성, 국적, 소속 기관, 부서, 직위, 장애 정보, 식이 정보",
 	"eventQuestions_supportedTypes": "네 가지 유형의 사용자 정의 질문이 지원됩니다: 체크박스 (복수 선택), 드롭다운 (단일 선택), 텍스트 (텍스트 입력), 텍스트 영역 (여러 줄 텍스트 입력)",
 	"eventQuestions_resetChanges": "변경 사항 초기화",
 	"eventQuestions_applyChanges": "변경 사항 적용",
@@ -268,7 +269,7 @@
 	"attendees_nationality": "국적",
 	"attendees_institute": "소속 기관",
 	"attendees_department": "부서",
-	"attendees_jobTitle": "직함",
+	"attendees_jobTitle": "직위",
 	"attendees_disability": "장애",
 	"attendees_dietary": "식이",
 	"attendees_actions": "작업",
@@ -324,7 +325,7 @@
 	"onsiteAttendees_id": "ID",
 	"onsiteAttendees_name": "이름",
 	"onsiteAttendees_institute": "소속 기관",
-	"onsiteAttendees_jobTitle": "직함",
+	"onsiteAttendees_jobTitle": "직위",
 	"onsiteAttendees_actions": "작업",
 	"onsiteAttendees_noRecords": "기록 없음",
 	"onsiteAttendees_detailsTitle": "참가자 세부 정보",
