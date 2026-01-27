@@ -12,6 +12,34 @@
 
     let { data } = $props();
 
+    // Load Korean font for PDF
+    let fontLoaded = $state(false);
+    let fontBase64 = $state('');
+
+    async function loadKoreanFont() {
+        if (fontLoaded) return;
+        try {
+            // Fetch the NanumGothic font file from static folder
+            const response = await fetch('/fonts/NanumGothic-Regular.ttf');
+            const blob = await response.blob();
+            const reader = new FileReader();
+
+            reader.onloadend = () => {
+                fontBase64 = reader.result.split(',')[1];
+                fontLoaded = true;
+            };
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error('Failed to load Korean font:', error);
+            // Fallback - font will use default helvetica
+        }
+    }
+
+    // Load font on component mount
+    $effect(() => {
+        loadKoreanFont();
+    });
+
     function sortAttendeesById(a, b) {
         return a.id - b.id;
     }
@@ -129,9 +157,20 @@
             ...row.custom_answers.map(answer => answer ? answer.answer.replace(/^- /, '').replace(/\n- /g, '; ') : "")
         ]);
 
-        const csv = [headers, ...dataRows].map(row => row.map(item => `"${item}"`).join(',')).join('\n');
+        const csv = [headers, ...dataRows].map(row => row.join('\t')).join('\r\n');
 
-        const blob = new Blob([csv], { type: 'text/csv' });
+        // Convert to UTF-16 LE with BOM for Excel compatibility
+        const BOM = '\uFEFF';
+        const csvWithBOM = BOM + csv;
+
+        // Encode to UTF-16 LE
+        const buffer = new ArrayBuffer(csvWithBOM.length * 2);
+        const view = new Uint16Array(buffer);
+        for (let i = 0; i < csvWithBOM.length; i++) {
+            view[i] = csvWithBOM.charCodeAt(i);
+        }
+
+        const blob = new Blob([buffer], { type: 'text/csv;charset=utf-16le;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         // Get current timestamp in YYYY-MM-DD_HH-MM-SS format
@@ -289,13 +328,29 @@
     let selected_nametag = $state({});
     let role = $state(m.attendees_participant()); // Default role for nametag
     const showNametagModal = async (id) => {
+        // Wait for font to load
+        if (!fontLoaded) {
+            await loadKoreanFont();
+            // Wait a bit more to ensure font is ready
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
         const doc = new jsPDF({
             orientation: "portrait",
             unit: "mm",
             format: [90, 100]
         });
+
+        // Add Korean font to PDF
+        if (fontLoaded && fontBase64) {
+            doc.addFileToVFS("NanumGothic-Regular.ttf", fontBase64);
+            doc.addFont("NanumGothic-Regular.ttf", "NanumGothic", "normal");
+            doc.addFont("NanumGothic-Regular.ttf", "NanumGothic", "bold");
+        }
+
         let p = table_data_attendees.find(a => a.id === id);
-        doc.setFont("helvetica", "bold");
+
+        doc.setFont(fontLoaded ? "NanumGothic" : "helvetica", "bold");
         doc.setFontSize(10);
         doc.text(`${p.id}`, 45, 10, 'center');
         doc.setFontSize(30);
@@ -315,15 +370,30 @@
     let cert_modal = $state(false);
     let selected_cert = $state({});
     const showCertificateModal = async (id) => {
+        // Wait for font to load
+        if (!fontLoaded) {
+            await loadKoreanFont();
+            // Wait a bit more to ensure font is ready
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
         const doc = new jsPDF({
             orientation: "portrait",
             unit: "mm",
             format: [210, 297]
         });
+
+        // Add Korean font to PDF
+        if (fontLoaded && fontBase64) {
+            doc.addFileToVFS("NanumGothic-Regular.ttf", fontBase64);
+            doc.addFont("NanumGothic-Regular.ttf", "NanumGothic", "normal");
+            doc.addFont("NanumGothic-Regular.ttf", "NanumGothic", "bold");
+        }
+
         let p = table_data_attendees.find(a => a.id === id);
         let curr_y = 45;
         const add_line = (text, font_weight, font_size, y) => {
-            doc.setFont("helvetica", font_weight?font_weight:'normal');
+            doc.setFont(fontLoaded ? "NanumGothic" : "helvetica", font_weight?font_weight:'normal');
             doc.setFontSize(font_size?font_size:15);
             let splitText = doc.splitTextToSize(text, 150);
             if (y) {
@@ -337,7 +407,7 @@
                 curr_y += (splitText.length * 12);
             }
         };
-        add_line(`${m.attendees_certIssueDate()}: ${new Date().toLocaleDateString()}`, 'italic', 10, 10);
+        add_line(`${m.attendees_certIssueDate()}: ${new Date().toLocaleDateString()}`, 'normal', 10, 10);
         add_line(m.attendees_certTitle(), 'bold', 30);
         curr_y += 15;
         add_line(m.attendees_certIntro());
@@ -354,7 +424,7 @@
         add_line(m.attendees_certAsParticipant());
         curr_y += 20;
         add_line(data.event.organizers, 'bold');
-        add_line(m.attendees_certFooter(), 'italic', 10, 287);
+        add_line(m.attendees_certFooter(), 'normal', 10, 287);
 
         selected_cert = doc.output('bloburi');
         cert_modal = true;

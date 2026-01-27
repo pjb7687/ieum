@@ -31,9 +31,20 @@
                 row.institute,
                 row.job_title
             ])
-        ].map(row => row.map(item => `"${item}"`).join(',')).join('\n');
+        ].map(row => row.join('\t')).join('\r\n');
 
-        const blob = new Blob([csv], { type: 'text/csv' });
+        // Convert to UTF-16 LE with BOM for Excel compatibility
+        const BOM = '\uFEFF';
+        const csvWithBOM = BOM + csv;
+
+        // Encode to UTF-16 LE
+        const buffer = new ArrayBuffer(csvWithBOM.length * 2);
+        const view = new Uint16Array(buffer);
+        for (let i = 0; i < csvWithBOM.length; i++) {
+            view[i] = csvWithBOM.charCodeAt(i);
+        }
+
+        const blob = new Blob([buffer], { type: 'text/csv;charset=utf-16le;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         // Get current timestamp in YYYY-MM-DD_HH-MM-SS format
