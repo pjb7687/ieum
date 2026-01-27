@@ -2,23 +2,24 @@
     import { Input, Label, Button, Checkbox, Spinner } from 'flowbite-svelte';
     import { SearchOutline, CalendarMonthOutline, MapPinAltSolid, UserCircleOutline, CheckCircleSolid, ClockOutline } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
+    import { goto } from '$app/navigation';
+    import { page } from '$app/stores';
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
 
     let { data } = $props();
 
-    // Events state - initialize from server data once
-    let events = $state(data.eventsData?.events || []);
-    let total = $state(data.eventsData?.total || 0);
-    let offset = $state(data.eventsData?.events?.length || 0);
-    let hasMore = $derived(events.length < total);
-    let loading = $state(false);
-    let loadingMore = $state(false);
+    // Events state - accumulate results for infinite scroll
+    let allEvents = $state([]);
+    let total = $state(0);
+    let currentOffset = $state(0);
+    let hasMore = $derived(allEvents.length < total);
+    let navigating = $state(false);
 
-    // Filter state
-    let searchKeyword = $state('');
-    let showOnlyOpen = $state(false);
-    let selectedYear = $state('all');
+    // Initialize filter state from URL
+    let searchKeyword = $state($page.url.searchParams.get('search') || '');
+    let showOnlyOpen = $state($page.url.searchParams.get('showOnlyOpen') === 'true');
+    let selectedYear = $state($page.url.searchParams.get('year') || 'all');
 
     // Debounce timer for search
     let searchTimer;
@@ -33,69 +34,70 @@
         return [centerYear - 1, centerYear, centerYear + 1];
     });
 
+    // Update events when data changes (from server load)
+    $effect(() => {
+        if (data.eventsData) {
+            const newOffset = parseInt($page.url.searchParams.get('offset') || '0');
+
+            if (newOffset === 0) {
+                // Reset - new search/filter
+                allEvents = data.eventsData.events || [];
+            } else {
+                // Append - load more
+                const existingIds = new Set(allEvents.map(e => e.id));
+                const newEvents = (data.eventsData.events || []).filter(e => !existingIds.has(e.id));
+                allEvents = [...allEvents, ...newEvents];
+            }
+
+            total = data.eventsData.total || 0;
+            currentOffset = newOffset + (data.eventsData.events?.length || 0);
+        }
+    });
+
+    // Update URL with current filters
+    function updateURL(reset = false) {
+        const params = new URLSearchParams();
+
+        if (reset) {
+            params.set('offset', '0');
+        } else {
+            params.set('offset', currentOffset.toString());
+        }
+
+        if (selectedYear !== 'all') params.set('year', selectedYear);
+        if (searchKeyword.trim()) params.set('search', searchKeyword.trim());
+        if (showOnlyOpen) params.set('showOnlyOpen', 'true');
+
+        navigating = true;
+        goto(`?${params.toString()}`, {
+            keepFocus: true,
+            noScroll: !reset,
+            replaceState: !reset
+        }).finally(() => {
+            navigating = false;
+        });
+    }
+
     function selectYear(year) {
         selectedYear = year.toString();
-        loadEvents(true);
+        updateURL(true);
     }
 
     function navigateYears(direction) {
         yearOffset += direction;
     }
 
-    // Load events from API
-    async function loadEvents(reset = false) {
-        if (loading || loadingMore) return;
-
-        if (reset) {
-            loading = true;
-            offset = 0;
-        } else {
-            loadingMore = true;
-        }
-
-        try {
-            const queryParams = new URLSearchParams({
-                offset: reset ? '0' : offset.toString(),
-                limit: '20',
-            });
-
-            if (selectedYear !== 'all') queryParams.append('year', selectedYear);
-            if (searchKeyword.trim()) queryParams.append('search', searchKeyword.trim());
-            if (showOnlyOpen) queryParams.append('showOnlyOpen', 'true');
-
-            const response = await fetch(`/api/events?${queryParams.toString()}`);
-            if (response.ok) {
-                const data = await response.json();
-
-                if (reset) {
-                    events = data.events;
-                    offset = data.events.length;
-                } else {
-                    events = [...events, ...data.events];
-                    offset += data.events.length;
-                }
-
-                total = data.total;
-            }
-        } catch (error) {
-            console.error('Failed to load events:', error);
-        } finally {
-            loading = false;
-            loadingMore = false;
-        }
-    }
-
     // Handle search with debounce
     function handleSearchChange() {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => {
-            loadEvents(true);
+            updateURL(true);
         }, 500);
     }
 
     // Handle checkbox change
     function handleCheckboxChange() {
-        loadEvents(true);
+        updateURL(true);
     }
 
     // Clear all filters
@@ -104,29 +106,20 @@
         showOnlyOpen = false;
         selectedYear = 'all';
         yearOffset = 0;
-        loadEvents(true);
+        updateURL(true);
+    }
+
+    // Load more events
+    function loadMore() {
+        if (navigating || !hasMore) return;
+        updateURL(false);
     }
 
     // Infinite scroll handler
-    let scrollContainer;
-
-    function handleScroll() {
-        if (!scrollContainer || loading || loadingMore || !hasMore) return;
-
-        const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-        const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
-
-        // Load more when scrolled to 80%
-        if (scrollPercentage > 0.8) {
-            loadEvents(false);
-        }
-    }
-
     onMount(() => {
         if (browser) {
-            // Find the scrollable container (window or specific element)
             window.addEventListener('scroll', () => {
-                if (loading || loadingMore || !hasMore) return;
+                if (navigating || !hasMore) return;
 
                 const scrollHeight = document.documentElement.scrollHeight;
                 const scrollTop = window.scrollY;
@@ -135,7 +128,7 @@
 
                 // Load more when scrolled to 80%
                 if (scrollPercentage > 0.8) {
-                    loadEvents(false);
+                    loadMore();
                 }
             });
         }
@@ -270,12 +263,12 @@
         <!-- Right Content - Events List -->
         <div class="lg:col-span-3">
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
-                {#if loading}
+                {#if navigating && allEvents.length === 0}
                     <div class="text-center py-16">
                         <Spinner size="12" />
                         <p class="text-gray-600 mt-4">Loading events...</p>
                     </div>
-                {:else if events.length === 0}
+                {:else if allEvents.length === 0}
                     <div class="text-center py-16">
                         <CalendarMonthOutline class="w-16 h-16 mx-auto text-gray-400 mb-4" />
                         <h3 class="text-xl font-semibold text-gray-900 mb-2">{m.events_noResults()}</h3>
@@ -283,7 +276,7 @@
                     </div>
                 {:else}
                     <div class="space-y-8">
-                        {#each events as event}
+                        {#each allEvents as event}
                             <div class="pb-8 border-b border-gray-200 last:border-b-0 last:pb-0">
                                 <!-- Event Title and Status -->
                                 <div class="flex justify-between items-start gap-4 mb-4">
@@ -340,7 +333,7 @@
                         {/each}
 
                         <!-- Load More Indicator -->
-                        {#if loadingMore}
+                        {#if navigating}
                             <div class="text-center py-8">
                                 <Spinner size="8" />
                                 <p class="text-gray-600 mt-2 text-sm">Loading more events...</p>
