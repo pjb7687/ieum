@@ -12,12 +12,27 @@
         FileLinesSolid
     } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
+    import { marked } from 'marked';
+    import DOMPurify from 'dompurify';
+
+    // Configure marked options for consistent rendering
+    marked.setOptions({
+        breaks: true,
+        gfm: true
+    });
 
     let { data } = $props();
     let event = data.event;
     let user = data.user;
     let registered = data.registered;
     let is_event_admin = data.is_event_admin;
+
+    // Parse and sanitize markdown description
+    let descriptionHtml = $derived.by(() => {
+        if (!event.description) return '';
+        const html = marked.parse(event.description);
+        return DOMPurify.sanitize(html);
+    });
 
     // Check if registration is closed
     let isRegistrationClosed = $derived.by(() => {
@@ -121,9 +136,9 @@
                     </div>
                 </div>
 
-                {#if event.description}
+                {#if descriptionHtml}
                     <div class="prose prose-sm max-w-none mt-6 pt-6 border-t border-gray-200">
-                        {@html event.description}
+                        {@html descriptionHtml}
                     </div>
                 {/if}
             </div>
