@@ -79,7 +79,15 @@
 
   function goToCreateStep() {
     modal_step = 'create';
-    new_name_en = search_query; // Pre-fill with search query
+    // Pre-fill the first field based on current language
+    const lang = languageTag();
+    if (lang === 'ko') {
+      new_name_ko = search_query;
+      new_name_en = '';
+    } else {
+      new_name_en = search_query;
+      new_name_ko = '';
+    }
     create_error = '';
   }
 
@@ -225,28 +233,55 @@
       <!-- Create Step -->
       <form id="create_institution_form" method="post" action="?/create_institution" use:enhance={handleCreateInstitution}>
         <div class="space-y-4">
-          <div>
-            <Label for="new_name_en" class="block mb-2">{m.admin_institutionNameEn()}*</Label>
-            <Input
-              id="new_name_en"
-              name="name_en"
-              type="text"
-              bind:value={new_name_en}
-              placeholder={m.admin_institutionNameEn()}
-              required
-              autofocus
-            />
-          </div>
-          <div>
-            <Label for="new_name_ko" class="block mb-2">{m.admin_institutionNameKo()}</Label>
-            <Input
-              id="new_name_ko"
-              name="name_ko"
-              type="text"
-              bind:value={new_name_ko}
-              placeholder={m.admin_institutionNameKo()}
-            />
-          </div>
+          {#if languageTag() === 'ko'}
+            <!-- Korean name first when UI is Korean -->
+            <div>
+              <Label for="new_name_ko" class="block mb-2">{m.admin_institutionNameKo()}</Label>
+              <Input
+                id="new_name_ko"
+                name="name_ko"
+                type="text"
+                bind:value={new_name_ko}
+                placeholder={m.admin_institutionNameKo()}
+                autofocus
+              />
+            </div>
+            <div>
+              <Label for="new_name_en" class="block mb-2">{m.admin_institutionNameEn()}*</Label>
+              <Input
+                id="new_name_en"
+                name="name_en"
+                type="text"
+                bind:value={new_name_en}
+                placeholder={m.admin_institutionNameEn()}
+                required
+              />
+            </div>
+          {:else}
+            <!-- English name first when UI is English -->
+            <div>
+              <Label for="new_name_en" class="block mb-2">{m.admin_institutionNameEn()}*</Label>
+              <Input
+                id="new_name_en"
+                name="name_en"
+                type="text"
+                bind:value={new_name_en}
+                placeholder={m.admin_institutionNameEn()}
+                required
+                autofocus
+              />
+            </div>
+            <div>
+              <Label for="new_name_ko" class="block mb-2">{m.admin_institutionNameKo()}</Label>
+              <Input
+                id="new_name_ko"
+                name="name_ko"
+                type="text"
+                bind:value={new_name_ko}
+                placeholder={m.admin_institutionNameKo()}
+              />
+            </div>
+          {/if}
           {#if create_error}
             <Alert color="red">
               <p class="text-sm">{create_error}</p>
