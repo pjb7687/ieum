@@ -42,7 +42,7 @@ class User(AbstractUser):
     korean_name = models.CharField(max_length=1000, blank=True)
     nationality = models.IntegerField(choices=NATIONALITY_CHOICES, default=1)
     job_title = models.CharField(max_length=1000, blank=True)
-    institute = models.CharField(max_length=1000)
+    institute = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
     department = models.CharField(max_length=1000, blank=True)
     disability = models.TextField(blank=True)
     dietary = models.TextField(blank=True)
@@ -64,7 +64,8 @@ class Attendee(models.Model):
     last_name = models.CharField(max_length=1000)
     korean_name = models.CharField(max_length=1000, blank=True)
     nationality = models.IntegerField()
-    institute = models.CharField(max_length=1000)
+    institute = models.CharField(max_length=1000)  # English name
+    institute_ko = models.CharField(max_length=1000, blank=True)  # Korean name
     department = models.CharField(max_length=1000, blank=True)
     job_title = models.CharField(max_length=1000, blank=True)
     disability = models.TextField(blank=True)

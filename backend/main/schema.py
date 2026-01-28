@@ -63,6 +63,10 @@ class UserSchema(Schema):
         return ""
 
     @staticmethod
+    def resolve_institute(user: User) -> str:
+        return str(user.institute.id) if user.institute else ""
+
+    @staticmethod
     def resolve_name(user: User) -> str:
         name = user.first_name
         if user.middle_initial:
@@ -178,15 +182,6 @@ class AttendeeSchema(Schema):
             name += " " + da.middle_initial
         name += " " + da.last_name
         return name
-
-    @staticmethod
-    def resolve_institute_ko(da: Attendee) -> str:
-        # Look up the Korean name from Institution table
-        try:
-            institution = Institution.objects.get(name_en=da.institute)
-            return institution.name_ko if institution.name_ko else da.institute
-        except Institution.DoesNotExist:
-            return da.institute
 
 class SpeakerSchema(Schema):
     id: int

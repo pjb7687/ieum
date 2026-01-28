@@ -76,13 +76,20 @@ def update_user(request):
     user.job_title = data.get("job_title", "")
     user.department = data.get("department", "")
 
-    # Auto-create institution if it doesn't exist
-    institute_name = data["institute"]
-    institution, _ = Institution.objects.get_or_create(
-        name_en=institute_name,
-        defaults={'name_ko': ''}
-    )
-    user.institute = institution.name_en
+    # Assign institution by ID
+    institute_id = data.get("institute")
+    if institute_id:
+        try:
+            institution = Institution.objects.get(id=int(institute_id))
+            user.institute = institution
+        except (Institution.DoesNotExist, ValueError):
+            return api.create_response(
+                request,
+                {"error": "Invalid institution"},
+                status=400,
+            )
+    else:
+        user.institute = None
 
     user.disability = data.get("disability", "")
     user.dietary = data.get("dietary", "")
@@ -462,13 +469,19 @@ def update_attendee(request, event_id: int, attendee_id: int):
     attendee.korean_name = data.get("korean_name", "")
     attendee.nationality = data["nationality"]
 
-    # Auto-create institution if it doesn't exist
-    institute_name = data["institute"]
-    institution, _ = Institution.objects.get_or_create(
-        name_en=institute_name,
-        defaults={'name_ko': ''}
-    )
-    attendee.institute = institution.name_en
+    # Get institution by ID to retrieve both English and Korean names
+    institute_id = data.get("institute")
+    if institute_id:
+        try:
+            institution = Institution.objects.get(id=int(institute_id))
+            attendee.institute = institution.name_en
+            attendee.institute_ko = institution.name_ko
+        except (Institution.DoesNotExist, ValueError):
+            return api.create_response(
+                request,
+                {"code": "invalid_institution", "message": "Invalid institution"},
+                status=400,
+            )
 
     attendee.department = data.get("department", "")
     attendee.job_title = data.get("job_title", "")
@@ -539,12 +552,25 @@ def register_event(request, event_id: int):
                         status=400,
                     )
 
-    # Auto-create institution if it doesn't exist
-    institute_name = data["institute"]
-    institution, _ = Institution.objects.get_or_create(
-        name_en=institute_name,
-        defaults={'name_ko': ''}
-    )
+    # Get institution by ID to retrieve both English and Korean names
+    institute_id = data.get("institute")
+    if institute_id:
+        try:
+            institution = Institution.objects.get(id=int(institute_id))
+            institute_name_en = institution.name_en
+            institute_name_ko = institution.name_ko
+        except (Institution.DoesNotExist, ValueError):
+            return api.create_response(
+                request,
+                {"code": "invalid_institution", "message": "Invalid institution"},
+                status=400,
+            )
+    else:
+        return api.create_response(
+            request,
+            {"code": "missing_institute", "message": "Institute is required"},
+            status=400,
+        )
 
     attendee = Attendee.objects.create(
         user=user,
@@ -554,7 +580,8 @@ def register_event(request, event_id: int):
         last_name=data.get("last_name", ""),
         korean_name=data.get("korean_name", ""),
         nationality=data["nationality"],
-        institute=institution.name_en,
+        institute=institute_name_en,
+        institute_ko=institute_name_ko,
         department=data.get("department", ""),
         job_title=data.get("job_title", ""),
         disability=data.get("disability", ""),

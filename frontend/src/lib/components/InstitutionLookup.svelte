@@ -7,6 +7,9 @@
 
   let { value = $bindable(''), error = null, required = false, institutions = $bindable([]) } = $props();
 
+  // Display value (institution name for UI)
+  let displayValue = $state('');
+
   // Get display name based on current language
   function getDisplayName(institution) {
     const lang = languageTag();
@@ -25,23 +28,31 @@
     return institution.name_ko; // Show Korean as secondary when English is primary
   }
 
-  // Update value to match current language when language changes
+  // Initialize displayValue from institution ID
+  $effect(() => {
+    if (!value || institutions.length === 0) {
+      displayValue = '';
+      return;
+    }
+
+    // value should be institution ID
+    const institution = institutions.find(inst => inst.id.toString() === value.toString());
+    if (institution) {
+      displayValue = getDisplayName(institution);
+    } else {
+      displayValue = '';
+    }
+  });
+
+  // Update displayValue when language changes
   $effect(() => {
     if (!value || institutions.length === 0) {
       return;
     }
 
-    // Try to find matching institution by either name
-    const matchingInstitution = institutions.find(inst =>
-      inst.name_en === value || inst.name_ko === value
-    );
-
-    if (matchingInstitution) {
-      const langAppropriateValue = getDisplayName(matchingInstitution);
-      // Only update if different to avoid infinite loops
-      if (value !== langAppropriateValue) {
-        value = langAppropriateValue;
-      }
+    const institution = institutions.find(inst => inst.id.toString() === value.toString());
+    if (institution) {
+      displayValue = getDisplayName(institution);
     }
   });
 
@@ -84,7 +95,8 @@
   }
 
   function selectInstitution(institution) {
-    value = getDisplayName(institution);
+    value = institution.id.toString(); // Store institution ID
+    displayValue = getDisplayName(institution);
     modal_open = false;
     modal_step = 'search';
     search_query = '';
@@ -96,8 +108,9 @@
       if (result.type === 'success' && result.data?.success) {
         // Add the new institution to the list
         institutions.push(result.data.institution);
-        // Set the value to the new institution
-        value = getDisplayName(result.data.institution);
+        // Set the value to the new institution ID
+        value = result.data.institution.id.toString();
+        displayValue = getDisplayName(result.data.institution);
         // Close modal and reset
         modal_open = false;
         modal_step = 'search';
@@ -115,7 +128,7 @@
   function openModal() {
     modal_open = true;
     modal_step = 'search';
-    search_query = value || '';
+    search_query = displayValue || '';
     if (search_query.length >= 2) {
       filterInstitutions();
     }
@@ -136,11 +149,11 @@
   {m.form_institute()}{required ? '*' : ''}
 </Label>
 <ButtonGroup class="w-full">
+  <input type="hidden" name="institute" bind:value={value} />
   <Input
-    id="institute"
-    name="institute"
+    id="institute_display"
     type="text"
-    bind:value={value}
+    value={displayValue}
     readonly
     placeholder={m.form_institutePlaceholder()}
     class="cursor-pointer"
