@@ -10,11 +10,6 @@
   // Display value (institution name for UI)
   let displayValue = $state('');
 
-  // Initialize displayValue from server-resolved institution
-  if (institution_resolved) {
-    displayValue = getDisplayName(institution_resolved);
-  }
-
   // Get display name based on current language
   function getDisplayName(institution) {
     const lang = languageTag();
@@ -32,6 +27,13 @@
     }
     return institution.name_ko; // Show Korean as secondary when English is primary
   }
+
+  // Initialize and update displayValue from server-resolved institution
+  $effect(() => {
+    if (institution_resolved) {
+      displayValue = getDisplayName(institution_resolved);
+    }
+  });
 
   let modal_open = $state(false);
   let modal_step = $state('search'); // 'search' or 'create'
