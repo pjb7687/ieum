@@ -3,7 +3,7 @@
   import { SearchOutline } from 'flowbite-svelte-icons';
   import * as m from '$lib/paraglide/messages.js';
   import { languageTag } from '$lib/paraglide/runtime.js';
-  import { enhance } from '$app/forms';
+  import { enhance, deserialize } from '$app/forms';
 
   let { value = $bindable(''), error = null, required = false, institution_resolved = null } = $props();
 
@@ -59,7 +59,7 @@
       });
 
       if (response.ok) {
-        const result = await response.json();
+        const result = deserialize(await response.text());
         if (result.type === 'success' && result.data?.success) {
           filtered_suggestions = result.data.institutions;
         } else {
