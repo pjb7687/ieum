@@ -156,8 +156,8 @@
 <Label for="institute" class="block mb-2">
   {m.form_institute()}{required ? '*' : ''}
 </Label>
+<input type="hidden" name="institute" value={value} />
 <ButtonGroup class="w-full">
-  <input type="hidden" name="institute" bind:value={value} />
   <Input
     id="institute_display"
     type="text"
