@@ -63,18 +63,29 @@
   let new_name_en = $state('');
   let new_name_ko = $state('');
   let create_error = $state('');
+  let searching = $state(false);
 
-  function filterInstitutions() {
+  async function filterInstitutions() {
     if (!search_query || search_query.length < 2) {
       filtered_suggestions = [];
       return;
     }
 
-    const query = search_query.toLowerCase();
-    filtered_suggestions = institutions.filter(inst =>
-      inst.name_en.toLowerCase().includes(query) ||
-      (inst.name_ko && inst.name_ko.toLowerCase().includes(query))
-    ).slice(0, 50); // Limit to 50 results
+    searching = true;
+    try {
+      const response = await fetch(`/api/institutions?search=${encodeURIComponent(search_query)}`);
+      if (response.ok) {
+        const data = await response.json();
+        filtered_suggestions = data;
+      } else {
+        filtered_suggestions = [];
+      }
+    } catch (error) {
+      console.error('Failed to search institutions:', error);
+      filtered_suggestions = [];
+    } finally {
+      searching = false;
+    }
   }
 
   function goToCreateStep() {
@@ -98,8 +109,12 @@
     create_error = '';
   }
 
+  let searchTimeout;
   function handleSearchInput() {
-    filterInstitutions();
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      filterInstitutions();
+    }, 300); // Debounce by 300ms
   }
 
   function selectInstitution(institution) {
@@ -195,8 +210,15 @@
         />
       </div>
 
+      <!-- Loading Indicator -->
+      {#if searching}
+        <div class="text-center py-4">
+          <p class="text-sm text-gray-600">Searching...</p>
+        </div>
+      {/if}
+
       <!-- Search Results -->
-      {#if filtered_suggestions.length > 0}
+      {#if !searching && filtered_suggestions.length > 0}
         <div class="border border-gray-200 rounded-lg overflow-hidden max-h-80 overflow-y-auto">
           {#each filtered_suggestions as suggestion}
             <button
@@ -214,7 +236,7 @@
       {/if}
 
       <!-- No Results Message -->
-      {#if search_query.length >= 2 && filtered_suggestions.length === 0}
+      {#if !searching && search_query.length >= 2 && filtered_suggestions.length === 0}
         <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 text-center">
           <p class="text-sm text-gray-600 mb-3">{m.form_noInstitutionsFound()}</p>
           <Button color="primary" onclick={goToCreateStep}>

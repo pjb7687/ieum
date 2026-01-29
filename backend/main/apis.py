@@ -101,7 +101,7 @@ def get_csrf_token(request):
     token = get_token(request)
     return {"csrftoken": token}
 
-@api.get("/institutions", response=List[InstitutionSchema])
+@api.get("/institutions", response=List[InstitutionSchema], auth=None)
 def search_institutions(request, search: str = ""):
     from django.db.models import Q
 
