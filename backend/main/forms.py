@@ -1,7 +1,13 @@
 from django import forms
-from .models import User
+from .models import User, Institution
 
 class CustomSignupForm(forms.ModelForm):
+    institute = forms.ModelChoiceField(
+        queryset=Institution.objects.all(),
+        required=False,
+        to_field_name='id'
+    )
+
     class Meta:
         model = User
         fields = [
