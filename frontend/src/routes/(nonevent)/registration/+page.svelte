@@ -11,8 +11,6 @@
     import { UserCircleSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
 
-    let institutions = $state(page_data.institutions || []);
-
     const schema = yup.object({
         email: yup.string().email().required(m.validation_emailRequired()),
         password: yup.string().required(m.validation_passwordRequired()).min(8, m.validation_passwordMinLength()),
@@ -29,9 +27,9 @@
         dietary: yup.string(),
     });
 
-    let form_config = {
+    let form_config = $derived({
         next: page_data.next,
-    }
+    });
 
     const { form: felteForm, data, errors, isSubmitting } = createForm({
         onSubmit: async (data) => {
@@ -76,7 +74,7 @@
 <!-- Form Card -->
 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
     <form use:felteForm method="post">
-        <RegistrationForm errors={$errors} config={form_config} bind:institutions />
+        <RegistrationForm errors={$errors} config={form_config} />
         <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
             <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>
                 {m.registration_submit()}

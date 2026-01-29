@@ -5,10 +5,15 @@
   import { languageTag } from '$lib/paraglide/runtime.js';
   import { enhance } from '$app/forms';
 
-  let { value = $bindable(''), error = null, required = false, institutions = $bindable([]) } = $props();
+  let { value = $bindable(''), error = null, required = false, institution_resolved = null } = $props();
 
   // Display value (institution name for UI)
   let displayValue = $state('');
+
+  // Initialize displayValue from server-resolved institution
+  if (institution_resolved) {
+    displayValue = getDisplayName(institution_resolved);
+  }
 
   // Get display name based on current language
   function getDisplayName(institution) {
@@ -28,34 +33,6 @@
     return institution.name_ko; // Show Korean as secondary when English is primary
   }
 
-  // Initialize displayValue from institution ID
-  $effect(() => {
-    if (!value || institutions.length === 0) {
-      displayValue = '';
-      return;
-    }
-
-    // value should be institution ID
-    const institution = institutions.find(inst => inst.id.toString() === value.toString());
-    if (institution) {
-      displayValue = getDisplayName(institution);
-    } else {
-      displayValue = '';
-    }
-  });
-
-  // Update displayValue when language changes
-  $effect(() => {
-    if (!value || institutions.length === 0) {
-      return;
-    }
-
-    const institution = institutions.find(inst => inst.id.toString() === value.toString());
-    if (institution) {
-      displayValue = getDisplayName(institution);
-    }
-  });
-
   let modal_open = $state(false);
   let modal_step = $state('search'); // 'search' or 'create'
   let search_query = $state('');
@@ -73,10 +50,21 @@
 
     searching = true;
     try {
-      const response = await fetch(`/api/institutions?search=${encodeURIComponent(search_query)}`);
+      const formData = new FormData();
+      formData.append('search', search_query);
+
+      const response = await fetch('?/search_institutions', {
+        method: 'POST',
+        body: formData
+      });
+
       if (response.ok) {
-        const data = await response.json();
-        filtered_suggestions = data;
+        const result = await response.json();
+        if (result.type === 'success' && result.data?.success) {
+          filtered_suggestions = result.data.institutions;
+        } else {
+          filtered_suggestions = [];
+        }
       } else {
         filtered_suggestions = [];
       }
@@ -129,12 +117,8 @@
   const handleCreateInstitution = () => {
     return async ({ result, update }) => {
       if (result.type === 'success' && result.data?.success) {
-        // Add the new institution to the list
-        institutions.push(result.data.institution);
-        // Set the value to the new institution ID
         value = result.data.institution.id.toString();
         displayValue = getDisplayName(result.data.institution);
-        // Close modal and reset
         modal_open = false;
         modal_step = 'search';
         search_query = '';

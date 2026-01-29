@@ -8,12 +8,12 @@ export async function load({ parent, request, cookies }) {
     const next = url.searchParams.get('next') || '/';
     data.next = next;
 
-    // Load all institutions for the lookup component
-    const institutionsResponse = await get('api/institutions', cookies);
-    if (institutionsResponse.ok) {
-        data.institutions = institutionsResponse.data;
-    } else {
-        data.institutions = [];
+    // Resolve user's current institution by ID
+    if (data.user && data.user.institute) {
+        const institutionResponse = await get(`api/institutions/${data.user.institute}`, cookies);
+        if (institutionResponse.ok) {
+            data.user.institution_resolved = institutionResponse.data;
+        }
     }
 
     return data;
@@ -34,6 +34,17 @@ export const actions = {
 
         if (!response.ok || response.status !== 200) {
             throw error(response.status, { message: 'Server error. If this persists, please contact the administrator.' });
+        }
+    },
+    search_institutions: async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const search = formdata.get('search') || '';
+
+        const response = await get(`api/institutions?search=${encodeURIComponent(search)}`, cookies);
+        if (response.ok) {
+            return { success: true, institutions: response.data };
+        } else {
+            return { success: false, institutions: [] };
         }
     },
     create_institution: async ({ cookies, request }) => {

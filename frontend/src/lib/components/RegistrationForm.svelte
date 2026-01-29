@@ -22,7 +22,7 @@
   };
   export let errors = {};
   export let config = {};
-  export let institutions = [];
+  export let institution_resolved = null;
 
   function link_orcid() {
     let data = {
@@ -201,7 +201,7 @@
 <hr class="my-8 border-gray-200" />
 <Heading tag="h2" customSize="text-lg font-bold" class="mb-6">{m.form_additionalInfo()}</Heading>
 <div class="mb-6">
-  <InstitutionLookup bind:value={data.institute} error={errors.institute} required={true} bind:institutions />
+  <InstitutionLookup bind:value={data.institute} error={errors.institute} required={true} institution_resolved={institution_resolved} />
 </div>
 
 <div class="mb-6">

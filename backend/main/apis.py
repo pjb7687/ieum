@@ -114,6 +114,14 @@ def search_institutions(request, search: str = ""):
 
     return list(institutions[:50])  # Limit to 50 results
 
+@api.get("/institutions/{institution_id}", response=InstitutionSchema, auth=None)
+def get_institution(request, institution_id: int):
+    try:
+        institution = Institution.objects.get(id=institution_id)
+        return institution
+    except Institution.DoesNotExist:
+        return api.create_response(request, {"error": "Institution not found"}, status=404)
+
 @api.post("/institutions", response=InstitutionSchema, auth=None)
 def create_institution(request, data: InstitutionCreateSchema):
 

@@ -13,7 +13,6 @@
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
 
     let success = $state(false);
-    let institutions = $state(page_data.institutions || []);
 
     const schema = yup.object({
         email: yup.string().email().required(),
@@ -93,7 +92,7 @@
 <!-- Form Card -->
 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
     <form use:felteForm method="post">
-        <RegistrationForm data={$data} errors={$errors} config={form_config} bind:institutions />
+        <RegistrationForm data={$data} errors={$errors} config={form_config} institution_resolved={page_data.user?.institution_resolved} />
         {#if success}
         <Alert color="blue" class="mb-4" dismissable>{m.profile_updateSuccess()}</Alert>
         {/if}

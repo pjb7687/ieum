@@ -42,19 +42,22 @@ export async function load({ parent, cookies, request }) {
     }
     data.next = next;
 
-    // Load all institutions for the lookup component
-    const institutionsResponse = await get('api/institutions', cookies);
-    if (institutionsResponse.ok) {
-        data.institutions = institutionsResponse.data;
-    } else {
-        data.institutions = [];
-    }
-
     return data;
 }
 
 /** @type {import('./$types').Actions} */
 export const actions = {
+    search_institutions: async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const search = formdata.get('search') || '';
+
+        const response = await get(`api/institutions?search=${encodeURIComponent(search)}`, cookies);
+        if (response.ok) {
+            return { success: true, institutions: response.data };
+        } else {
+            return { success: false, institutions: [] };
+        }
+    },
     create_institution: async ({ cookies, request }) => {
         let formdata = await request.formData();
         const data = {
