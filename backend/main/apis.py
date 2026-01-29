@@ -114,7 +114,7 @@ def search_institutions(request, search: str = ""):
 
     return list(institutions[:50])  # Limit to 50 results
 
-@api.post("/institutions", response=InstitutionSchema)
+@api.post("/institutions", response=InstitutionSchema, auth=None)
 def create_institution(request, data: InstitutionCreateSchema):
 
     # Check if institution already exists
