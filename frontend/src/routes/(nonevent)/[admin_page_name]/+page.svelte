@@ -434,7 +434,7 @@
                 hide_password: true,
                 show_english_name: true,
                 show_korean_name: true,
-                csrf_token: page_data.csrf_token
+                csrf_token: data.csrf_token
             }}
             institution_resolved={selected_user.institute ? {
                 id: selected_user.institute,
