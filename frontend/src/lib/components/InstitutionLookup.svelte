@@ -1,4 +1,5 @@
 <script>
+  import { tick } from 'svelte';
   import { Input, Label, Alert, Modal, Button, ButtonGroup } from 'flowbite-svelte';
   import { SearchOutline } from 'flowbite-svelte-icons';
   import * as m from '$lib/paraglide/messages.js';
@@ -9,6 +10,9 @@
 
   // Display value (institution name for UI)
   let displayValue = $state('');
+
+  // Reference to the hidden input for event dispatching
+  let hiddenInput;
 
   // Get display name based on current language
   function getDisplayName(institution) {
@@ -103,7 +107,7 @@
     }, 300); // Debounce by 300ms
   }
 
-  function selectInstitution(institution) {
+  async function selectInstitution(institution) {
     value = institution.id.toString(); // Store institution ID
     displayValue = getDisplayName(institution);
     modal_open = false;
@@ -111,10 +115,14 @@
     search_query = '';
     filtered_suggestions = [];
 
-    // Trigger input event for form validation
-    const input = document.querySelector('input[name="institute"]');
-    if (input) {
-      input.dispatchEvent(new Event('input', { bubbles: true }));
+    // Wait for DOM to update
+    await tick();
+
+    // Trigger events for form validation using direct reference
+    if (hiddenInput) {
+      hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+      hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+      hiddenInput.dispatchEvent(new Event('blur', { bubbles: true }));
     }
   }
 
@@ -131,10 +139,14 @@
         new_name_ko = '';
         create_error = '';
 
-        // Trigger input event for form validation
-        const input = document.querySelector('input[name="institute"]');
-        if (input) {
-          input.dispatchEvent(new Event('input', { bubbles: true }));
+        // Wait for DOM to update
+        await tick();
+
+        // Trigger events for form validation using direct reference
+        if (hiddenInput) {
+          hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+          hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+          hiddenInput.dispatchEvent(new Event('blur', { bubbles: true }));
         }
       } else {
         create_error = result.data?.error || 'Failed to create institution';
@@ -165,7 +177,7 @@
 <Label for="institute" class="block mb-2">
   {m.form_institute()}{required ? '*' : ''}
 </Label>
-<input type="hidden" name="institute" value={value} />
+<input type="hidden" name="institute" bind:this={hiddenInput} value={value} />
 <ButtonGroup class="w-full">
   <Input
     id="institute_display"
