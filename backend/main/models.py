@@ -79,14 +79,13 @@ class OnSiteAttendee(models.Model):
     OnSiteAttendee model
     """
     event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='onsite_attendees')
-    first_name = models.CharField(max_length=1000)
-    middle_initial = models.CharField(max_length=1, blank=True)
-    last_name = models.CharField(max_length=1000)
+    name = models.CharField(max_length=1000)
+    email = models.EmailField(blank=True)
     institute = models.CharField(max_length=1000)
     job_title = models.CharField(max_length=1000, blank=True)
 
     def __str__(self):
-        return f'{self.first_name}{" " + self.middle_initial if self.middle_initial else ""} {self.last_name}'
+        return self.name
 
 class Setting(models.Model):
     """

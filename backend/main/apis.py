@@ -1204,9 +1204,8 @@ def register_on_site(request, event_id: int):
 
     oa = OnSiteAttendee.objects.create(
         event=event,
-        first_name=data.get("first_name"),
-        middle_initial=data.get("middle_initial"),
-        last_name=data.get("last_name"),
+        name=data.get("name"),
+        email=data.get("email", ""),
         institute=institute_name,
         job_title=data.get("job_title", "")
     )
@@ -1232,9 +1231,8 @@ def update_on_site_attendee(request, event_id: int, onsite_id: int):
     event = Event.objects.get(id=event_id)
     oa = OnSiteAttendee.objects.get(id=onsite_id, event=event)
     data = json.loads(request.body)
-    oa.first_name = data.get("first_name")
-    oa.middle_initial = data.get("middle_initial")
-    oa.last_name = data.get("last_name")
+    oa.name = data.get("name")
+    oa.email = data.get("email", "")
 
     # Auto-create institution if it doesn't exist
     institute_name = data.get("institute", "")

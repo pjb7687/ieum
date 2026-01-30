@@ -8,6 +8,7 @@
 
     import OnSiteRegistrationForm from './OnSiteRegistrationForm.svelte';
     import jsPDF from 'jspdf';
+    import QRCode from 'qrcode';
 
     let { data } = $props();
 
@@ -17,17 +18,15 @@
     const exportAttendeesAsCSV = () => {
         const csv = [
             [   "ID",
-                "First Name",
-                "Middle Initial",
-                "Last Name",
+                "Name",
+                "Email",
                 "Institute",
                 "Job Title"
             ],
             ...sortedAttendees.map(row => [
                 row.id,
-                row.first_name,
-                row.middle_initial,
-                row.last_name,
+                row.name,
+                row.email,
                 row.institute,
                 row.job_title
             ])
@@ -136,6 +135,69 @@
 
     let cert_modal = $state(false);
     let selected_cert = $state({});
+
+    let qr_modal = $state(false);
+    let qr_code_url = $state('');
+    const showQRCodeModal = async () => {
+        const registrationUrl = `${window.location.origin}/event/${data.event.id}/onsite`;
+        qr_code_url = await QRCode.toDataURL(registrationUrl, {
+            width: 400,
+            margin: 2
+        });
+        qr_modal = true;
+    };
+
+    const printQRCode = () => {
+        const registrationUrl = `${window.location.origin}/event/${data.event.id}/onsite`;
+        const printWindow = window.open('', '', 'width=600,height=600');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>On-site Registration QR Code</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        html, body {
+                            height: 100%;
+                            width: 100%;
+                        }
+                        body {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            font-family: Arial, sans-serif;
+                        }
+                        img {
+                            max-width: 400px;
+                            margin-bottom: 20px;
+                        }
+                        p {
+                            text-align: center;
+                            font-size: 12px;
+                            color: #666;
+                            word-break: break-all;
+                            max-width: 400px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img src="${qr_code_url}" alt="QR Code" />
+                    <p>${registrationUrl}</p>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    };
+
     const showCertificateModal = async (id) => {
         const doc = new jsPDF({
             orientation: "portrait",
@@ -185,10 +247,14 @@
 
 <Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.onsiteAttendees_title()}</Heading>
 <p class="font-light mb-6">{m.onsiteAttendees_description()}</p>
-<div class="flex justify-end sm:flex-row flex-col">
-    <div class="flex items-center gap-2">
-        <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>{m.onsiteAttendees_exportCSV()}</Button>
-    </div>
+
+<div class="flex justify-end items-center gap-2 mb-4">
+    <Button color="primary" size="sm" onclick={showQRCodeModal}>
+        {m.onsiteRegistration_qrCode()}
+    </Button>
+    <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>
+        {m.onsiteAttendees_exportCSV()}
+    </Button>
 </div>
 <p class="mt-5 mb-3 text-sm text-right">{sortedAttendees.length} {m.onsiteAttendees_peopleRegistered()}</p>
 <TableSearch placeholder={m.onsiteAttendees_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermAttendee}>
@@ -318,5 +384,19 @@
             }
         }}>{m.onsiteAttendees_print()}</Button>
         <Button color="dark" onclick={() => cert_modal = false}>{m.onsiteAttendees_close()}</Button>
+    </div>
+</Modal>
+
+<Modal id="qr_modal" size="md" title={m.onsiteRegistration_qrCodeTitle()} bind:open={qr_modal} outsideclose>
+    <div class="flex flex-col items-center">
+        <p class="text-center text-sm text-gray-600 mb-4">{m.onsiteRegistration_qrCodeDescription()}</p>
+        {#if qr_code_url}
+            <img src={qr_code_url} alt="QR Code" class="w-full max-w-md" />
+        {/if}
+        <p class="text-center text-xs text-gray-500 mt-4 break-all">{window.location.origin}/event/{data.event.id}/onsite</p>
+    </div>
+    <div class="flex justify-center mt-6 gap-2">
+        <Button color="primary" onclick={printQRCode}>{m.onsiteAttendees_print()}</Button>
+        <Button color="dark" onclick={() => qr_modal = false}>{m.onsiteAttendees_close()}</Button>
     </div>
 </Modal>

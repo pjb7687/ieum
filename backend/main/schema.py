@@ -271,17 +271,7 @@ class AbstractVoteSchema(Schema):
 
 class OnSiteAttendeeSchema(Schema):
     id: int
-    first_name: str
-    middle_initial: str
-    last_name: str
     name: str
+    email: str
     institute: str
     job_title: str
-
-    @staticmethod
-    def resolve_name(da: OnSiteAttendee) -> str:
-        name = da.first_name
-        if da.middle_initial:
-            name += " " + da.middle_initial
-        name += " " + da.last_name
-        return name
