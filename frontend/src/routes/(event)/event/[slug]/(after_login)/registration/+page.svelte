@@ -1,5 +1,5 @@
 <script>
-    import { Button, Alert } from 'flowbite-svelte';
+    import { Button, Alert, Checkbox } from 'flowbite-svelte';
     import { UserCircleSolid, FileLinesSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
@@ -21,6 +21,21 @@
             case 2: return m.nationality_nonKorean();
             default: return m.nationality_notSpecified();
         }
+    }
+
+    // Parse checkbox answer format: "- option1: value\n- option2: value"
+    function parseCheckboxAnswer(answer) {
+        const lines = answer.split('\n');
+        return lines.map(line => {
+            const match = line.match(/^-\s*(.+?):\s*(.+)$/);
+            if (match) {
+                return {
+                    option: match[1],
+                    checked: match[2] === 'on' || match[2] === 'true' || match[2] === 'checked'
+                };
+            }
+            return null;
+        }).filter(item => item !== null);
     }
 </script>
 
@@ -120,8 +135,16 @@
                     <div class="space-y-4 pl-8">
                         {#each attendee.custom_answers as answer}
                             <div>
-                                <p class="text-sm font-medium text-gray-500">{answer.question}</p>
-                                <p class="text-base text-gray-900">{answer.answer}</p>
+                                <p class="text-sm font-medium text-gray-500 mb-2">{answer.question}</p>
+                                {#if answer.reference?.question?.type === 'checkbox'}
+                                    <div class="space-y-2">
+                                        {#each parseCheckboxAnswer(answer.answer) as item}
+                                            <Checkbox checked={item.checked} disabled>{item.option}</Checkbox>
+                                        {/each}
+                                    </div>
+                                {:else}
+                                    <p class="text-base text-gray-900">{answer.answer}</p>
+                                {/if}
                             </div>
                         {/each}
                     </div>
