@@ -460,7 +460,7 @@
 <div class="flex justify-end sm:flex-row flex-col">
     <div class="flex items-center gap-2">
         <Button color="primary" size="sm" onclick={showSendEmailModal} disabled={selectedAttendees.length === 0}>{m.attendees_sendEmailToSelected()}</Button>
-        <Button color="primary" size="sm" onclick={() => expand_attendees = !expand_attendees}>{expand_attendees ? m.attendees_collapse() : m.attendees_expand()} {m.attendees_headers()}</Button>
+        <Button color="primary" size="sm" onclick={() => expand_attendees = !expand_attendees}>{expand_attendees ? m.attendees_collapseHeaders() : m.attendees_expandHeaders()}</Button>
         <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>{m.attendees_exportCSV()}</Button>
     </div>
 </div>
