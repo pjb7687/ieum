@@ -19,6 +19,7 @@
         end_date: '',
         deadline: '',
         capacity: 0,
+        registration_fee: null,
         accepts_abstract: false,
         abstract_deadline: '',
         capacity_abstract: 0,
@@ -27,7 +28,6 @@
 
     // Create local reactive state for properties to enable two-way binding
     let description = $state(data.description);
-    let category = $state(data.category);
     let venue = $state(data.venue);
     let venue_ko = $state(data.venue_ko);
     let venue_address = $state(data.venue_address);
@@ -39,7 +39,6 @@
     // Keep properties in sync with data object
     $effect(() => {
         data.description = description;
-        data.category = category;
         data.venue = venue;
         data.venue_ko = venue_ko;
         data.venue_address = venue_address;
@@ -80,7 +79,7 @@
 </div>
 <div class="mb-6">
     <Label for="category" class="block mb-2">{m.eventForm_category()}*</Label>
-    <Select id="category" name="category" bind:value={category} items={[
+    <Select id="category" name="category" value={data.category} items={[
         { value: 'workshop', name: m.eventCategory_workshop() },
         { value: 'hackathon', name: m.eventCategory_hackathon() },
         { value: 'symposium', name: m.eventCategory_symposium() },
@@ -142,6 +141,11 @@
     <Label for="capacity" class="block mb-2">{m.eventForm_registrationCapacity()}</Label>
     <Input type="number" id="capacity" name="capacity" value={data.capacity} />
     <span class="text-sm">* {m.eventForm_registrationCapacityHelp()}</span>
+</div>
+<div class="mb-6">
+    <Label for="registration_fee" class="block mb-2">{m.eventForm_registrationFee()}</Label>
+    <Input type="number" id="registration_fee" name="registration_fee" value={data.registration_fee} step="1" min="0" placeholder="0" />
+    <span class="text-sm">* {m.eventForm_registrationFeeHelp()}</span>
 </div>
 <div class="mb-6">
     <Label for="accepts_abstract" class="block mb-2">{m.eventForm_enableAbstract()}</Label>

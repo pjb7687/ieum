@@ -120,6 +120,7 @@ class EventSchema(Schema):
     organizers_ko: str
     main_languages: List[str]
     registration_deadline: Union[date, None]
+    registration_fee: Union[int, None]
     accepts_abstract: bool
     abstract_deadline: Union[date, None]
     published: bool
@@ -157,6 +158,7 @@ class EventAdminSchema(Schema):
     main_languages: List[str]
     registration_deadline: Union[date, None]
     capacity: int
+    registration_fee: Union[int, None]
     accepts_abstract: bool
     abstract_deadline: Union[date, None]
     capacity_abstract: Union[int, None]

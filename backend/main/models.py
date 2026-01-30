@@ -124,6 +124,7 @@ class Event(models.Model):
     main_languages = models.JSONField(default=default_main_languages)  # Array of language codes: ['ko', 'en']
     registration_deadline = models.DateField(blank=True, null=True)
     capacity = models.IntegerField()
+    registration_fee = models.IntegerField(blank=True, null=True)
     accepts_abstract = models.BooleanField(default=False)
     abstract_deadline = models.DateField(blank=True, null=True)
     capacity_abstract = models.IntegerField(null=True)

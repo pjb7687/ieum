@@ -10,9 +10,11 @@
         CalendarMonthSolid,
         ClockSolid,
         FileLinesSolid,
-        GlobeSolid
+        GlobeSolid,
+        CreditCardSolid
     } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
+    import { languageTag } from '$lib/paraglide/runtime.js';
     import { getDisplayVenue, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
     import { marked } from 'marked';
     import { browser } from '$app/environment';
@@ -58,6 +60,16 @@
         const deadline = new Date(event.registration_deadline);
         const now = new Date();
         return deadline < now;
+    });
+
+    // Format registration fee based on language
+    let formattedRegistrationFee = $derived.by(() => {
+        const fee = event.registration_fee || 0;
+        if (fee === 0) {
+            return m.eventDetail_registrationFeeFree();
+        }
+        const formattedAmount = fee.toLocaleString('ko-KR', {maximumFractionDigits: 0});
+        return languageTag() === 'ko' ? `${formattedAmount} 원` : `KRW ${formattedAmount}`;
     });
 
     // Get current page URL for sharing
@@ -110,9 +122,9 @@
     </div>
 
     <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
         <!-- Left Column - Main Content -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 2xl:col-span-3 space-y-6">
             <!-- Event Details -->
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -209,10 +221,18 @@
                                 <p class="font-semibold">{m.eventRegister_closed()}</p>
                             </div>
                         {:else if user}
+                            <div class="flex justify-between items-center">
+                                <span class="text-base font-medium text-gray-700">{m.eventDetail_registrationFee()}</span>
+                                <span class="{languageTag() === 'ko' ? 'text-xl' : 'text-lg'} font-bold text-gray-900">{formattedRegistrationFee}</span>
+                            </div>
                             <Button href="/event/{event.id}/register" color="primary" size="lg" class="w-full">
                                 {m.eventDetail_registerNow()}
                             </Button>
                         {:else}
+                            <div class="flex justify-between items-center">
+                                <span class="text-base font-medium text-gray-700">{m.eventDetail_registrationFee()}</span>
+                                <span class="{languageTag() === 'ko' ? 'text-xl' : 'text-lg'} font-bold text-gray-900">{formattedRegistrationFee}</span>
+                            </div>
                             <Button href="/login?next={encodeURIComponent(`/event/${event.id}`)}" color="primary" size="lg" class="w-full">
                                 {m.eventDetail_loginToRegister()}
                             </Button>

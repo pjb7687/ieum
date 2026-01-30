@@ -384,6 +384,7 @@ def update_event(request, event_id: int):
     event.main_languages = main_languages if main_languages else ['en']
     event.registration_deadline = data["registration_deadline"] if data["registration_deadline"] else None
     event.capacity = data["capacity"]
+    event.registration_fee = int(data["registration_fee"]) if data.get("registration_fee") not in [None, ""] else None
     event.accepts_abstract = data["accepts_abstract"] == "true"
     event.published = data.get("published", "false") == "true"
     event.save()
