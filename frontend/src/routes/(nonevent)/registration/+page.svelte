@@ -22,7 +22,7 @@
         nationality: yup.string().required(m.validation_nationalityRequired()),
         job_title: yup.string().required(m.validation_jobTitleRequired()),
         department: yup.string(),
-        institute: yup.string().required(m.validation_instituteRequired()),
+        institute: yup.number().required(m.validation_instituteRequired()),
         disability: yup.string(),
         dietary: yup.string(),
     });

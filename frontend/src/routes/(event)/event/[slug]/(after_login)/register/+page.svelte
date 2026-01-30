@@ -42,7 +42,7 @@
         // All personal info fields allow all languages (set by institution modal or user input)
         job_title: yup.string().required(m.validation_jobTitleRequired()),
         department: yup.string(),
-        institute: yup.string().required(m.validation_instituteRequired()),
+        institute: yup.number().required(m.validation_instituteRequired()),
         disability: yup.string(),
         dietary: yup.string(),
     };

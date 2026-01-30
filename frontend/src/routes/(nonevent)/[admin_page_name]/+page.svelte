@@ -421,7 +421,7 @@
                 korean_name: selected_user.korean_name || '',
                 last_name: selected_user.last_name,
                 nationality: selected_user.nationality ? selected_user.nationality.toString() : '',
-                institute: selected_user.institute ? selected_user.institute.toString() : '',
+                institute: selected_user.institute,
                 department: selected_user.department || '',
                 job_title: selected_user.job_title || '',
                 disability: selected_user.disability || '',
