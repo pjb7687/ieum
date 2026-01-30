@@ -354,8 +354,9 @@
                         <p class="text-gray-700 mb-6">{m.eventRegister_confirmDescription()}</p>
                     </div>
 
-                    <!-- Personal Information Review -->
+                    <!-- Confirmation Card -->
                     <div class="border border-gray-200 rounded-lg p-6">
+                        <!-- Personal Information -->
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">{m.eventRegister_personalInfo()}</h3>
                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {#if hasEnglish}
@@ -396,25 +397,32 @@
                                     <dd class="mt-1 text-sm text-gray-900">{$formData.department}</dd>
                                 </div>
                             {/if}
-                            {#if $formData.disability}
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">{m.profile_disability()}</dt>
-                                    <dd class="mt-1 text-sm text-gray-900">{$formData.disability}</dd>
-                                </div>
-                            {/if}
-                            {#if $formData.dietary}
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">{m.profile_dietary()}</dt>
-                                    <dd class="mt-1 text-sm text-gray-900">{$formData.dietary}</dd>
-                                </div>
-                            {/if}
                         </dl>
-                    </div>
 
-                    <!-- Event-Specific Answers -->
-                    {#if data.questions.length > 0}
-                        <div class="border border-gray-200 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">{m.myRegistration_eventSpecificAnswers()}</h3>
+                        <!-- Additional Information -->
+                        {#if $formData.disability || $formData.dietary}
+                            <hr class="my-6 border-gray-200" />
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">{m.form_additionalInfo()}</h3>
+                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {#if $formData.disability}
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">{m.profile_disability()}</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">{$formData.disability}</dd>
+                                    </div>
+                                {/if}
+                                {#if $formData.dietary}
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">{m.profile_dietary()}</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">{$formData.dietary}</dd>
+                                    </div>
+                                {/if}
+                            </dl>
+                        {/if}
+
+                        <!-- Event-Specific Questions -->
+                        {#if data.questions.length > 0}
+                            <hr class="my-6 border-gray-200" />
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">{m.eventRegister_eventSpecificInfo()}</h3>
                             <dl class="space-y-4">
                                 {#each data.questions as question}
                                     <div>
@@ -438,18 +446,17 @@
                                     </div>
                                 {/each}
                             </dl>
-                        </div>
-                    {/if}
+                        {/if}
 
-                    <!-- Registration Fee (if not free) -->
-                    {#if !isFreeEvent}
-                        <div class="border border-gray-300 rounded-lg p-6 bg-gray-50">
+                        <!-- Registration Fee (if not free) -->
+                        {#if !isFreeEvent}
+                            <hr class="my-6 border-gray-200" />
                             <div class="flex justify-between items-center">
                                 <span class="text-lg font-semibold text-gray-900">{m.eventDetail_registrationFee()}</span>
                                 <span class="text-2xl font-bold text-gray-900">{formattedRegistrationFee()}</span>
                             </div>
-                        </div>
-                    {/if}
+                        {/if}
+                    </div>
 
                     {#if error_message}
                         <Alert color="red" class="error">{error_message}</Alert>
