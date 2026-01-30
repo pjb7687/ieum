@@ -12,7 +12,7 @@
     let { data } = $props();
 
     // Create a sorted derived value for attendees
-    let sortedAttendees = $derived([...sortedAttendees].sort((a, b) => a.id - b.id));
+    let sortedAttendees = $derived([...data.attendees].sort((a, b) => a.id - b.id));
 
     const exportAttendeesAsCSV = () => {
         const csv = [
