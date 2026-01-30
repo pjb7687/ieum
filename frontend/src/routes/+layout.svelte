@@ -10,6 +10,7 @@
 		DropdownItem,
 		DropdownDivider,
 		Button,
+		Spinner,
 	} from "flowbite-svelte";
 	import { GlobeOutline } from "flowbite-svelte-icons";
 	import { onMount } from 'svelte';
@@ -25,6 +26,7 @@
 
 	let currentLanguage = $state(languageTag());
 	let profileDropdownOpen = $state(false);
+	let isLoading = $state(true);
 
 	onMount(() => {
 		// Set up callback to update state when language changes
@@ -54,6 +56,9 @@
 
 		// Update current language state after setting
 		currentLanguage = languageTag();
+
+		// Mark loading as complete
+		isLoading = false;
 	});
 
 	function switchLanguage(newLocale) {
@@ -69,8 +74,13 @@
 	);
 </script>
 
-{#key currentLanguage}
-<div class="min-h-screen bg-slate-50">
+{#if isLoading}
+	<div class="fixed inset-0 bg-white flex items-center justify-center z-50">
+		<Spinner size="12" />
+	</div>
+{:else}
+	{#key currentLanguage}
+	<div class="min-h-screen bg-slate-50">
 <Navbar class="border-b border-gray-200 bg-white py-2">
 	<div class="container mx-auto flex items-center justify-between px-4">
 		<!-- Logo -->
@@ -165,7 +175,8 @@
 				</p>
 			</div>
 		</div>
+		</div>
+	</footer>
 	</div>
-</footer>
-</div>
-{/key}
+	{/key}
+{/if}
