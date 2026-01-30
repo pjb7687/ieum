@@ -389,7 +389,6 @@
 
 <Modal id="qr_modal" size="md" title={m.onsiteRegistration_qrCodeTitle()} bind:open={qr_modal} outsideclose>
     <div class="flex flex-col items-center">
-        <p class="text-center text-sm text-gray-600 mb-4">{m.onsiteRegistration_qrCodeDescription()}</p>
         {#if qr_code_url}
             <img src={qr_code_url} alt="QR Code" class="w-full max-w-md" />
         {/if}

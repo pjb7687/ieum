@@ -397,7 +397,6 @@
 	"onsiteRegistration_jobTitleRequired": "직책을 입력해주세요.",
 	"onsiteRegistration_qrCode": "현장 등록 QR 코드",
 	"onsiteRegistration_qrCodeTitle": "현장 등록 QR 코드",
-	"onsiteRegistration_qrCodeDescription": "이 QR 코드를 스캔하여 현장 등록 페이지에 접속하세요.",
 	"onsiteRegistration_linkUrl": "등록 링크",
 
 	"abstracts_title": "초록",
