@@ -106,5 +106,24 @@ export const actions = {
         } else {
             throw error(response.status, response.data);
         }
+    },
+    'update_user': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        let user_id = formdata.get('user_id');
+
+        // Convert FormData to JSON object
+        const data = {};
+        for (const [key, value] of formdata.entries()) {
+            if (key !== 'user_id') {
+                data[key] = value;
+            }
+        }
+
+        const response = await post(`api/admin/user/${user_id}/update`, data, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
     }
 };

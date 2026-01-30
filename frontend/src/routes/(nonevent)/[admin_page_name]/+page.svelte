@@ -1,11 +1,13 @@
 <script>
     import { TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell} from 'flowbite-svelte';
     import { Modal, Heading, Button, Alert } from 'flowbite-svelte';
-    import { CogSolid, TrashBinSolid } from 'flowbite-svelte-icons';
+    import { CogSolid, TrashBinSolid, UserEditSolid } from 'flowbite-svelte-icons';
     import { enhance } from '$app/forms';
     import * as m from '$lib/paraglide/messages.js';
+    import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
 
     import EventAdminForm from '$lib/components/EventAdminForm.svelte';
+    import RegistrationForm from '$lib/components/RegistrationForm.svelte';
 
     let { data } = $props();
 
@@ -22,10 +24,14 @@
     let user_search_term = $state('');
     let filtered_users = $state([]);
     $effect(() => {
-        filtered_users = data.admin.users.filter((user) =>
-            user.name.toLowerCase().indexOf(user_search_term.toLowerCase()) !== -1 ||
-            user.email.toLowerCase().indexOf(user_search_term.toLowerCase()) !== -1
-        );
+        filtered_users = data.admin.users.filter((user) => {
+            const searchLower = user_search_term.toLowerCase();
+            return user.name.toLowerCase().includes(searchLower) ||
+                   (user.korean_name && user.korean_name.toLowerCase().includes(searchLower)) ||
+                   user.email.toLowerCase().includes(searchLower) ||
+                   (user.institute_en && user.institute_en.toLowerCase().includes(searchLower)) ||
+                   (user.institute_ko && user.institute_ko.toLowerCase().includes(searchLower));
+        });
     });
 
     let institution_search_term = $state('');
@@ -122,6 +128,30 @@
         // Clear any previous error messages
         create_error = '';
     }
+
+    // User management
+    let selected_user = $state(null);
+    let user_edit_modal = $state(false);
+    let user_edit_error = $state('');
+
+    const openUserEditModal = (user) => {
+        selected_user = user;
+        user_edit_modal = true;
+        user_edit_error = '';
+    };
+
+    const afterUserEdit = () => {
+        return async ({ result, update }) => {
+            if (result.type === "success") {
+                await update();
+                user_edit_modal = false;
+                user_edit_error = '';
+                selected_user = null;
+            } else {
+                user_edit_error = result.error?.message || 'An error occurred';
+            }
+        }
+    };
 
     // Institution management
     let selected_institution = $state(null);
@@ -250,16 +280,19 @@
             <TableHeadCell>{m.admin_tableId()}</TableHeadCell>
             <TableHeadCell>{m.admin_tableUserName()}</TableHeadCell>
             <TableHeadCell>{m.admin_tableEmail()}</TableHeadCell>
+            <TableHeadCell>{m.admin_tableInstitute()}</TableHeadCell>
             <TableHeadCell>{m.admin_tableJoinDate()}</TableHeadCell>
             <TableHeadCell>{m.admin_tableActiveStatus()}</TableHeadCell>
             <TableHeadCell>{m.admin_tableVerifiedStatus()}</TableHeadCell>
+            <TableHeadCell class="w-1">{m.admin_tableActions()}</TableHeadCell>
         </TableHead>
         <TableBody>
             {#each filtered_users as user}
                 <TableBodyRow>
                     <TableBodyCell>{user.id}</TableBodyCell>
-                    <TableBodyCell>{user.name}</TableBodyCell>
+                    <TableBodyCell>{getDisplayName(user)}</TableBodyCell>
                     <TableBodyCell>{user.email}</TableBodyCell>
+                    <TableBodyCell>{getDisplayInstitute(user)}</TableBodyCell>
                     <TableBodyCell>{new Date(user.date_joined).toLocaleDateString()}</TableBodyCell>
                     <TableBodyCell>
                         <form method="post" action="?/toggle_user_active" use:enhance>
@@ -277,11 +310,18 @@
                             </Button>
                         </form>
                     </TableBodyCell>
+                    <TableBodyCell>
+                        <div class="flex justify-center">
+                            <Button color="none" size="none" onclick={() => openUserEditModal(user)}>
+                                <UserEditSolid class="w-5 h-5" />
+                            </Button>
+                        </div>
+                    </TableBodyCell>
                 </TableBodyRow>
             {/each}
             {#if filtered_users.length === 0}
                 <TableBodyRow>
-                    <TableBodyCell colspan="6" class="text-center">{m.admin_noUsersFound()}</TableBodyCell>
+                    <TableBodyCell colspan="8" class="text-center">{m.admin_noUsersFound()}</TableBodyCell>
                 </TableBodyRow>
             {/if}
         </TableBody>
@@ -366,4 +406,42 @@
             <Button color="dark" type="button" onclick={() => institution_delete_modal = false}>{m.common_cancel()}</Button>
         </div>
     </form>
+</Modal>
+
+<!-- User Edit Modal -->
+<Modal id="user_edit_modal" size="xl" title={m.admin_editUser()} bind:open={user_edit_modal} outsideclose>
+    {#if selected_user}
+    <form method="post" action="?/update_user" use:enhance={afterUserEdit}>
+        <input type="hidden" name="user_id" value={selected_user.id} />
+        <RegistrationForm
+            data={{
+                email: selected_user.email,
+                first_name: selected_user.first_name,
+                middle_initial: selected_user.middle_initial,
+                korean_name: selected_user.korean_name || '',
+                last_name: selected_user.last_name,
+                nationality: selected_user.nationality ? selected_user.nationality.toString() : '',
+                institute: selected_user.institute || '',
+                department: selected_user.department || '',
+                job_title: selected_user.job_title || '',
+                disability: selected_user.disability || '',
+                dietary: selected_user.dietary || ''
+            }}
+            errors={{}}
+            config={{
+                hide_login_info: true,
+                hide_password: true,
+                show_english_name: true,
+                show_korean_name: true
+            }}
+        />
+        {#if user_edit_error}
+            <Alert color="red" class="mb-6">{user_edit_error}</Alert>
+        {/if}
+        <div class="flex justify-center gap-2 mt-6">
+            <Button color="primary" type="submit">{m.admin_update()}</Button>
+            <Button color="alternative" type="button" onclick={() => user_edit_modal = false}>{m.common_cancel()}</Button>
+        </div>
+    </form>
+    {/if}
 </Modal>

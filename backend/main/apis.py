@@ -961,6 +961,45 @@ def toggle_user_verified(request, user_id: int):
             status=404,
         )
 
+@ensure_staff
+@api.post("/admin/user/{user_id}/update", response=UserSchema)
+def update_user_by_admin(request, user_id: int):
+    try:
+        user = User.objects.get(id=user_id)
+        data = json.loads(request.body)
+
+        # Update user fields
+        if "first_name" in data:
+            user.first_name = data["first_name"]
+        if "last_name" in data:
+            user.last_name = data["last_name"]
+        if "middle_initial" in data:
+            user.middle_initial = data["middle_initial"]
+        if "korean_name" in data:
+            user.korean_name = data["korean_name"]
+        if "nationality" in data:
+            user.nationality = int(data["nationality"])
+        if "institute" in data:
+            institute_id = int(data["institute"]) if data["institute"] else None
+            user.institute_id = institute_id
+        if "department" in data:
+            user.department = data["department"]
+        if "job_title" in data:
+            user.job_title = data["job_title"]
+        if "disability" in data:
+            user.disability = data["disability"]
+        if "dietary" in data:
+            user.dietary = data["dietary"]
+
+        user.save()
+        return user
+    except User.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "User not found."},
+            status=404,
+        )
+
 @api.post("/generate-verification-key", response=VerificationKeyResponseSchema, auth=None)
 def generate_verification_key(request, data: GenerateVerificationKeySchema):
     import secrets
