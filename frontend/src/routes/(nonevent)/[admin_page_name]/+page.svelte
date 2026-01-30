@@ -425,15 +425,22 @@
                 department: selected_user.department || '',
                 job_title: selected_user.job_title || '',
                 disability: selected_user.disability || '',
-                dietary: selected_user.dietary || ''
+                dietary: selected_user.dietary || '',
+                orcid: selected_user.orcid || ''
             }}
             errors={{}}
             config={{
                 hide_login_info: true,
                 hide_password: true,
                 show_english_name: true,
-                show_korean_name: true
+                show_korean_name: true,
+                csrf_token: page_data.csrf_token
             }}
+            institution_resolved={selected_user.institute ? {
+                id: selected_user.institute,
+                name_en: selected_user.institute_en,
+                name_ko: selected_user.institute_ko
+            } : null}
         />
         {#if user_edit_error}
             <Alert color="red" class="mb-6">{user_edit_error}</Alert>
