@@ -47,7 +47,7 @@ class UserSchema(Schema):
     nationality: int
     job_title: str
     department: str
-    institute: str
+    institute_en: str
     institute_ko: str
     disability: str
     dietary: str
@@ -57,7 +57,7 @@ class UserSchema(Schema):
     email_verified: bool
 
     @staticmethod
-    def resolve_institute(user: User) -> str:
+    def resolve_institute_en(user: User) -> str:
         if user.institute:
             return user.institute.name_en
         return ""
@@ -74,10 +74,6 @@ class UserSchema(Schema):
         if linked_accounts.count() > 0:
             return linked_accounts[0].uid
         return ""
-
-    @staticmethod
-    def resolve_institute(user: User) -> str:
-        return str(user.institute.id) if user.institute else ""
 
     @staticmethod
     def resolve_name(user: User) -> str:

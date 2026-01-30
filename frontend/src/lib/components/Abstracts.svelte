@@ -6,17 +6,9 @@
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
-    import { languageTag } from '$lib/paraglide/runtime.js';
+    import { getDisplayInstitute } from '$lib/utils.js';
 
     let { data } = $props();
-
-    function getDisplayInstitute(attendee) {
-        const currentLang = languageTag();
-        if (currentLang === 'ko' && attendee.institute_ko) {
-            return attendee.institute_ko;
-        }
-        return attendee.institute;
-    }
 
     let searchTermReviewer = $state('');
     let filteredReviewers = $state([]);
