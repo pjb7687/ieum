@@ -211,6 +211,11 @@ def get_events(request, offset: int = 0, limit: int = 20, year: str = None, sear
     from django.db.models import Q
 
     events = Event.objects.all()
+    if request.user.is_authenticated:
+        if not request.user.is_superuser:
+            events = events.filter(Q(published=True) | Q(admins=request.user))
+    else:
+        events = events.filter(published=True)
 
     # Apply filters
     if year and year != 'all':
@@ -380,6 +385,7 @@ def update_event(request, event_id: int):
     event.registration_deadline = data["registration_deadline"] if data["registration_deadline"] else None
     event.capacity = data["capacity"]
     event.accepts_abstract = data["accepts_abstract"] == "true"
+    event.published = data.get("published", "false") == "true"
     event.save()
     if event.accepts_abstract:
         event.abstract_deadline = data["abstract_deadline"] if data["abstract_deadline"] else None
@@ -388,6 +394,14 @@ def update_event(request, event_id: int):
         event.save()
 
     return {"code": "success", "message": "Event updated."}
+
+@ensure_event_staff
+@api.post("/event/{event_id}/toggle_published", response=MessageSchema)
+def toggle_published(request, event_id: int):
+    event = Event.objects.get(id=event_id)
+    event.published = not event.published
+    event.save()
+    return {"code": "success", "message": "Event published status updated."}
 
 @ensure_staff
 @api.post("/admin/event/{event_id}/delete", response=MessageSchema)

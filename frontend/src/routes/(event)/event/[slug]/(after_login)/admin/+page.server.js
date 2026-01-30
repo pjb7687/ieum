@@ -35,6 +35,15 @@ export async function load({ parent, params, cookies, request }) {
 
 /** @type {import('./$types').Actions} */
 export const actions = {
+    toggle_published: async ({ cookies, params, request }) => {
+        const response = await post(`api/event/${params.slug}/toggle_published`, {}, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
     update_event: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
         const response = await post(`api/event/${params.slug}/update`, formdata, cookies);

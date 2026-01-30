@@ -20,7 +20,7 @@ export async function load({ parent, cookies, url }) {
     if (search) queryParams.append('search', search);
     if (showOnlyOpen) queryParams.append('showOnlyOpen', 'true');
 
-    const response_events = await get(`api/events?${queryParams.toString()}`);
+    const response_events = await get(`api/events?${queryParams.toString()}`, cookies);
     if (response_events.ok && response_events.status === 200) {
         rtn.eventsData = response_events.data;
     } else {

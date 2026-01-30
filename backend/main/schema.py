@@ -122,6 +122,7 @@ class EventSchema(Schema):
     registration_deadline: Union[date, None]
     accepts_abstract: bool
     abstract_deadline: Union[date, None]
+    published: bool
 
 class PaginatedEventsSchema(Schema):
     events: List[EventSchema]
@@ -162,6 +163,7 @@ class EventAdminSchema(Schema):
     max_votes: Union[int, None]
     email_template_registration: Union[EmailTemplateSchema, None]
     email_template_abstract_submission: Union[EmailTemplateSchema, None]
+    published: bool
 
 class RegistrationStatusSchema(Schema):
     registered: bool

@@ -1,9 +1,9 @@
 <script>
     import { error } from '@sveltejs/kit';
-    import { Modal, Heading, Button, Table, TableSearch, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Input, Label } from 'flowbite-svelte';
+    import { Modal, Heading, Button, Table, TableSearch, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Input, Label, Toggle } from 'flowbite-svelte';
     import { Card, List, Li, Checkbox, Datepicker, Textarea, Select } from 'flowbite-svelte';
     import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper, Alert } from 'flowbite-svelte';
-    import { NewspaperSolid, EnvelopeSolid, ClipboardListSolid, MicrophoneSolid, UsersGroupSolid, EditSolid, ProfileCardSolid } from 'flowbite-svelte-icons';
+    import { NewspaperSolid, EnvelopeSolid, ClipboardListSolid, MicrophoneSolid, UsersGroupSolid, EditSolid, ProfileCardSolid, EyeSolid, EyeSlashSolid } from 'flowbite-svelte-icons';
     import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
     import * as m from '$lib/paraglide/messages.js';
@@ -51,6 +51,8 @@
     };
 
     let show_sidebar = $state(true);
+    let published = $state(data.event.published);
+    let saving_published = $state(false);
 
     $effect.pre(() => {
         setAdminPage();
@@ -80,6 +82,31 @@
     </div>
 
     <div id="scroll_here">&nbsp;</div>
+
+    <!-- Published Toggle -->
+    <div class="flex justify-end mb-4">
+        <form method="POST" action="?/toggle_published" use:enhance={() => {
+            saving_published = true;
+            return async ({ result, update }) => {
+                if (result.type === 'success') {
+                    published = !published;
+                }
+                saving_published = false;
+                await update();
+            };
+        }}>
+            <Button type="submit" color={published ? 'green' : 'light'} size="lg" disabled={saving_published}>
+                {#if published}
+                    <EyeSolid class="w-5 h-5 me-2" />
+                    {m.eventPublished_published()}
+                {:else}
+                    <EyeSlashSolid class="w-5 h-5 me-2" />
+                    {m.eventPublished_draft()}
+                {/if}
+            </Button>
+        </form>
+    </div>
+
     <Card size="none" class="!p-0">
         <div class="flex flex-row">
             <div class={"border-r lg:relative fixed bottom-0 top-0 left-0 bg-white z-10" + (show_sidebar ? " w-[292px] md:w-[300px] p-4 sm:p-6" : " w-0 py-4 sm:py-6")}>
