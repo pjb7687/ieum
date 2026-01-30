@@ -111,6 +111,7 @@ class EventSchema(Schema):
     start_date: date
     end_date: date
     venue: str
+    venue_ko: str
     venue_address: str
     venue_latitude: Union[float, None]
     venue_longitude: Union[float, None]
@@ -143,6 +144,7 @@ class EventAdminSchema(Schema):
     start_date: date
     end_date: date
     venue: str
+    venue_ko: str
     venue_address: str
     venue_latitude: Union[float, None]
     venue_longitude: Union[float, None]

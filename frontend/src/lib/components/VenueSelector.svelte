@@ -2,11 +2,13 @@
   import { Input, Label, Alert, Modal, Button } from 'flowbite-svelte';
   import { MapPinAltSolid } from 'flowbite-svelte-icons';
   import * as m from '$lib/paraglide/messages.js';
+  import { languageTag } from '$lib/paraglide/runtime.js';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
 
   let {
     venueName = $bindable(''),
+    venueNameKo = $bindable(''),
     venueAddress = $bindable(''),
     venueLatitude = $bindable(null),
     venueLongitude = $bindable(null),
@@ -211,6 +213,7 @@
 
   function clearVenue() {
     venueName = '';
+    venueNameKo = '';
     venueAddress = '';
     venueLatitude = null;
     venueLongitude = null;
@@ -218,19 +221,61 @@
 </script>
 
 <div class="space-y-4">
-  <div>
-    <Label for="venue_name" class="block mb-2">
-      {m.form_venueName()}{required ? '*' : ''}
-    </Label>
-    <Input
-      id="venue_name"
-      name="venue"
-      type="text"
-      bind:value={venueName}
-      placeholder={m.form_venueNamePlaceholder()}
-      required={required}
-    />
-  </div>
+  {#if languageTag() === 'ko'}
+    <!-- Korean venue name first when UI is Korean -->
+    <div>
+      <Label for="venue_name_ko" class="block mb-2">
+        {m.form_venueNameKo()}
+      </Label>
+      <Input
+        id="venue_name_ko"
+        name="venue_ko"
+        type="text"
+        bind:value={venueNameKo}
+        placeholder={m.form_venueNameKo()}
+      />
+    </div>
+    <div>
+      <Label for="venue_name" class="block mb-2">
+        {m.form_venueName()}{required ? '*' : ''}
+      </Label>
+      <Input
+        id="venue_name"
+        name="venue"
+        type="text"
+        bind:value={venueName}
+        placeholder={m.form_venueNamePlaceholder()}
+        required={required}
+      />
+    </div>
+  {:else}
+    <!-- English venue name first when UI is English -->
+    <div>
+      <Label for="venue_name" class="block mb-2">
+        {m.form_venueName()}{required ? '*' : ''}
+      </Label>
+      <Input
+        id="venue_name"
+        name="venue"
+        type="text"
+        bind:value={venueName}
+        placeholder={m.form_venueNamePlaceholder()}
+        required={required}
+      />
+    </div>
+    <div>
+      <Label for="venue_name_ko" class="block mb-2">
+        {m.form_venueNameKo()}
+      </Label>
+      <Input
+        id="venue_name_ko"
+        name="venue_ko"
+        type="text"
+        bind:value={venueNameKo}
+        placeholder={m.form_venueNameKo()}
+      />
+    </div>
+  {/if}
 
   <div>
     <Label for="venue_address" class="block mb-2">

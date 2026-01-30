@@ -10,6 +10,7 @@
         category: 'conference',
         organizers: '',
         venue: '',
+        venue_ko: '',
         venue_address: '',
         venue_latitude: null,
         venue_longitude: null,
@@ -28,6 +29,7 @@
     let description = $state(data.description);
     let category = $state(data.category);
     let venue = $state(data.venue);
+    let venue_ko = $state(data.venue_ko);
     let venue_address = $state(data.venue_address);
     let venue_latitude = $state(data.venue_latitude);
     let venue_longitude = $state(data.venue_longitude);
@@ -39,6 +41,7 @@
         data.description = description;
         data.category = category;
         data.venue = venue;
+        data.venue_ko = venue_ko;
         data.venue_address = venue_address;
         data.venue_latitude = venue_latitude;
         data.venue_longitude = venue_longitude;
@@ -113,6 +116,7 @@
 <div class="mb-6">
     <VenueSelector
         bind:venueName={venue}
+        bind:venueNameKo={venue_ko}
         bind:venueAddress={venue_address}
         bind:venueLatitude={venue_latitude}
         bind:venueLongitude={venue_longitude}

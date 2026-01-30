@@ -13,6 +13,7 @@
         GlobeSolid
     } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
+    import { getDisplayVenue } from '$lib/utils.js';
     import { marked } from 'marked';
     import { browser } from '$app/environment';
     import VenueMapWidget from '$lib/components/VenueMapWidget.svelte';
@@ -68,7 +69,7 @@
     });
 
     // Share text
-    const shareText = `${event.name} - ${event.start_date} to ${event.end_date} at ${event.venue}`;
+    const shareText = `${event.name} - ${event.start_date} to ${event.end_date} at ${getDisplayVenue(event)}`;
     const shareTitle = event.name;
 
     // Share functions
@@ -139,7 +140,7 @@
                         <MapPinAltSolid class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                         <div class="flex-1">
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_venue()}</p>
-                            <p class="text-sm text-gray-900 font-medium">{event.venue}</p>
+                            <p class="text-sm text-gray-900 font-medium">{getDisplayVenue(event)}</p>
                             {#if event.venue_address}
                                 <p class="text-xs text-gray-600 mt-1">{event.venue_address}</p>
                             {/if}
@@ -247,7 +248,7 @@
 
             <!-- Location Map -->
             <VenueMapWidget
-                venueName={event.venue}
+                venueName={getDisplayVenue(event)}
                 venueAddress={event.venue_address}
                 venueLatitude={event.venue_latitude}
                 venueLongitude={event.venue_longitude}

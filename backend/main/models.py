@@ -116,7 +116,8 @@ class Event(models.Model):
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='conference')
     start_date = models.DateField()
     end_date = models.DateField()
-    venue = models.CharField(max_length=1000)  # Venue display name
+    venue = models.CharField(max_length=1000)  # Venue display name (English)
+    venue_ko = models.CharField(max_length=1000, blank=True)  # Venue display name (Korean)
     venue_address = models.CharField(max_length=1000, blank=True)  # Full address
     venue_latitude = models.FloatField(blank=True, null=True)  # Latitude for map
     venue_longitude = models.FloatField(blank=True, null=True)  # Longitude for map

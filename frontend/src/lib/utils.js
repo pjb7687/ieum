@@ -28,3 +28,16 @@ export function getDisplayName(obj) {
     }
     return obj.name || '';
 }
+
+/**
+ * Get the display venue for an event based on the current UI language
+ * @param {Object} event - Event object
+ * @returns {string} - Venue name in the appropriate language
+ */
+export function getDisplayVenue(event) {
+    const currentLang = languageTag();
+    if (currentLang === 'ko' && event.venue_ko) {
+        return event.venue_ko;
+    }
+    return event.venue || '';
+}

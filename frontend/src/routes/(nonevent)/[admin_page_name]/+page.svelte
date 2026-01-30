@@ -4,7 +4,7 @@
     import { CogSolid, TrashBinSolid, UserEditSolid } from 'flowbite-svelte-icons';
     import { enhance } from '$app/forms';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
+    import { getDisplayInstitute, getDisplayName, getDisplayVenue } from '$lib/utils.js';
 
     import EventAdminForm from '$lib/components/EventAdminForm.svelte';
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
@@ -217,7 +217,7 @@
                     </TableBodyCell>
                     <TableBodyCell>
                         <div>
-                            <div class="font-medium">{event.venue}</div>
+                            <div class="font-medium">{getDisplayVenue(event)}</div>
                             {#if event.venue_address}
                                 <div class="text-sm text-gray-600">{event.venue_address}</div>
                             {/if}
