@@ -326,8 +326,10 @@
 
     let nametag_modal = $state(false);
     let selected_nametag = $state({});
-    let role = $state(m.attendees_participant()); // Default role for nametag
-    const showNametagModal = async (id) => {
+    let selected_nametag_id = $state(null);
+    let selected_role = $state('Participant');
+
+    const generateNametag = async (id, role) => {
         // Wait for font to load
         if (!fontLoaded) {
             await loadKoreanFont();
@@ -364,7 +366,17 @@
         doc.line(5, 82, 85, 82);
         doc.text(role, 45, 93, 'center');
         selected_nametag = doc.output('bloburi');
+    };
+
+    const showNametagModal = async (id) => {
+        selected_nametag_id = id;
+        selected_role = 'Participant';
+        await generateNametag(id, selected_role);
         nametag_modal = true;
+    };
+
+    const applyRole = async () => {
+        await generateNametag(selected_nametag_id, selected_role);
     };
 
     let cert_modal = $state(false);
@@ -453,7 +465,6 @@
     </div>
 </div>
 <p class="mt-5 mb-3 text-sm text-right">{table_data_attendees.length} {m.attendees_peopleRegistered()}</p>
-<Input type="text" placeholder={m.attendees_role()} bind:value={role} class="mb-6" /><br>
 <TableSearch placeholder={m.attendees_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermAttendee}>
     <TableHead>
         <TableHeadCell class="w-1">
@@ -648,6 +659,17 @@
 </Modal>
 
 <Modal id="nametag_modal" size="lg" title={m.attendees_nametag()} bind:open={nametag_modal} outsideclose>
+    <div class="mb-4 flex gap-2 items-center">
+        <Label for="role" class="whitespace-nowrap">Role:</Label>
+        <Select id="role" bind:value={selected_role} items={[
+            { value: 'Participant', name: 'Participant' },
+            { value: 'Speaker', name: 'Speaker' },
+            { value: 'Organizer', name: 'Organizer' },
+            { value: 'Staff', name: 'Staff' },
+            { value: 'Volunteer', name: 'Volunteer' }
+        ]} class="flex-1" />
+        <Button color="primary" onclick={applyRole}>{m.common_apply()}</Button>
+    </div>
     <iframe id="nametag" class="w-full h-[500px]" src={selected_nametag} title={m.attendees_nametag()}>
         {m.attendees_iframeNotSupported()}
     </iframe>
