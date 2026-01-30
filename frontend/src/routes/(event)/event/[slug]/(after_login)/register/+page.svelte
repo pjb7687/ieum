@@ -18,7 +18,6 @@
     let event = data.event;
     let deadline = event.registration_deadline ? new Date(event.registration_deadline) : new Date(event.start_date);
     let now = new Date();
-    let institutions = $state(data.institutions || []);
 
     // Determine which languages are included in the event
     const hasEnglish = event.main_languages && event.main_languages.includes('en');
@@ -161,7 +160,7 @@
             </div>
 
             <form use:felteForm method="post" class="space-y-6">
-                <RegistrationForm data={$formData} errors={$errors} config={form_config} bind:institutions />
+                <RegistrationForm data={$formData} errors={$errors} config={form_config} institution_resolved={data.user?.institution_resolved} />
 
                 {#if data.questions.length > 0}
                     <div class="pt-6 border-t border-gray-200">

@@ -14,16 +14,16 @@ export async function load({ parent, params, cookies }) {
         } else {
             error(500, "Internal Server Error");
         }
+
+        // Resolve user's current institution by ID
+        if (rtn.user.institute) {
+            const institutionResponse = await get(`api/institutions/${rtn.user.institute}`, cookies);
+            if (institutionResponse.ok) {
+                rtn.user.institution_resolved = institutionResponse.data;
+            }
+        }
     } else {
         return redirect(303, `/login?next=${encodeURIComponent(`/event/${params.slug}/register`)}`);
-    }
-
-    // Load all institutions for the lookup component
-    const institutionsResponse = await get('api/institutions', cookies);
-    if (institutionsResponse.ok) {
-        rtn.institutions = institutionsResponse.data;
-    } else {
-        rtn.institutions = [];
     }
 
     return rtn;
@@ -31,6 +31,17 @@ export async function load({ parent, params, cookies }) {
 
 /** @type {import('./$types').Actions} */
 export const actions = {
+    search_institutions: async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const search = formdata.get('search') || '';
+
+        const response = await get(`api/institutions?search=${encodeURIComponent(search)}`, cookies);
+        if (response.ok) {
+            return { success: true, institutions: response.data };
+        } else {
+            return { success: false, institutions: [] };
+        }
+    },
     create_institution: async ({ cookies, request }) => {
         let formdata = await request.formData();
         const data = {
