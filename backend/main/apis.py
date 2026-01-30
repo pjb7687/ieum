@@ -1193,20 +1193,12 @@ def get_email_templates(request, event_id: int):
 def register_on_site(request, event_id: int):
     event = Event.objects.get(id=event_id)
     data = json.loads(request.body)
-    # Auto-create institution if it doesn't exist
-    institute_name = data.get("institute", "")
-    if institute_name:
-        institution, _ = Institution.objects.get_or_create(
-            name_en=institute_name,
-            defaults={'name_ko': ''}
-        )
-        institute_name = institution.name_en
 
     oa = OnSiteAttendee.objects.create(
         event=event,
         name=data.get("name"),
         email=data.get("email", ""),
-        institute=institute_name,
+        institute=data.get("institute", ""),
         job_title=data.get("job_title", "")
     )
     return {"code": "success", "message": "Successfully registered on-site.", "id": oa.id}
