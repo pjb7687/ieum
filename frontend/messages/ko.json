@@ -362,6 +362,7 @@
 	"onsiteAttendees_searchPlaceholder": "이름으로 검색",
 	"onsiteAttendees_id": "ID",
 	"onsiteAttendees_name": "이름",
+	"onsiteAttendees_email": "이메일",
 	"onsiteAttendees_institute": "소속 기관",
 	"onsiteAttendees_jobTitle": "직위",
 	"onsiteAttendees_actions": "작업",

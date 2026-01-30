@@ -362,6 +362,7 @@
 	"onsiteAttendees_searchPlaceholder": "Search by First Name",
 	"onsiteAttendees_id": "ID",
 	"onsiteAttendees_name": "Name",
+	"onsiteAttendees_email": "Email",
 	"onsiteAttendees_institute": "Institute",
 	"onsiteAttendees_jobTitle": "Job Title",
 	"onsiteAttendees_actions": "Actions",

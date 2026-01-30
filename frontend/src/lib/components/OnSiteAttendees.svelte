@@ -276,6 +276,7 @@
         </TableHeadCell>
         <TableHeadCell>{m.onsiteAttendees_id()}</TableHeadCell>
         <TableHeadCell>{m.onsiteAttendees_name()}</TableHeadCell>
+        <TableHeadCell>{m.onsiteAttendees_email()}</TableHeadCell>
         <TableHeadCell>{m.onsiteAttendees_institute()}</TableHeadCell>
         <TableHeadCell>{m.onsiteAttendees_jobTitle()}</TableHeadCell>
         <TableHeadCell class="w-1">{m.onsiteAttendees_actions()}</TableHeadCell>
@@ -292,6 +293,7 @@
                 }} /></TableBodyCell>
                 <TableBodyCell>{row.id}</TableBodyCell>
                 <TableBodyCell>{row.name}</TableBodyCell>
+                <TableBodyCell>{row.email}</TableBodyCell>
                 <TableBodyCell>{row.institute}</TableBodyCell>
                 <TableBodyCell>{row.job_title}</TableBodyCell>
                 <TableBodyCell>
@@ -314,7 +316,7 @@
         {/each}
         {#if filteredAttendees.length === 0}
             <TableBodyRow>
-                <TableBodyCell colspan="6" class="text-center">{m.onsiteAttendees_noRecords()}</TableBodyCell>
+                <TableBodyCell colspan="7" class="text-center">{m.onsiteAttendees_noRecords()}</TableBodyCell>
             </TableBodyRow>
         {/if}
     </TableBody>
