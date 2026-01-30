@@ -6,8 +6,17 @@
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
+    import { languageTag } from '$lib/paraglide/runtime.js';
 
     let { data } = $props();
+
+    function getDisplayInstitute(user) {
+        const currentLang = languageTag();
+        if (currentLang === 'ko' && user.institute_ko) {
+            return user.institute_ko;
+        }
+        return user.institute;
+    }
 
     let searchTermEventAdmin = $state('');
     let filteredEventAdmins = $state([]);
@@ -72,7 +81,7 @@
             <TableBodyRow>
                 <TableBodyCell>{row.name}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
-                <TableBodyCell>{row.institute}</TableBodyCell>
+                <TableBodyCell>{getDisplayInstitute(row)}</TableBodyCell>
                 <TableBodyCell>
                     <div class="flex justify-center gap-2">
                         <Button color="none" size="none" onclick={() => deleteEventAdminModal(row.id)}>
@@ -95,14 +104,14 @@
         <div class="mb-6">
             <Label for="id" class="block mb-2">{m.eventAdmins_admin()}</Label>
             <Select id="id" name="id" items={
-                data.users.map(a => ({ value: a.id, name: `${a.name}, ${a.institute} (${a.email})` }))
+                data.users.map(a => ({ value: a.id, name: `${a.name}, ${getDisplayInstitute(a)} (${a.email})` }))
             } onchange={
                 (e) => {
                     const id = parseInt(e.target.value);
                     const user = data.users.find(a => a.id === id);
                     document.getElementById('name').value = user.name;
                     document.getElementById('email').value = user.email;
-                    document.getElementById('affiliation').value = user.institute;
+                    document.getElementById('affiliation').value = getDisplayInstitute(user);
                 }
             } />
         </div>

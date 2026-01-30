@@ -6,8 +6,17 @@
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
+    import { languageTag } from '$lib/paraglide/runtime.js';
 
     let { data } = $props();
+
+    function getDisplayInstitute(attendee) {
+        const currentLang = languageTag();
+        if (currentLang === 'ko' && attendee.institute_ko) {
+            return attendee.institute_ko;
+        }
+        return attendee.institute;
+    }
 
     let searchTermReviewer = $state('');
     let filteredReviewers = $state([]);
@@ -163,7 +172,7 @@
                 }} /></TableBodyCell>
                 <TableBodyCell>{row.name}</TableBodyCell>
                 <TableBodyCell>{row.user.email}</TableBodyCell>
-                <TableBodyCell>{row.institute}</TableBodyCell>
+                <TableBodyCell>{getDisplayInstitute(row)}</TableBodyCell>
                 <TableBodyCell>
                     <div class="flex justify-center gap-2">
                         <Button color="none" size="none" onclick={() => deleteReviewerModal(row.id)}>
@@ -227,14 +236,14 @@
         <div class="mb-6">
             <Label for="id" class="block mb-2">{m.abstracts_reviewer()}</Label>
             <Select id="id" name="id" items={
-                data.attendees.map(a => ({ value: a.id, name: a.name + ", " + a.institute }))
+                data.attendees.map(a => ({ value: a.id, name: a.name + ", " + getDisplayInstitute(a) }))
             } onchange={
                 (e) => {
                     const id = parseInt(e.target.value);
                     const attendee = data.attendees.find(a => a.id === id);
                     document.getElementById('name').value = attendee.name;
                     document.getElementById('email').value = attendee.user.email;
-                    document.getElementById('affiliation').value = attendee.institute;
+                    document.getElementById('affiliation').value = getDisplayInstitute(attendee);
                 }
             } />
         </div>

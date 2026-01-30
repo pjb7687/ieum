@@ -48,12 +48,25 @@ class UserSchema(Schema):
     job_title: str
     department: str
     institute: str
+    institute_ko: str
     disability: str
     dietary: str
     is_staff: bool
     is_active: bool
     date_joined: str
     email_verified: bool
+
+    @staticmethod
+    def resolve_institute(user: User) -> str:
+        if user.institute:
+            return user.institute.name_en
+        return ""
+
+    @staticmethod
+    def resolve_institute_ko(user: User) -> str:
+        if user.institute:
+            return user.institute.name_ko
+        return ""
 
     @staticmethod
     def resolve_orcid(user: User) -> str:
