@@ -411,6 +411,36 @@
                         </dl>
                     </div>
 
+                    <!-- Event-Specific Answers -->
+                    {#if data.questions.length > 0}
+                        <div class="border border-gray-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">{m.myRegistration_eventSpecificAnswers()}</h3>
+                            <dl class="space-y-4">
+                                {#each data.questions as question}
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500 mb-2">{@render process_spaces(question.question.question)}</dt>
+                                        <dd class="text-sm text-gray-900">
+                                            {#if question.question.type === 'checkbox'}
+                                                <div class="space-y-1">
+                                                    {#each question.question.options as option, oidx}
+                                                        {@const fieldName = `${question.id}_${oidx}`}
+                                                        {@const isChecked = $formData[fieldName] === true || $formData[fieldName] === 'on'}
+                                                        <div class="flex items-center gap-2">
+                                                            <Checkbox checked={isChecked} disabled class="pointer-events-none" />
+                                                            <span>{option}</span>
+                                                        </div>
+                                                    {/each}
+                                                </div>
+                                            {:else}
+                                                {$formData[question.id] || '-'}
+                                            {/if}
+                                        </dd>
+                                    </div>
+                                {/each}
+                            </dl>
+                        </div>
+                    {/if}
+
                     <!-- Registration Fee (if not free) -->
                     {#if !isFreeEvent}
                         <div class="border border-gray-300 rounded-lg p-6 bg-gray-50">
