@@ -110,6 +110,12 @@
     modal_step = 'search';
     search_query = '';
     filtered_suggestions = [];
+
+    // Trigger input event for form validation
+    const input = document.querySelector('input[name="institute"]');
+    if (input) {
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   }
 
   const handleCreateInstitution = () => {
@@ -124,6 +130,12 @@
         new_name_en = '';
         new_name_ko = '';
         create_error = '';
+
+        // Trigger input event for form validation
+        const input = document.querySelector('input[name="institute"]');
+        if (input) {
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
       } else {
         create_error = result.data?.error || 'Failed to create institution';
       }
