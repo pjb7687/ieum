@@ -6,14 +6,18 @@
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayInstitute } from '$lib/utils.js';
+    import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
 
     let { data } = $props();
 
     let searchTermEventAdmin = $state('');
     let filteredEventAdmins = $state([]);
     $effect(() => {
-        filteredEventAdmins = data.eventadmins.filter((item) => item.name.toLowerCase().includes(searchTermEventAdmin.toLowerCase()))
+        filteredEventAdmins = data.eventadmins.filter((item) => {
+            const searchLower = searchTermEventAdmin.toLowerCase();
+            return item.name.toLowerCase().includes(searchLower) ||
+                   (item.korean_name && item.korean_name.toLowerCase().includes(searchLower));
+        });
     });
 
     let eventadmin_modal = $state(false);
@@ -71,7 +75,7 @@
     <TableBody tableBodyClass="divide-y">
         {#each filteredEventAdmins as row}
             <TableBodyRow>
-                <TableBodyCell>{row.name}</TableBodyCell>
+                <TableBodyCell>{getDisplayName(row)}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
                 <TableBodyCell>{getDisplayInstitute(row)}</TableBodyCell>
                 <TableBodyCell>
@@ -96,12 +100,12 @@
         <div class="mb-6">
             <Label for="id" class="block mb-2">{m.eventAdmins_admin()}</Label>
             <Select id="id" name="id" items={
-                data.users.map(a => ({ value: a.id, name: `${a.name}, ${getDisplayInstitute(a)} (${a.email})` }))
+                data.users.map(a => ({ value: a.id, name: `${getDisplayName(a)}, ${getDisplayInstitute(a)} (${a.email})` }))
             } onchange={
                 (e) => {
                     const id = parseInt(e.target.value);
                     const user = data.users.find(a => a.id === id);
-                    document.getElementById('name').value = user.name;
+                    document.getElementById('name').value = getDisplayName(user);
                     document.getElementById('email').value = user.email;
                     document.getElementById('affiliation').value = getDisplayInstitute(user);
                 }

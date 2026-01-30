@@ -6,7 +6,7 @@
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayInstitute } from '$lib/utils.js';
+    import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
 
     let { data } = $props();
 
@@ -166,12 +166,12 @@
             <div class="mb-6">
                 <Label for="id" class="block mb-2">{m.speakers_selectAttendee()}</Label>
                 <Select id="id" name="id" items={
-                    data.attendees.map(a => ({ value: a.id, name: `${a.name}, ${getDisplayInstitute(a)} (${a.user.email})` }))
+                    data.attendees.map(a => ({ value: a.id, name: `${getDisplayName(a)}, ${getDisplayInstitute(a)} (${a.user.email})` }))
                 } onchange={
                     (e) => {
                         const id = parseInt(e.target.value);
                         const attendee = data.attendees.find(a => a.id === id);
-                        document.getElementById('name').value = attendee.name;
+                        document.getElementById('name').value = getDisplayName(attendee);
                         document.getElementById('email').value = attendee.user.email;
                         document.getElementById('affiliation').value = getDisplayInstitute(attendee);
                     }

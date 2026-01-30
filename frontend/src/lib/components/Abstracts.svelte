@@ -6,7 +6,7 @@
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayInstitute } from '$lib/utils.js';
+    import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
 
     let { data } = $props();
 
@@ -14,7 +14,11 @@
     let filteredReviewers = $state([]);
     let selectedReviewers = $state([]);
     $effect(() => {
-        filteredReviewers = data.reviewers.filter((item) => item.name.toLowerCase().includes(searchTermReviewer.toLowerCase()))
+        filteredReviewers = data.reviewers.filter((item) => {
+            const searchLower = searchTermReviewer.toLowerCase();
+            return item.name.toLowerCase().includes(searchLower) ||
+                   (item.korean_name && item.korean_name.toLowerCase().includes(searchLower));
+        });
     });
 
     let reviewer_modal = $state(false);
@@ -162,7 +166,7 @@
                         selectedReviewers = selectedReviewers.filter(a => a !== row.id);
                     }
                 }} /></TableBodyCell>
-                <TableBodyCell>{row.name}</TableBodyCell>
+                <TableBodyCell>{getDisplayName(row)}</TableBodyCell>
                 <TableBodyCell>{row.user.email}</TableBodyCell>
                 <TableBodyCell>{getDisplayInstitute(row)}</TableBodyCell>
                 <TableBodyCell>
@@ -196,7 +200,7 @@
         {#each data.abstracts as row}
             <TableBodyRow>
                 <TableBodyCell>{(row.title.length > 10)?row.title.slice(0, 10)+'...':row.title}</TableBodyCell>
-                <TableBodyCell>{row.attendee.name}</TableBodyCell>
+                <TableBodyCell>{getDisplayName(row.attendee)}</TableBodyCell>
                 <TableBodyCell>{row.is_oral ? m.abstractType_oral() : m.abstractType_poster()}</TableBodyCell>
                 <TableBodyCell>{row.is_accepted}</TableBodyCell>
                 <TableBodyCell>{row.votes}</TableBodyCell>
@@ -228,12 +232,12 @@
         <div class="mb-6">
             <Label for="id" class="block mb-2">{m.abstracts_reviewer()}</Label>
             <Select id="id" name="id" items={
-                data.attendees.map(a => ({ value: a.id, name: a.name + ", " + getDisplayInstitute(a) }))
+                data.attendees.map(a => ({ value: a.id, name: getDisplayName(a) + ", " + getDisplayInstitute(a) }))
             } onchange={
                 (e) => {
                     const id = parseInt(e.target.value);
                     const attendee = data.attendees.find(a => a.id === id);
-                    document.getElementById('name').value = attendee.name;
+                    document.getElementById('name').value = getDisplayName(attendee);
                     document.getElementById('email').value = attendee.user.email;
                     document.getElementById('affiliation').value = getDisplayInstitute(attendee);
                 }
@@ -310,7 +314,7 @@
         </div>
         <div class="mb-6">
             <Label for="presenter" class="block mb-2">{m.abstracts_presenter()}</Label>
-            <Input id="presenter" type="text" value={selected_abstract?selected_abstract.attendee.name:''} readonly />
+            <Input id="presenter" type="text" value={selected_abstract?getDisplayName(selected_abstract.attendee):''} readonly />
         </div>
         <div class="mb-6">
             <Label for="title" class="block mb-2">{m.abstracts_titleField()}</Label>
