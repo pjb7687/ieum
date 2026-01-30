@@ -2,7 +2,7 @@
     import { Input, Label, Button, Checkbox, Spinner } from 'flowbite-svelte';
     import { SearchOutline, CalendarMonthOutline, MapPinAltSolid, UserCircleOutline, CheckCircleSolid, ClockOutline, GlobeSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayVenue } from '$lib/utils.js';
+    import { getDisplayVenue, formatDate, formatDateRange } from '$lib/utils.js';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
@@ -321,10 +321,10 @@
                                         <CalendarMonthOutline class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                                         <div class="flex-1">
                                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_dates()}</p>
-                                            <p class="text-sm text-gray-900 font-medium">{event.start_date} - {event.end_date}</p>
+                                            <p class="text-sm text-gray-900 font-medium">{formatDateRange(event.start_date, event.end_date)}</p>
                                             {#if event.registration_deadline}
                                                 <p class="text-xs text-gray-600 mt-1.5">
-                                                    <span class="font-medium">{m.events_registrationDeadline()}:</span> {event.registration_deadline}
+                                                    <span class="font-medium">{m.events_registrationDeadline()}:</span> {formatDate(event.registration_deadline)}
                                                 </p>
                                             {/if}
                                         </div>

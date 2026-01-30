@@ -41,3 +41,46 @@ export function getDisplayVenue(event) {
     }
     return event.venue || '';
 }
+
+/**
+ * Format a date string based on the current UI language
+ * @param {string} dateString - Date string in YYYY-MM-DD format
+ * @returns {string} - Formatted date
+ * Korean: 2026.04.22
+ * English: Apr 22, 2026
+ */
+export function formatDate(dateString) {
+    if (!dateString) return '';
+
+    const currentLang = languageTag();
+    const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
+
+    if (currentLang === 'ko') {
+        // Korean format: 2026.04.22
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}.${month}.${day}`;
+    } else {
+        // English format: Apr 22, 2026
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    }
+}
+
+/**
+ * Format a date range based on the current UI language
+ * @param {string} startDate - Start date in YYYY-MM-DD format
+ * @param {string} endDate - End date in YYYY-MM-DD format
+ * @returns {string} - Formatted date range
+ * Korean: 2026.04.22 ~ 2026.04.30
+ * English: Apr 22, 2026 - Apr 30, 2026
+ */
+export function formatDateRange(startDate, endDate) {
+    if (!startDate || !endDate) return '';
+
+    const currentLang = languageTag();
+    const separator = currentLang === 'ko' ? ' ~ ' : ' - ';
+
+    return formatDate(startDate) + separator + formatDate(endDate);
+}

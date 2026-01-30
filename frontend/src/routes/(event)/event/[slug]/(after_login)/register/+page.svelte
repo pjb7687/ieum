@@ -11,6 +11,7 @@
 
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
     import * as m from '$lib/paraglide/messages.js';
+    import { formatDateRange } from '$lib/utils.js';
     import 'academicons';
 
     let { data, form } = $props();
@@ -148,7 +149,7 @@
                         <span class="font-medium">{m.eventRegister_eventName()}</span> {event.name}
                     </li>
                     <li>
-                        <span class="font-medium">{m.eventRegister_eventDates()}</span> {event.start_date} {m.eventRegister_to()} {event.end_date}
+                        <span class="font-medium">{m.eventRegister_eventDates()}</span> {formatDateRange(event.start_date, event.end_date)}
                     </li>
                 </ul>
                 <p class="text-gray-700 mb-4">
