@@ -369,7 +369,6 @@ def update_event(request, event_id: int):
     event.venue_address = data.get("venue_address", "")
     event.venue_latitude = float(data["venue_latitude"]) if data.get("venue_latitude") else None
     event.venue_longitude = float(data["venue_longitude"]) if data.get("venue_longitude") else None
-    event.organizers = data["organizers"]
     # Parse main_languages if it's a JSON string, otherwise use the array directly
     main_languages_value = data.get("main_languages", [])
     if isinstance(main_languages_value, str):
@@ -1136,6 +1135,35 @@ def delete_event_admin(request, event_id: int, admin_id: int):
     user = User.objects.get(id=admin_id)
     event.admins.remove(user)
     return {"code": "success", "message": "Admin deleted."}
+
+@ensure_event_staff
+@api.get("/event/{event_id}/organizers", response=List[UserSchema])
+def get_organizers(request, event_id: int):
+    event = Event.objects.get(id=event_id)
+    return event.organizers.all()
+
+@ensure_event_staff
+@api.post("/event/{event_id}/organizer/add", response=MessageSchema)
+def add_organizer(request, event_id: int):
+    data = json.loads(request.body)
+    event = Event.objects.get(id=event_id)
+    user = User.objects.get(id=data["id"])
+    if user in event.organizers.all():
+        return api.create_response(
+            request,
+            {"code": "already_organizer", "message": "User is already an organizer."},
+            status=400,
+        )
+    event.organizers.add(user)
+    return {"code": "success", "message": "Organizer added."}
+
+@ensure_event_staff
+@api.post("/event/{event_id}/organizer/{organizer_id}/delete", response=MessageSchema)
+def delete_organizer(request, event_id: int, organizer_id: int):
+    event = Event.objects.get(id=event_id)
+    user = User.objects.get(id=organizer_id)
+    event.organizers.remove(user)
+    return {"code": "success", "message": "Organizer deleted."}
 
 @ensure_event_staff
 @api.get("/event/{event_id}/email_templates", response=dict[str, EmailTemplateSchema])

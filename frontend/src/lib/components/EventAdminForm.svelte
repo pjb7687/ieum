@@ -89,10 +89,6 @@
     ]} />
 </div>
 <div class="mb-6">
-    <Label for="organizers" class="block mb-2">{m.eventForm_organizer()}*</Label>
-    <Input type="text" id="organizers" name="organizers" value={data.organizers} />
-</div>
-<div class="mb-6">
     <Label class="block mb-2">{m.eventForm_mainLanguages()}*</Label>
     <div class="flex gap-4">
         <Checkbox

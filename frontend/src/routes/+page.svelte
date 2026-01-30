@@ -2,7 +2,7 @@
     import { Input, Label, Button, Checkbox, Spinner } from 'flowbite-svelte';
     import { SearchOutline, CalendarMonthOutline, MapPinAltSolid, UserCircleOutline, CheckCircleSolid, ClockOutline, GlobeSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayVenue, formatDate, formatDateRange } from '$lib/utils.js';
+    import { getDisplayVenue, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
@@ -347,7 +347,7 @@
                                         <UserCircleOutline class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
                                         <div class="flex-1">
                                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_organizer()}</p>
-                                            <p class="text-sm text-gray-900 font-medium">{@html highlightText(event.organizers, searchKeyword)}</p>
+                                            <p class="text-sm text-gray-900 font-medium">{@html highlightText(getDisplayOrganizers(event), searchKeyword)}</p>
                                         </div>
                                     </div>
 

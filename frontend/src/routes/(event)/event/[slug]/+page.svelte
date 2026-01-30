@@ -13,7 +13,7 @@
         GlobeSolid
     } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayVenue, formatDate, formatDateRange } from '$lib/utils.js';
+    import { getDisplayVenue, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
     import { marked } from 'marked';
     import { browser } from '$app/environment';
     import VenueMapWidget from '$lib/components/VenueMapWidget.svelte';
@@ -152,7 +152,7 @@
                         <UsersSolid class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
                         <div class="flex-1">
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_organizer()}</p>
-                            <p class="text-sm text-gray-900 font-medium">{event.organizers}</p>
+                            <p class="text-sm text-gray-900 font-medium">{getDisplayOrganizers(event)}</p>
                         </div>
                     </div>
 

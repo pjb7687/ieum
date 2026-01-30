@@ -1,0 +1,125 @@
+<script>
+    import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Card } from 'flowbite-svelte';
+    import { Button, Modal, Label, Select, Alert } from 'flowbite-svelte';
+    import { UserRemoveSolid } from 'flowbite-svelte-icons';
+    import { enhance } from '$app/forms';
+    import * as m from '$lib/paraglide/messages.js';
+    import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
+
+    let { data } = $props();
+
+    let searchTermOrganizer = $state('');
+    let filteredOrganizers = $state([]);
+    $effect(() => {
+        filteredOrganizers = data.organizers.filter((item) => {
+            const searchLower = searchTermOrganizer.toLowerCase();
+            return item.name.toLowerCase().includes(searchLower) ||
+                   (item.korean_name && item.korean_name.toLowerCase().includes(searchLower));
+        });
+    });
+
+    let organizer_modal = $state(false);
+    let delete_organizer_modal = $state(false);
+    let selected_organizer = $state(null);
+
+    const addOrganizerModal = () => {
+        selected_organizer = null;
+        organizer_modal = true;
+    };
+    const deleteOrganizerModal = (id) => {
+        selected_organizer = data.organizers.find((item) => item.id === id);
+        delete_organizer_modal = true;
+    };
+
+    let add_organizer_error = $state('');
+    const afterAddOrganizer = () => {
+        return async ({ result, action, update }) => {
+            if (result.type === "success") {
+                await update({ reset: false });
+                organizer_modal = false;
+                add_organizer_error = '';
+            } else {
+                add_organizer_error = result.error.message;
+            }
+        }
+    };
+
+    let delete_organizer_error = $state('');
+    const afterDeleteOrganizer = () => {
+        return async ({ result, action, update }) => {
+            if (result.type === "success") {
+                await update({ reset: false });
+                delete_organizer_modal = false;
+                delete_organizer_error = '';
+            } else {
+                delete_organizer_error = result.error.message;
+            }
+        }
+    };
+</script>
+
+<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.organizers_title()}</Heading>
+<p class="font-light mb-6">{m.organizers_description()}</p>
+<div class="flex justify-end gap-2 mb-4">
+    <Button color="primary" size="sm" onclick={addOrganizerModal}>{m.organizers_addOrganizer()}</Button>
+</div>
+<TableSearch placeholder={m.organizers_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermOrganizer}>
+    <TableHead>
+        <TableHeadCell>{m.organizers_name()}</TableHeadCell>
+        <TableHeadCell>{m.organizers_email()}</TableHeadCell>
+        <TableHeadCell>{m.organizers_institute()}</TableHeadCell>
+        <TableHeadCell class="w-1">{m.organizers_actions()}</TableHeadCell>
+    </TableHead>
+    <TableBody tableBodyClass="divide-y">
+        {#each filteredOrganizers as row}
+            <TableBodyRow>
+                <TableBodyCell>{getDisplayName(row)}</TableBodyCell>
+                <TableBodyCell>{row.email}</TableBodyCell>
+                <TableBodyCell>{getDisplayInstitute(row)}</TableBodyCell>
+                <TableBodyCell>
+                    <div class="flex justify-center gap-2">
+                        <Button color="none" size="none" onclick={() => deleteOrganizerModal(row.id)}>
+                            <UserRemoveSolid class="w-5 h-5" />
+                        </Button>
+                    </div>
+                </TableBodyCell>
+            </TableBodyRow>
+        {/each}
+        {#if filteredOrganizers.length === 0}
+            <TableBodyRow>
+                <TableBodyCell colspan="4" class="text-center">{m.organizers_noRecords()}</TableBodyCell>
+            </TableBodyRow>
+        {/if}
+    </TableBody>
+</TableSearch>
+
+<Modal bind:open={organizer_modal} title={m.organizers_addOrganizerTitle()} size="lg">
+    <form method="POST" action="?/add_organizer" use:enhance={afterAddOrganizer}>
+        <div class="mb-6">
+            <Label for="id" class="block mb-2">{m.organizers_organizer()}</Label>
+            <Select id="id" name="id" items={
+                data.users.map(a => ({ value: a.id, name: `${getDisplayName(a)}, ${getDisplayInstitute(a)} (${a.email})` }))
+            } />
+        </div>
+        {#if add_organizer_error}
+            <Alert color="red" class="mb-6">{add_organizer_error}</Alert>
+        {/if}
+        <div class="flex justify-center">
+            <Button color="primary" type="submit">{m.organizers_add()}</Button>
+        </div>
+    </form>
+</Modal>
+
+<Modal bind:open={delete_organizer_modal} title={m.organizers_deleteOrganizer()} size="sm">
+    <form method="POST" action="?/delete_organizer" use:enhance={afterDeleteOrganizer}>
+        <input type="hidden" name="id" value={selected_organizer?selected_organizer.id:''} />
+        <p class="mb-6">{m.organizers_deleteConfirm()}</p>
+        {#if delete_organizer_error}
+            <Alert color="red" class="mb-6">{delete_organizer_error}</Alert>
+        {/if}
+        <div class="flex justify-center gap-2">
+            <Button color="red" type="submit">{m.organizers_delete()}</Button>
+            <Button color="dark" type="button" onclick={() => delete_organizer_modal = false}>{m.organizers_cancel()}</Button>
+        </div>
+    </form>
+</Modal>

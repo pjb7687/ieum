@@ -121,7 +121,7 @@ class Event(models.Model):
     venue_address = models.CharField(max_length=1000, blank=True)  # Full address
     venue_latitude = models.FloatField(blank=True, null=True)  # Latitude for map
     venue_longitude = models.FloatField(blank=True, null=True)  # Longitude for map
-    organizers = models.CharField(max_length=1000)
+    organizers = models.ManyToManyField('User', related_name='organized_events', blank=True)
     main_languages = models.JSONField(default=default_main_languages)  # Array of language codes: ['ko', 'en']
     registration_deadline = models.DateField(blank=True, null=True)
     capacity = models.IntegerField()
@@ -137,7 +137,36 @@ class Event(models.Model):
 
     def __str__(self):
         return self.name
-    
+
+    @property
+    def organizers_en(self):
+        """Return formatted organizers in English: First Last (Institution)"""
+        organizer_list = []
+        for org in self.organizers.all():
+            name = f"{org.first_name} {org.last_name}"
+            # Get institution English name
+            institute = org.institute.name_en if org.institute else ""
+            if institute:
+                organizer_list.append(f"{name} ({institute})")
+            else:
+                organizer_list.append(name)
+        return ", ".join(organizer_list)
+
+    @property
+    def organizers_ko(self):
+        """Return formatted organizers in Korean: 한글이름 (기관명)"""
+        organizer_list = []
+        for org in self.organizers.all():
+            # Use Korean name if available, otherwise fall back to English name
+            name = org.korean_name if org.korean_name else f"{org.first_name} {org.last_name}"
+            # Get institution Korean name
+            institute = org.institute.name_ko if org.institute else ""
+            if institute:
+                organizer_list.append(f"{name} ({institute})")
+            else:
+                organizer_list.append(name)
+        return ", ".join(organizer_list)
+
     def delete(self, *args, **kwargs):
         if self.email_template_registration:
             self.email_template_registration.delete()

@@ -24,6 +24,7 @@ export async function load({ parent, params, cookies, request }) {
     rtn.speakers = await get_data_or_404_event('speakers');
     rtn.reviewers = await get_data_or_404_event('reviewers');
     rtn.abstracts = await get_data_or_404_event('abstracts');
+    rtn.organizers = await get_data_or_404_event('organizers');
     rtn.eventadmins = await get_data_or_404_event('eventadmins');
     rtn.email_templates = await get_data_or_404_event('email_templates');
     rtn.users = await get_data_or_404('users');
@@ -268,6 +269,28 @@ export const actions = {
     delete_eventadmin: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
         const response = await post(`api/event/${params.slug}/eventadmin/${formdata.get('id')}/delete`, {}, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
+    add_organizer: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/organizer/add`, {
+            id: parseInt(formdata.get('id')),
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
+    delete_organizer: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/organizer/${formdata.get('id')}/delete`, {}, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
         } else {

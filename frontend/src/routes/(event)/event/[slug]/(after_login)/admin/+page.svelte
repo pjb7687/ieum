@@ -18,6 +18,7 @@
     import OnSiteAttendees from '$lib/components/OnSiteAttendees.svelte';
     import Abstracts from '$lib/components/Abstracts.svelte';
     import EventAdmins from '$lib/components/EventAdmins.svelte';
+    import Organizers from '$lib/components/Organizers.svelte';
 
     let { data } = $props();
 
@@ -35,6 +36,7 @@
             location.hash !== '#speakers' &&
             location.hash !== '#attendees' &&
             location.hash !== '#abstracts' &&
+            location.hash !== '#organizers' &&
             location.hash !== '#event_admins' &&
             location.hash !== '#onsite'
         ) {
@@ -126,6 +128,11 @@
                                 <EditSolid class="w-6 h-6" />
                             </svelte:fragment>
                         </SidebarItem>
+                        <SidebarItem label={m.eventAdmin_organizers()} class={(sidebar_selected === 'organizers')?activeClass:nonActiveClass} href="#organizers">
+                            <svelte:fragment slot="icon">
+                                <UsersGroupSolid class="w-6 h-6" />
+                            </svelte:fragment>
+                        </SidebarItem>
                         <SidebarItem label={m.eventAdmin_eventAdmins()} class={(sidebar_selected === 'event_admins')?activeClass:nonActiveClass} href="#event_admins">
                             <svelte:fragment slot="icon">
                                 <ProfileCardSolid class="w-6 h-6" />
@@ -162,6 +169,10 @@
 
                 {#if sidebar_selected === 'abstracts'}
                 <Abstracts data={data} />
+                {/if}
+
+                {#if sidebar_selected === 'organizers'}
+                <Organizers data={data} />
                 {/if}
 
                 {#if sidebar_selected === 'event_admins'}

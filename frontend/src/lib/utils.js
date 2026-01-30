@@ -43,6 +43,20 @@ export function getDisplayVenue(event) {
 }
 
 /**
+ * Get the display organizers for an event based on the current UI language
+ * @param {Object} event - Event object
+ * @returns {string} - Formatted organizers string in the appropriate language
+ * Format: "Name (Institution), Name (Institution)"
+ */
+export function getDisplayOrganizers(event) {
+    const currentLang = languageTag();
+    if (currentLang === 'ko' && event.organizers_ko) {
+        return event.organizers_ko;
+    }
+    return event.organizers_en || '';
+}
+
+/**
  * Format a date string based on the current UI language
  * @param {string} dateString - Date string in YYYY-MM-DD format
  * @returns {string} - Formatted date
