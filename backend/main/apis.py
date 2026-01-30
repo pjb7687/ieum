@@ -1136,7 +1136,7 @@ def resend_verification_email(request, data: ResendVerificationSchema):
         )
 
 @api.get("/users", response=List[UserSchema])
-@ensure_event_staff
+@ensure_staff
 def get_users(request):
     return User.objects.all()
 
