@@ -60,7 +60,7 @@
     };
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.eventAdmins_title()}</Heading>
+<Heading tag="h2" class="text-xl font-bold mb-3">{m.eventAdmins_title()}</Heading>
 <p class="font-light mb-6">{m.eventAdmins_description()}</p>
 <div class="flex justify-end gap-2">
     <Button color="primary" size="sm" onclick={addEventAdminModal}>{m.eventAdmins_addAdmin()}</Button>

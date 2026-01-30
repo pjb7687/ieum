@@ -22,7 +22,15 @@
         nationality: yup.string().required(m.validation_nationalityRequired()),
         job_title: yup.string().required(m.validation_jobTitleRequired()),
         department: yup.string(),
-        institute: yup.number().required(m.validation_instituteRequired()),
+        institute: yup.mixed().transform((value, originalValue) => {
+            // If it's already a number, return it
+            if (typeof originalValue === 'number') return originalValue;
+            // If it's an empty string, return undefined to trigger required validation
+            if (originalValue === '' || originalValue === null || originalValue === undefined) return undefined;
+            // Otherwise convert to number
+            const num = Number(originalValue);
+            return isNaN(num) ? undefined : num;
+        }).required(m.validation_instituteRequired()),
         disability: yup.string(),
         dietary: yup.string(),
     });
@@ -32,6 +40,21 @@
     });
 
     const { form: felteForm, data, errors, isSubmitting } = createForm({
+        initialValues: {
+            email: '',
+            password: '',
+            confirm_password: '',
+            first_name: '',
+            last_name: '',
+            middle_initial: '',
+            korean_name: '',
+            nationality: '1',
+            job_title: '',
+            department: '',
+            institute: '',
+            disability: '',
+            dietary: '',
+        },
         onSubmit: async (data) => {
             delete data.confirm_password;
             data.username = data.email;
@@ -74,7 +97,7 @@
 <!-- Form Card -->
 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
     <form use:felteForm method="post">
-        <RegistrationForm errors={$errors} config={form_config} />
+        <RegistrationForm data={$data} errors={$errors} config={form_config} />
         <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
             <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>
                 {m.registration_submit()}

@@ -26,6 +26,7 @@
 
 	let currentLanguage = $state(languageTag());
 	let profileDropdownOpen = $state(false);
+	let languageDropdownOpen = $state(false);
 	let isLoading = $state(true);
 
 	onMount(() => {
@@ -68,9 +69,9 @@
 	}
 
 	// Compute the next parameter for login/registration
-	// If user is on email verification page, redirect to events page after login
+	// If user is on email verification page, redirect to root after login
 	let nextPath = $derived(
-		$page.url.pathname.includes('/verify-email') ? '/events' : $page.url.pathname
+		$page.url.pathname.includes('/verify-email') ? '/' : $page.url.pathname
 	);
 </script>
 
@@ -91,44 +92,36 @@
 		<!-- Right side: Language selector and Auth buttons -->
 		<div class="flex flex-row items-center gap-3">
 			<!-- Language Selector -->
-			<div class="relative">
-				<button class="flex items-center gap-1 text-gray-700 hover:text-gray-900 px-2 py-1.5">
-					<GlobeOutline class="w-5 h-5" />
-					<span class="text-sm font-medium">{currentLanguage.toUpperCase()}</span>
-				</button>
-				<Dropdown>
-					{#each languages as lang}
-						<DropdownItem onclick={() => switchLanguage(lang.code)}>
-							<span class="flex items-center gap-2">
-								{lang.name}
-							</span>
-						</DropdownItem>
-					{/each}
-				</Dropdown>
-			</div>
+			<Button color="none" size="sm" class="flex items-center gap-1 hover:bg-gray-100">
+				<GlobeOutline class="w-5 h-5" />
+				<span class="text-sm font-medium">{currentLanguage.toUpperCase()}</span>
+			</Button>
+			<Dropdown simple bind:open={languageDropdownOpen}>
+				{#each languages as lang}
+					<DropdownItem onclick={() => { switchLanguage(lang.code); languageDropdownOpen = false; }}>
+						{lang.name}
+					</DropdownItem>
+				{/each}
+			</Dropdown>
 
 			{#if data.user}
 				<!-- User Profile Dropdown -->
-				<div class="relative">
-					<button class="flex items-center gap-2">
-						<Avatar size="sm" class="cursor-pointer">
-							{data.user.first_name.charAt(0)}{data.user.last_name.charAt(0)}
-						</Avatar>
-					</button>
-					<Dropdown placement="bottom-end" bind:open={profileDropdownOpen}>
-						<DropdownHeader>
-							<span class="block text-sm font-semibold">{data.user.first_name} {data.user.last_name}</span>
-							<span class="block truncate text-sm text-gray-500">{data.user.email}</span>
-						</DropdownHeader>
-						<DropdownItem href="/profile" onclick={() => profileDropdownOpen = false}>{m.nav_myProfile()}</DropdownItem>
-						{#if data.user.is_staff}
-							<DropdownDivider />
-							<DropdownItem href="/{data.admin_page_name}" onclick={() => profileDropdownOpen = false}>{m.nav_adminPage()}</DropdownItem>
-						{/if}
+				<Avatar size="sm" class="cursor-pointer">
+					{data.user.first_name.charAt(0)}{data.user.last_name.charAt(0)}
+				</Avatar>
+				<Dropdown simple placement="bottom-end" bind:open={profileDropdownOpen}>
+					<DropdownHeader>
+						<span class="block text-sm font-semibold">{data.user.first_name} {data.user.last_name}</span>
+						<span class="block truncate text-sm text-gray-500">{data.user.email}</span>
+					</DropdownHeader>
+					<DropdownItem href="/profile" onclick={() => profileDropdownOpen = false}>{m.nav_myProfile()}</DropdownItem>
+					{#if data.user.is_staff}
 						<DropdownDivider />
-						<DropdownItem href="/logout" data-sveltekit-reload onclick={() => profileDropdownOpen = false}>{m.nav_signOut()}</DropdownItem>
-					</Dropdown>
-				</div>
+						<DropdownItem href="/{data.admin_page_name}" onclick={() => profileDropdownOpen = false}>{m.nav_adminPage()}</DropdownItem>
+					{/if}
+					<DropdownDivider />
+					<DropdownItem href="/logout" data-sveltekit-reload onclick={() => profileDropdownOpen = false}>{m.nav_signOut()}</DropdownItem>
+				</Dropdown>
 			{:else}
 				<!-- Login and Register Buttons -->
 				<div class="flex items-center gap-3">

@@ -6,7 +6,7 @@
   import { languageTag } from '$lib/paraglide/runtime.js';
   import { enhance, deserialize } from '$app/forms';
 
-  let { value = $bindable(''), error = null, required = false, institution_resolved = null } = $props();
+  let { value = $bindable(''), displayName = $bindable(''), error = null, required = false, institution_resolved = null } = $props();
 
   // Display value (institution name for UI)
   let displayValue = $state('');
@@ -39,6 +39,11 @@
     }
   });
 
+  // Sync displayValue with displayName bindable prop
+  $effect(() => {
+    displayName = displayValue;
+  });
+
   let modal_open = $state(false);
   let modal_step = $state('search'); // 'search' or 'create'
   let search_query = $state('');
@@ -46,6 +51,18 @@
   let new_name_en = $state('');
   let new_name_ko = $state('');
   let create_error = $state('');
+
+  // Reset modal state when closed (preserves value and displayValue)
+  $effect(() => {
+    if (!modal_open) {
+      modal_step = 'search';
+      search_query = '';
+      filtered_suggestions = [];
+      new_name_en = '';
+      new_name_ko = '';
+      create_error = '';
+    }
+  });
 
   async function filterInstitutions() {
     if (!search_query || search_query.length < 2) {
@@ -108,46 +125,39 @@
   }
 
   async function selectInstitution(institution) {
-    value = institution.id.toString(); // Store institution ID
+    value = institution.id; // Store institution ID as number
     displayValue = getDisplayName(institution);
-    modal_open = false;
-    modal_step = 'search';
-    search_query = '';
-    filtered_suggestions = [];
 
-    // Wait for DOM to update
+    // Wait for DOM to update before triggering events
     await tick();
 
     // Trigger events for form validation using direct reference
     if (hiddenInput) {
       hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
       hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-      hiddenInput.dispatchEvent(new Event('blur', { bubbles: true }));
     }
+
+    // Close modal after dispatching events (effect will reset modal state)
+    modal_open = false;
   }
 
   const handleCreateInstitution = () => {
     return async ({ result, update }) => {
       if (result.type === 'success' && result.data?.success) {
-        value = result.data.institution.id.toString();
+        value = result.data.institution.id; // Store institution ID as number
         displayValue = getDisplayName(result.data.institution);
-        modal_open = false;
-        modal_step = 'search';
-        search_query = '';
-        filtered_suggestions = [];
-        new_name_en = '';
-        new_name_ko = '';
-        create_error = '';
 
-        // Wait for DOM to update
+        // Wait for DOM to update before triggering events
         await tick();
 
         // Trigger events for form validation using direct reference
         if (hiddenInput) {
           hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
           hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-          hiddenInput.dispatchEvent(new Event('blur', { bubbles: true }));
         }
+
+        // Close modal after dispatching events (effect will reset modal state)
+        modal_open = false;
       } else {
         create_error = result.data?.error || 'Failed to create institution';
       }
@@ -164,13 +174,9 @@
   }
 
   function closeModal() {
+    // Setting modal_open to false triggers the effect that resets modal state
+    // while preserving the selected institute value and displayValue
     modal_open = false;
-    modal_step = 'search';
-    search_query = '';
-    filtered_suggestions = [];
-    new_name_en = '';
-    new_name_ko = '';
-    create_error = '';
   }
 </script>
 
@@ -200,7 +206,7 @@
   </Alert>
 {/if}
 
-<Modal title={modal_step === 'search' ? m.form_findInstitution() : m.form_createInstitution()} bind:open={modal_open} size="md" outsideclose>
+<Modal title={modal_step === 'search' ? m.form_findInstitution() : m.form_createInstitution()} bind:open={modal_open} size="md" dismissable={false}>
   <div class="space-y-4">
     {#if modal_step === 'search'}
       <!-- Search Step -->
@@ -313,14 +319,14 @@
     {/if}
   </div>
 
-  <svelte:fragment slot="footer">
+  {#snippet footer()}
     <div class="flex justify-between w-full">
       {#if modal_step === 'create'}
-        <Button color="alternative" onclick={goBackToSearch}>{m.common_goBack()}</Button>
+        <Button color="alternative" type="button" onclick={goBackToSearch}>{m.common_goBack()}</Button>
         <Button color="primary" type="submit" form="create_institution_form">{m.form_createInstitution()}</Button>
       {:else}
-        <Button color="alternative" onclick={closeModal}>{m.common_cancel()}</Button>
+        <Button color="alternative" type="button" onclick={closeModal}>{m.common_cancel()}</Button>
       {/if}
     </div>
-  </svelte:fragment>
+  {/snippet}
 </Modal>

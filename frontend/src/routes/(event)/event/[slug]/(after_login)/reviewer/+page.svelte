@@ -24,7 +24,7 @@
     };
 </script>
 
-<Heading tag="h1" customSize="text-2xl font-bold" class="mb-3">Abstract Voting</Heading>
+<Heading tag="h1" class="text-2xl font-bold mb-3">Abstract Voting</Heading>
 <p class="mb-6">Please review the abstract below and vote for the ones you think are the best.</p>
 
 {#if data.vote.voted_abstracts.length > 0}
@@ -40,14 +40,14 @@
     {/if}
 
     {#each data.abstracts as abstract}
-    <Card size="none" class="text-black mt-6">
+    <Card size="xl" class="text-black mt-6">
         <div class="text-center">
             <h3 class="text-lg font-bold">{abstract.title}</h3>
             <p class="text-sm text-gray-600 mb-6">Presented by {abstract.attendee.name}</p>
         </div>
-        <hr class="mb-5" />
+        <hr class="mb-5 border-gray-200" />
         {@html abstract.body}
-        <hr class="mb-5" />
+        <hr class="mb-5 border-gray-200" />
         <div class="flex justify-center gap-2">
             <Checkbox onclick={(e) => {
                 if (e.target.checked) {

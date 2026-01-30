@@ -92,13 +92,13 @@
     <div class="flex gap-4">
         <Checkbox
             checked={main_languages.includes('ko')}
-            on:change={() => toggleLanguage('ko')}
+            onchange={() => toggleLanguage('ko')}
         >
             {m.language_korean()}
         </Checkbox>
         <Checkbox
             checked={main_languages.includes('en')}
-            on:change={() => toggleLanguage('en')}
+            onchange={() => toggleLanguage('en')}
         >
             {m.language_english()}
         </Checkbox>

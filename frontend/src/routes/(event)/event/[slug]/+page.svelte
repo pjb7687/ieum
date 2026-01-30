@@ -183,7 +183,7 @@
                 </div>
 
                 {#if descriptionHtml}
-                    <div class="prose prose-sm max-w-none mt-6 pt-6 border-t border-gray-200">
+                    <div class="prose prose-gray prose-sm max-w-none mt-6 pt-6 border-t border-gray-200">
                         {@html descriptionHtml}
                     </div>
                 {/if}
@@ -249,7 +249,7 @@
                         {/if}
                     </div>
                 {/if}
-                <hr class="my-6" />
+                <hr class="my-6 border-gray-200" />
                 <div class="flex gap-3">
                     <button onclick={shareOnFacebook} class="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700" aria-label={m.eventDetail_shareOnFacebook()}>
                         <FacebookSolid class="w-5 h-5" />

@@ -22,26 +22,26 @@
     };
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.emailTemplates_title()}</Heading>
+<Heading tag="h2" class="text-xl font-bold mb-3">{m.emailTemplates_title()}</Heading>
 <p class="font-light mb-6">{m.emailTemplates_description()}</p>
 <form method="POST" action="?/update_email_templates" use:enhance={afterSubmit}>
-    <Heading tag="h3" customSize="text-lg font-bold" class="mb-6">{m.emailTemplates_registrationConfirmation()}</Heading>
+    <Heading tag="h3" class="text-lg font-bold mb-6">{m.emailTemplates_registrationConfirmation()}</Heading>
     <div class="mb-6">
         <Label for="email_template_registration_subject" class="block mb-2">{m.emailTemplates_subject()}</Label>
         <Input id="email_template_registration_subject" name="email_template_registration_subject" value={data.event.email_template_registration.subject} />
     </div>
     <div class="mb-6">
         <Label for="email_template_registration_body" class="block mb-2">{m.emailTemplates_body()}</Label>
-        <Textarea id="email_template_registration_body" name="email_template_registration_body" rows="10" value={data.event.email_template_registration.body} />
+        <Textarea id="email_template_registration_body" name="email_template_registration_body" rows="10" value={data.event.email_template_registration.body} class="w-full" />
     </div>
-    <Heading tag="h3" customSize="text-lg font-bold" class="mb-6">{m.emailTemplates_abstractSubmissionConfirmation()}</Heading>
+    <Heading tag="h3" class="text-lg font-bold mb-6">{m.emailTemplates_abstractSubmissionConfirmation()}</Heading>
     <div class="mb-6">
         <Label for="email_template_abstract_submission_subject" class="block mb-2">{m.emailTemplates_subject()}</Label>
         <Input id="email_template_abstract_submission_subject" name="email_template_abstract_submission_subject" value={data.event.email_template_abstract_submission.subject} />
     </div>
     <div class="mb-6">
         <Label for="email_template_abstract_submission_body" class="block mb-2">{m.emailTemplates_body()}</Label>
-        <Textarea id="email_template_abstract_submission_body" name="email_template_abstract_submission_body" rows="10" value={data.event.email_template_abstract_submission.body} />
+        <Textarea id="email_template_abstract_submission_body" name="email_template_abstract_submission_body" rows="10" value={data.event.email_template_abstract_submission.body} class="w-full" />
     </div>
     <div class="mb-6">
         {#if success}

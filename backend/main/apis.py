@@ -1,6 +1,7 @@
 import json
 import base64
 import uuid
+from functools import wraps
 
 from datetime import datetime
 from typing import List
@@ -23,6 +24,7 @@ from .tasks import send_mail
 api = NinjaAPI(csrf=True, auth=django_auth)
 
 def ensure_staff(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         request = args[0]
         user = request.user
@@ -36,6 +38,7 @@ def ensure_staff(func):
     return wrapper
 
 def ensure_event_staff(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         request = args[0]
         event_id = kwargs["event_id"]
@@ -136,8 +139,8 @@ def create_institution(request, data: InstitutionCreateSchema):
     )
     return institution
 
-@ensure_staff
 @api.get("/admin/institutions", response=List[InstitutionSchema])
+@ensure_staff
 def get_admin_institutions(request, offset: int = 0, limit: int = 100, search: str = ""):
     from django.db.models import Q
 
@@ -154,8 +157,8 @@ def get_admin_institutions(request, offset: int = 0, limit: int = 100, search: s
 
     return list(institutions)
 
-@ensure_staff
 @api.get("/admin/institution/{institution_id}", response=InstitutionSchema)
+@ensure_staff
 def get_admin_institution(request, institution_id: int):
 
     try:
@@ -168,8 +171,8 @@ def get_admin_institution(request, institution_id: int):
             status=404,
         )
 
-@ensure_staff
 @api.post("/admin/institution/{institution_id}/update", response=InstitutionSchema)
+@ensure_staff
 def update_institution(request, institution_id: int, data: InstitutionCreateSchema):
 
     try:
@@ -185,8 +188,8 @@ def update_institution(request, institution_id: int, data: InstitutionCreateSche
             status=404,
         )
 
-@ensure_staff
 @api.post("/admin/institution/{institution_id}/delete", response=MessageSchema)
+@ensure_staff
 def delete_institution(request, institution_id: int):
 
     try:
@@ -200,8 +203,8 @@ def delete_institution(request, institution_id: int):
             status=404,
         )
 
-@ensure_staff
 @api.get("/admin/events", response=List[EventAdminSchema])
+@ensure_staff
 def get_admin_events(request):
     events = Event.objects.all()
     return events
@@ -249,8 +252,8 @@ def get_events(request, offset: int = 0, limit: int = 20, year: str = None, sear
         "limit": limit
     }
 
-@ensure_staff
 @api.post("/admin/event/add", response=MessageSchema)
+@ensure_staff
 def add_event(request):
     data = json.loads(request.body)
     if not data["name"] or not data["organizers"] or not data["venue"] or not data["start_date"] or not data["end_date"] or not data["capacity"]:
@@ -344,8 +347,10 @@ def get_event(request, event_id: int):
         )
     return event
 
-@api.get("/admin/event/{event_id}", response=EventAdminSchema, auth=None)
+@api.get("/admin/event/{event_id}", response=EventAdminSchema)
+@ensure_event_staff
 def get_admin_event(request, event_id: int):
+    print("Getting admin event for event_id:", event_id)
     try:
         event = Event.objects.get(id=event_id)
     except Event.DoesNotExist:
@@ -356,8 +361,8 @@ def get_admin_event(request, event_id: int):
         )
     return event
 
-@ensure_event_staff
 @api.post("/event/{event_id}/update", response=MessageSchema)
+@ensure_event_staff
 def update_event(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
@@ -396,16 +401,16 @@ def update_event(request, event_id: int):
 
     return {"code": "success", "message": "Event updated."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/toggle_published", response=MessageSchema)
+@ensure_event_staff
 def toggle_published(request, event_id: int):
     event = Event.objects.get(id=event_id)
     event.published = not event.published
     event.save()
     return {"code": "success", "message": "Event published status updated."}
 
-@ensure_staff
 @api.post("/admin/event/{event_id}/delete", response=MessageSchema)
+@ensure_staff
 def delete_event(request, event_id: int):
     try:
         Event.objects.get(id=event_id).delete()
@@ -417,8 +422,8 @@ def delete_event(request, event_id: int):
         )
     return {"code": "success", "message": "Event deleted."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/emailtemplates", response=MessageSchema)
+@ensure_event_staff
 def update_event_emailtemplates(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
@@ -442,8 +447,8 @@ def get_event_questions(request, event_id: int):
     questions = event.custom_questions.all()
     return questions
 
-@ensure_event_staff
 @api.post("/event/{event_id}/questions", response=MessageSchema)
+@ensure_event_staff
 def update_event_questions(request, event_id: int):
     event = Event.objects.get(id=event_id)
     data = json.loads(request.body)
@@ -465,8 +470,8 @@ def update_event_questions(request, event_id: int):
                 ca.save()
     return {"code": "success", "message": "Questions updated."}
 
-@ensure_event_staff
 @api.get("/event/{event_id}/stats", response=StatsSchema)
+@ensure_event_staff
 def get_event_stats(request, event_id: int):
     event = Event.objects.get(id=event_id)
     return {
@@ -474,14 +479,28 @@ def get_event_stats(request, event_id: int):
         "abstracts": event.abstracts.count(),
     }
 
-@ensure_event_staff
 @api.get("/event/{event_id}/attendees", response=List[AttendeeSchema])
+@ensure_event_staff
 def get_event_attendees(request, event_id: int):
     event = Event.objects.get(id=event_id)
     return event.attendees.all()
 
-@ensure_event_staff
+@api.get("/event/{event_id}/registration", response=AttendeeSchema)
+def get_my_registration(request, event_id: int):
+    user = request.user
+    event = Event.objects.get(id=event_id)
+    try:
+        attendee = event.attendees.get(user__id=user.id)
+        return attendee
+    except:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "Registration not found"},
+            status=404,
+        )
+
 @api.post("/event/{event_id}/attendee/{attendee_id}/update", response=MessageSchema)
+@ensure_event_staff
 def update_attendee(request, event_id: int, attendee_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
@@ -513,8 +532,8 @@ def update_attendee(request, event_id: int, attendee_id: int):
     attendee.save()
     return {"code": "success", "message": "Successfully updated."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/attendee/{attendee_id}/answers", response=MessageSchema)
+@ensure_event_staff
 def update_event_answers(request, event_id: int, attendee_id: int):
     data = json.loads(request.body)
     answers = data.get("answers", [])
@@ -633,8 +652,8 @@ def register_event(request, event_id: int):
 
     return {"code": "success", "message": "Successfully registered."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/attendee/{attendee_id}/deregister", response=MessageSchema)
+@ensure_event_staff
 def deregister_event(request, event_id: int, attendee_id: int):
     event = Event.objects.get(id=event_id)
     Attendee.objects.get(id=attendee_id, event=event).delete()
@@ -697,14 +716,13 @@ def submit_abstract(request, event_id: int):
 
     return {"code": "success", "message": "Successfully submitted!"}
 
-@ensure_event_staff
-@api.get("/event/{event_id}/speakers", response=List[SpeakerSchema])
+@api.get("/event/{event_id}/speakers", response=List[SpeakerSchema], auth=None)
 def get_speakers(request, event_id: int):
     event = Event.objects.get(id=event_id)
     return event.speakers.all()
 
-@ensure_event_staff
 @api.post("/event/{event_id}/speaker/add", response=MessageSchema)
+@ensure_event_staff
 def add_speaker(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
@@ -725,8 +743,8 @@ def add_speaker(request, event_id: int):
     )
     return {"code": "success", "message": "Speaker added."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/speaker/{speaker_id}/update", response=MessageSchema)
+@ensure_event_staff
 def update_speaker(request, event_id: int, speaker_id: int):
     event = Event.objects.get(id=event_id)
     speaker = event.speakers.get(id=speaker_id)
@@ -739,16 +757,16 @@ def update_speaker(request, event_id: int, speaker_id: int):
     speaker.save()
     return {"code": "success", "message": "Speaker updated."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/speaker/{speaker_id}/delete", response=MessageSchema)
+@ensure_event_staff
 def delete_speaker(request, event_id: int, speaker_id: int):
     event = Event.objects.get(id=event_id)
     speaker = event.speakers.get(id=speaker_id)
     speaker.delete()
     return {"code": "success", "message": "Speaker deleted."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/send_emails", response=MessageSchema)
+@ensure_event_staff
 def send_emails(request, event_id: int):
     data = json.loads(request.body)
     receipents = data["to"].split("; ")
@@ -760,14 +778,14 @@ def send_emails(request, event_id: int):
         )
     return {"code": "success", "message": "Emails sent."}
 
-@ensure_event_staff
 @api.get("/event/{event_id}/reviewers", response=List[AttendeeSchema])
+@ensure_event_staff
 def get_reviewers(request, event_id: int):
     event = Event.objects.get(id=event_id)
     return event.reviewers.all()
 
-@ensure_event_staff
 @api.post("/event/{event_id}/reviewer/add", response=MessageSchema)
+@ensure_event_staff
 def add_reviewer(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
@@ -783,8 +801,8 @@ def add_reviewer(request, event_id: int):
     AbstractVote.objects.create(reviewer=attendee)
     return {"code": "success", "message": "Reviewer added."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/reviewer/{reviewer_id}/delete", response=MessageSchema)
+@ensure_event_staff
 def delete_reviewer(request, event_id: int, reviewer_id: int):
     event = Event.objects.get(id=event_id)
     attendee = Attendee.objects.get(event=event, id=reviewer_id)
@@ -837,8 +855,8 @@ def get_abstract(request, event_id: int, abstract_id: int):
     abstract = event.abstracts.get(id=abstract_id)
     return abstract
 
-@ensure_event_staff
 @api.post("/event/{event_id}/abstract/{abstract_id}/update", response=MessageSchema)
+@ensure_event_staff
 def update_abstract(request, event_id: int, abstract_id: int):
     event = Event.objects.get(id=event_id)
     abstract = event.abstracts.get(id=abstract_id)
@@ -849,8 +867,8 @@ def update_abstract(request, event_id: int, abstract_id: int):
     abstract.save()
     return {"code": "success", "message": "Abstract updated."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/abstract/{abstract_id}/delete", response=MessageSchema)
+@ensure_event_staff
 def delete_abstract(request, event_id: int, abstract_id: int):
     event = Event.objects.get(id=event_id)
     abstract = event.abstracts.get(id=abstract_id)
@@ -922,13 +940,13 @@ def vote_abstract(request, event_id: int):
         vote.voted_abstracts.add(Abstract.objects.get(id=abstract_id))
     return {"code": "success", "message": "Votes submitted."}
 
-@ensure_staff
 @api.get("/admin/users", response=List[UserSchema])
+@ensure_staff
 def get_all_users(request):
     return User.objects.all().order_by('-date_joined')
 
-@ensure_staff
 @api.post("/admin/user/{user_id}/toggle-active", response=MessageSchema)
+@ensure_staff
 def toggle_user_active(request, user_id: int):
     # Prevent users from deactivating themselves
     if request.user.id == user_id:
@@ -951,8 +969,8 @@ def toggle_user_active(request, user_id: int):
             status=404,
         )
 
-@ensure_staff
 @api.post("/admin/user/{user_id}/toggle-verified", response=MessageSchema)
+@ensure_staff
 def toggle_user_verified(request, user_id: int):
     from allauth.account.models import EmailAddress
     try:
@@ -976,8 +994,8 @@ def toggle_user_verified(request, user_id: int):
             status=404,
         )
 
-@ensure_staff
 @api.post("/admin/user/{user_id}/update", response=UserSchema)
+@ensure_staff
 def update_user_by_admin(request, user_id: int):
     try:
         user = User.objects.get(id=user_id)
@@ -1117,19 +1135,19 @@ def resend_verification_email(request, data: ResendVerificationSchema):
             status=404,
         )
 
-@ensure_event_staff
 @api.get("/users", response=List[UserSchema])
+@ensure_event_staff
 def get_users(request):
     return User.objects.all()
 
-@ensure_event_staff
 @api.get("/event/{event_id}/eventadmins", response=List[UserSchema])
+@ensure_event_staff
 def get_event_admins(request, event_id: int):
     event = Event.objects.get(id=event_id)
     return event.admins.all()
 
-@ensure_event_staff
 @api.post("/event/{event_id}/eventadmin/add", response=MessageSchema)
+@ensure_event_staff
 def add_event_admin(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
@@ -1143,22 +1161,22 @@ def add_event_admin(request, event_id: int):
     event.admins.add(user)
     return {"code": "success", "message": "Admin added."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/eventadmin/{admin_id}/delete", response=MessageSchema)
+@ensure_event_staff
 def delete_event_admin(request, event_id: int, admin_id: int):
     event = Event.objects.get(id=event_id)
     user = User.objects.get(id=admin_id)
     event.admins.remove(user)
     return {"code": "success", "message": "Admin deleted."}
 
-@ensure_event_staff
 @api.get("/event/{event_id}/organizers", response=List[UserSchema])
+@ensure_event_staff
 def get_organizers(request, event_id: int):
     event = Event.objects.get(id=event_id)
     return event.organizers.all()
 
-@ensure_event_staff
 @api.post("/event/{event_id}/organizer/add", response=MessageSchema)
+@ensure_event_staff
 def add_organizer(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
@@ -1172,16 +1190,16 @@ def add_organizer(request, event_id: int):
     event.organizers.add(user)
     return {"code": "success", "message": "Organizer added."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/organizer/{organizer_id}/delete", response=MessageSchema)
+@ensure_event_staff
 def delete_organizer(request, event_id: int, organizer_id: int):
     event = Event.objects.get(id=event_id)
     user = User.objects.get(id=organizer_id)
     event.organizers.remove(user)
     return {"code": "success", "message": "Organizer deleted."}
 
-@ensure_event_staff
 @api.get("/event/{event_id}/email_templates", response=dict[str, EmailTemplateSchema])
+@ensure_event_staff
 def get_email_templates(request, event_id: int):
     event = Event.objects.get(id=event_id)
     rtn = {
@@ -1204,22 +1222,22 @@ def register_on_site(request, event_id: int):
     )
     return {"code": "success", "message": "Successfully registered on-site.", "id": oa.id}
 
-@ensure_event_staff
 @api.get("/event/{event_id}/onsite", response=List[OnSiteAttendeeSchema])
+@ensure_event_staff
 def get_on_site_attendees(request, event_id: int):
     event = Event.objects.get(id=event_id)
     return event.onsite_attendees.all()
 
-@ensure_event_staff
 @api.post("/event/{event_id}/onsite/{onsite_id}/delete", response=MessageSchema)
+@ensure_event_staff
 def delete_on_site_attendee(request, event_id: int, onsite_id: int):
     event = Event.objects.get(id=event_id)
     oa = OnSiteAttendee.objects.get(id=onsite_id, event=event)
     oa.delete()
     return {"code": "success", "message": "On-site attendee deleted."}
 
-@ensure_event_staff
 @api.post("/event/{event_id}/onsite/{onsite_id}/update", response=MessageSchema)
+@ensure_event_staff
 def update_on_site_attendee(request, event_id: int, onsite_id: int):
     event = Event.objects.get(id=event_id)
     oa = OnSiteAttendee.objects.get(id=onsite_id, event=event)

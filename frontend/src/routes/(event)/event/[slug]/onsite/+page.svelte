@@ -82,7 +82,7 @@
 
     <!-- Main Content -->
     <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
-        <Heading tag="h1" customSize="text-2xl font-bold" class="mb-3">{m.onsiteRegistration_title()}</Heading>
+        <Heading tag="h1" class="text-2xl font-bold mb-3">{m.onsiteRegistration_title()}</Heading>
         <p class="mb-10 font-light">{m.onsiteRegistration_description()}</p>
         <form use:felteForm method="post" class="space-y-5">
             <OnSiteRegistrationForm errors={$errors} />

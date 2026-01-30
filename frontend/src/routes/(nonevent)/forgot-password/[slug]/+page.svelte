@@ -49,7 +49,7 @@
     });
 </script>
 
-<Heading tag="h1" customSize="text-2xl font-bold" class="mb-3">Reset Password</Heading>
+<Heading tag="h1" class="text-2xl font-bold mb-3">Reset Password</Heading>
 <p class="mb-5 font-light">Please enter your new password.</p>
 <form use:felteForm method="post" class="space-y-5">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">

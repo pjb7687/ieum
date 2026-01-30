@@ -23,6 +23,7 @@
   export let errors = {};
   export let config = {};
   export let institution_resolved = null;
+  export let instituteDisplayName = '';
 
   function link_orcid() {
     let data = {
@@ -76,7 +77,7 @@
   
 {#if !config.hide_login_info}
 <!-- Login Information -->
-<Heading tag="h2" customSize="text-lg font-bold" class="mb-6">{m.form_personalInfo()}</Heading>
+<Heading tag="h2" class="text-lg font-bold mb-6">{m.form_personalInfo()}</Heading>
 <div class="mb-6">
   <Label for="email" class="block mb-2 text-dark">{m.form_email()}*</Label>
   <Input type="email" id="email" name="email" bind:value={data.email} disabled={config.hide_password} />
@@ -148,10 +149,10 @@
   {/if}
 </div>
 
-{#if config.show_english_name !== false}
+{#if config.show_english_name || data.nationality === '2' || data.nationality === '3'}
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
   <div class="mb-6">
-    <Label for="first_name" class="block mb-2">{m.form_firstName()}*</Label>
+    <Label for="first_name" class="block mb-2">{m.form_firstName()}{#if config.show_english_name || data.nationality === '2' || data.nationality === '3'}*{/if}</Label>
     <Input id="first_name" name="first_name" bind:value={data.first_name} />
     {#if errors.first_name}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -164,7 +165,7 @@
     <Input id="middle_initial" name="middle_initial" maxlength="1" bind:value={data.middle_initial} />
   </div>
   <div class="mb-6">
-    <Label for="last_name" class="block mb-2">{m.form_lastName()}*</Label>
+    <Label for="last_name" class="block mb-2">{m.form_lastName()}{#if data.nationality === '2' || data.nationality === '3'}*{:else if config.show_english_name}*{/if}</Label>
     <Input id="last_name" name="last_name" bind:value={data.last_name} />
     {#if errors.last_name}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -175,19 +176,9 @@
 </div>
 {/if}
 
-{#if config.show_korean_name}
+{#if config.show_korean_name || data.nationality === '1' || data.nationality === '2' || data.nationality === '3'}
 <div class="mb-6">
-  <Label for="korean_name" class="block mb-2">{m.form_koreanName()}{#if !config.show_english_name}*{/if}</Label>
-  <Input id="korean_name" name="korean_name" bind:value={data.korean_name} />
-  {#if errors.korean_name}
-    <Alert type="error" color="red" class="mb-6 mt-3">
-      <p class="text-sm">{errors.korean_name}</p>
-    </Alert>
-  {/if}
-</div>
-{:else if data.nationality === 1 || data.nationality === "1"}
-<div class="mb-6">
-  <Label for="korean_name" class="block mb-2">{m.form_koreanName()}</Label>
+  <Label for="korean_name" class="block mb-2">{m.form_koreanName()}{#if data.nationality === '1' && !config.show_english_name}*{/if}</Label>
   <Input id="korean_name" name="korean_name" bind:value={data.korean_name} />
   {#if errors.korean_name}
     <Alert type="error" color="red" class="mb-6 mt-3">
@@ -199,9 +190,9 @@
 
 <!-- Additional Information -->
 <hr class="my-8 border-gray-200" />
-<Heading tag="h2" customSize="text-lg font-bold" class="mb-6">{m.form_additionalInfo()}</Heading>
+<Heading tag="h2" class="text-lg font-bold mb-6">{m.form_additionalInfo()}</Heading>
 <div class="mb-6">
-  <InstitutionLookup bind:value={data.institute} error={errors.institute} required={true} institution_resolved={institution_resolved} />
+  <InstitutionLookup bind:value={data.institute} bind:displayName={instituteDisplayName} error={errors.institute} required={true} institution_resolved={institution_resolved} />
 </div>
 
 <div class="mb-6">
@@ -221,10 +212,10 @@
 
 <div class="mb-6">
   <Label for="disability" class="block mb-2">{m.form_disability()}</Label>
-  <Textarea id="disability" name="disability" bind:value={data.disability} />
+  <Textarea id="disability" name="disability" value={data.disability} class="w-full" />
 </div>
 
 <div class="mb-6">
   <Label for="dietary" class="block mb-2">{m.form_dietary()}</Label>
-  <Textarea id="dietary" name="dietary" bind:value={data.dietary} />
+  <Textarea id="dietary" name="dietary" value={data.dietary} class="w-full" />
 </div>

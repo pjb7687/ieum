@@ -17,9 +17,10 @@ export async function load({ parent, params, cookies }) {
     }
 
     // Check if user is an event admin
-    if (rtn.user) {
-        rtn.is_event_admin = false;
+    // Default to false for all users (including non-logged-in users)
+    rtn.is_event_admin = false;
 
+    if (rtn.user) {
         // Check if user is staff (superuser)
         if (rtn.user.is_staff) {
             rtn.is_event_admin = true;

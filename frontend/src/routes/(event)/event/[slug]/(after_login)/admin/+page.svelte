@@ -1,11 +1,13 @@
 <script>
     import { error } from '@sveltejs/kit';
     import { Modal, Heading, Button, Table, TableSearch, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Input, Label, Toggle } from 'flowbite-svelte';
-    import { Card, List, Li, Checkbox, Datepicker, Textarea, Select } from 'flowbite-svelte';
-    import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper, Alert } from 'flowbite-svelte';
+    import { Card, List, Li, Checkbox, Datepicker, Select } from 'flowbite-svelte';
+    import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper, Alert, SidebarButton, uiHelpers } from 'flowbite-svelte';
     import { NewspaperSolid, EnvelopeSolid, ClipboardListSolid, MicrophoneSolid, UsersGroupSolid, EditSolid, ProfileCardSolid, EyeSolid, EyeSlashSolid } from 'flowbite-svelte-icons';
     import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
+    import { fly } from 'svelte/transition';
+    import { cubicOut } from 'svelte/easing';
     import * as m from '$lib/paraglide/messages.js';
 
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
@@ -22,8 +24,6 @@
 
     let { data } = $props();
 
-    let nonActiveClass = 'flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700';
-    let activeClass = 'flex items-center p-2 text-base font-normal text-primary-900 bg-primary-200 dark:bg-primary-700 rounded-lg dark:text-white hover:bg-primary-100 dark:hover:bg-gray-700';
     let sidebar_selected = $state('event_information');
     const setAdminPage = () => {
         if (!location.hash) {
@@ -50,7 +50,40 @@
         }
     };
 
-    let show_sidebar = $state(true);
+    // Initialize sidebar state based on screen size
+    let isSidebarOpen = $state(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
+    let wasLargeScreen = $state(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
+
+    function toggleSidebar() {
+        isSidebarOpen = !isSidebarOpen;
+    }
+
+    function handleResize() {
+        if (typeof window === 'undefined') return;
+
+        const isLargeScreen = window.innerWidth >= 768;
+
+        // Only auto-hide/show when crossing the breakpoint
+        if (wasLargeScreen !== isLargeScreen) {
+            isSidebarOpen = isLargeScreen;
+            wasLargeScreen = isLargeScreen;
+        }
+    }
+
+    onMount(() => {
+        // Set initial state based on screen size
+        const isLargeScreen = window.innerWidth >= 768;
+        isSidebarOpen = isLargeScreen;
+        wasLargeScreen = isLargeScreen;
+
+        // Add resize listener
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    });
+
     let published = $state(data.event.published);
     let saving_published = $state(false);
 
@@ -107,68 +140,74 @@
         </form>
     </div>
 
-    <Card size="none" class="!p-0">
-        <div class="flex flex-row">
-            <div class={"border-r lg:relative fixed bottom-0 top-0 left-0 bg-white z-10" + (show_sidebar ? " w-[292px] md:w-[300px] p-4 sm:p-6" : " w-0 py-4 sm:py-6")}>
-                <Sidebar class="sticky py-2 top-0">
-                    <Button class={"text-md absolute top-32 bg-gray-50 border" + (show_sidebar? " left-[260px]":" md:-translate-x-1/2")} size="xs" color="none" onclick={() => show_sidebar = !show_sidebar}>
-                        {#if show_sidebar}
+    <Card size="xl" class="!p-0">
+        <div class="flex flex-row items-stretch relative">
+            {#if isSidebarOpen}
+                <div class="relative -mr-70 md:mr-0 border-r border-gray-300 bg-gray-50 z-40 md:z-auto" transition:fly={{ x: -100, duration: 300 }}>
+                    <Sidebar alwaysOpen={true} backdrop={false} class="sticky top-0 py-2 w-70 max-h-screen" activeClass="bg-primary-100 text-primary-900 hover:bg-primary-200" nonActiveClass="hover:bg-gray-100">
+                        <Button class="text-md absolute top-32 right-0 translate-x-1/2 bg-gray-50 border border-gray-300 z-50" size="xs" color="none" onclick={toggleSidebar}>
                             &lsaquo;
-                        {:else}
+                        </Button>
+                        <div class="overflow-y-auto max-h-screen">
+                        <SidebarGroup>
+                            <SidebarItem label={m.eventAdmin_eventInformation()} active={sidebar_selected === 'event_information'} href="#event_information">
+                                {#snippet icon()}
+                                    <NewspaperSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.eventAdmin_emailTemplates()} active={sidebar_selected === 'email_templates'} href="#email_templates">
+                                {#snippet icon()}
+                                    <EnvelopeSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.eventAdmin_eventSpecificQuestions()} active={sidebar_selected === 'event_specific_questions'} href="#event_specific_questions">
+                                {#snippet icon()}
+                                    <ClipboardListSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.eventAdmin_speakers()} active={sidebar_selected === 'speakers'} href="#speakers">
+                                {#snippet icon()}
+                                    <MicrophoneSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.eventAdmin_attendees()} active={sidebar_selected === 'attendees'} href="#attendees">
+                                {#snippet icon()}
+                                    <UsersGroupSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.eventAdmin_onsiteAttendees()} active={sidebar_selected === 'onsite'} href="#onsite">
+                                {#snippet icon()}
+                                    <UsersGroupSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.eventAdmin_abstracts()} active={sidebar_selected === 'abstracts'} href="#abstracts">
+                                {#snippet icon()}
+                                    <EditSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.eventAdmin_organizers()} active={sidebar_selected === 'organizers'} href="#organizers">
+                                {#snippet icon()}
+                                    <UsersGroupSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.eventAdmin_eventAdmins()} active={sidebar_selected === 'event_admins'} href="#event_admins">
+                                {#snippet icon()}
+                                    <ProfileCardSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                        </SidebarGroup>
+                        </div>
+                    </Sidebar>
+                </div>
+            {:else}
+                <div class="relative">
+                    <div class="sticky top-0">
+                        <Button class="text-md absolute top-32 left-0 -translate-x-1/2 bg-gray-50 border border-gray-300 z-50" size="xs" color="none" onclick={toggleSidebar}>
                             &rsaquo;
-                        {/if}
-                    </Button>
-                    {#if show_sidebar}
-                    <SidebarGroup>
-                        <SidebarItem label={m.eventAdmin_eventInformation()} class={(sidebar_selected === 'event_information')?activeClass:nonActiveClass} href="#event_information">
-                            <svelte:fragment slot="icon">
-                                <NewspaperSolid class="w-6 h-6" />
-                            </svelte:fragment>
-                        </SidebarItem>
-                        <SidebarItem label={m.eventAdmin_emailTemplates()} class={(sidebar_selected === 'email_templates')?activeClass:nonActiveClass} href="#email_templates">
-                            <svelte:fragment slot="icon">
-                                <EnvelopeSolid class="w-6 h-6" />
-                            </svelte:fragment>
-                        </SidebarItem>
-                        <SidebarItem label={m.eventAdmin_eventSpecificQuestions()} class={(sidebar_selected === 'event_specific_questions')?activeClass:nonActiveClass} href="#event_specific_questions">
-                            <svelte:fragment slot="icon">
-                                <ClipboardListSolid class="w-6 h-6" />
-                            </svelte:fragment>
-                        </SidebarItem>
-                        <SidebarItem label={m.eventAdmin_speakers()} class={(sidebar_selected === 'speakers')?activeClass:nonActiveClass} href="#speakers">
-                            <svelte:fragment slot="icon">
-                                <MicrophoneSolid class="w-6 h-6" />
-                            </svelte:fragment>
-                        </SidebarItem>
-                        <SidebarItem label={m.eventAdmin_attendees()} class={(sidebar_selected === 'attendees')?activeClass:nonActiveClass} href="#attendees">
-                            <svelte:fragment slot="icon">
-                                <UsersGroupSolid class="w-6 h-6" />
-                            </svelte:fragment>
-                        </SidebarItem>
-                        <SidebarItem label={m.eventAdmin_onsiteAttendees()} class={(sidebar_selected === 'onsite')?activeClass:nonActiveClass} href="#onsite">
-                            <svelte:fragment slot="icon">
-                                <UsersGroupSolid class="w-6 h-6" />
-                            </svelte:fragment>
-                        </SidebarItem>
-                        <SidebarItem label={m.eventAdmin_abstracts()} class={(sidebar_selected === 'abstracts')?activeClass:nonActiveClass} href="#abstracts">
-                            <svelte:fragment slot="icon">
-                                <EditSolid class="w-6 h-6" />
-                            </svelte:fragment>
-                        </SidebarItem>
-                        <SidebarItem label={m.eventAdmin_organizers()} class={(sidebar_selected === 'organizers')?activeClass:nonActiveClass} href="#organizers">
-                            <svelte:fragment slot="icon">
-                                <UsersGroupSolid class="w-6 h-6" />
-                            </svelte:fragment>
-                        </SidebarItem>
-                        <SidebarItem label={m.eventAdmin_eventAdmins()} class={(sidebar_selected === 'event_admins')?activeClass:nonActiveClass} href="#event_admins">
-                            <svelte:fragment slot="icon">
-                                <ProfileCardSolid class="w-6 h-6" />
-                            </svelte:fragment>
-                        </SidebarItem>
-                    </SidebarGroup>
-                    {/if}
-                </Sidebar>
-            </div>
+                        </Button>
+                    </div>
+                </div>
+            {/if}
             <div class="p-6 sm:p-8 overflow-auto w-full">
                 {#if sidebar_selected === 'event_information'}
                 <EventInformation data={data} />

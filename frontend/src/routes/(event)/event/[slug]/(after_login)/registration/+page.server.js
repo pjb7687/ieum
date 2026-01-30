@@ -10,15 +10,10 @@ export async function load({ parent, params, cookies }) {
         throw redirect(303, `/event/${params.slug}`);
     }
 
-    // Fetch attendee details
-    const response_attendees = await get(`api/event/${params.slug}/attendees`, cookies);
-    if (response_attendees.ok && response_attendees.status === 200) {
-        const attendees = response_attendees.data;
-        // Find the current user's attendee record
-        const myAttendee = attendees.find(a => a.user.id === rtn.user.id);
-        if (myAttendee) {
-            rtn.attendee = myAttendee;
-        }
+    // Fetch current user's registration
+    const response_attendee = await get(`api/event/${params.slug}/registration`, cookies);
+    if (response_attendee.ok && response_attendee.status === 200) {
+        rtn.attendee = response_attendee.data;
     }
 
     // Fetch abstract if user has submitted one

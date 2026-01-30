@@ -1,8 +1,9 @@
 <script>
     import { enhance } from '$app/forms';
-    import { goto } from '$app/navigation';
+    import { goto, invalidateAll } from '$app/navigation';
 
-    import { A, Card, Button, Heading, Indicator, Label, Input, Checkbox, Select, Alert, Navbar, Textarea } from 'flowbite-svelte';
+    import { A, Card, Button, Heading, Indicator, Label, Input, Checkbox, Select, Alert, Navbar, Textarea, ProgressStepper, Modal, Spinner } from 'flowbite-svelte';
+    import { ClipboardListSolid, CheckCircleSolid, CheckCircleOutline } from 'flowbite-svelte-icons';
     import { onMount } from 'svelte';
 
     import { createForm } from 'felte';
@@ -11,10 +12,18 @@
 
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
     import * as m from '$lib/paraglide/messages.js';
+    import { languageTag } from '$lib/paraglide/runtime.js';
     import { formatDateRange } from '$lib/utils.js';
     import 'academicons';
 
     let { data, form } = $props();
+
+    // Stepper state and configuration
+    let currentStep = $state(1);
+    const steps = $derived([
+        { id: 1, label: m.eventRegister_stepRegistration(), icon: ClipboardListSolid },
+        { id: 2, label: isFreeEvent ? m.eventRegister_stepConfirm() : m.eventRegister_stepCheckout(), icon: CheckCircleSolid }
+    ]);
 
     let event = data.event;
     let deadline = event.registration_deadline ? new Date(event.registration_deadline) : new Date(event.start_date);
@@ -37,51 +46,134 @@
         return !koreanRegex.test(value);
     };
 
-    // Build dynamic validation schema based on event languages
+    // Build dynamic validation schema based on event languages and nationality
     const schemaFields = {
         nationality: yup.string().required(),
         // All personal info fields allow all languages (set by institution modal or user input)
         job_title: yup.string().required(m.validation_jobTitleRequired()),
         department: yup.string(),
-        institute: yup.number().required(m.validation_instituteRequired()),
+        institute: yup.mixed().transform((value, originalValue) => {
+            // If it's already a number, return it
+            if (typeof originalValue === 'number') return originalValue;
+            // If it's an empty string, return undefined to trigger required validation
+            if (originalValue === '' || originalValue === null || originalValue === undefined) return undefined;
+            // Otherwise convert to number
+            const num = Number(originalValue);
+            return isNaN(num) ? undefined : num;
+        }).required(m.validation_instituteRequired()),
         disability: yup.string(),
         dietary: yup.string(),
     };
 
-    // Add English name fields if event includes English
+    // English name fields - required if:
+    // 1. Event includes English (always mandatory), OR
+    // 2. Nationality is Non-Korean or Prefer not to say
     if (hasEnglish) {
+        // Event has English - fields are always required
         schemaFields.first_name = yup.string().required(m.validation_firstNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
         schemaFields.last_name = yup.string().required(m.validation_lastNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
         schemaFields.middle_initial = yup.string().max(1).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
+    } else {
+        // Event doesn't have English - fields required only for non-Korean nationals
+        schemaFields.first_name = yup.string().when('nationality', {
+            is: (val) => val === '2' || val === '3', // Non-Korean or Prefer not to say
+            then: (schema) => schema.required(m.validation_firstNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
+            otherwise: (schema) => schema
+        });
+
+        schemaFields.last_name = yup.string().when('nationality', {
+            is: (val) => val === '2' || val === '3',
+            then: (schema) => schema.required(m.validation_lastNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
+            otherwise: (schema) => schema
+        });
+
+        schemaFields.middle_initial = yup.string().max(1).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
     }
 
-    // Add Korean name field if event includes Korean
-    if (hasKorean) {
-        schemaFields.korean_name = yup.string();
-        // If only Korean (not English), make Korean name required
-        if (!hasEnglish) {
-            schemaFields.korean_name = yup.string().required(m.validation_koreanNameRequired());
-        }
-    }
+    // Korean name field - required only if event is Korean-only AND nationality is Korean
+    schemaFields.korean_name = yup.string().when('nationality', {
+        is: '1', // Korean
+        then: (schema) => (hasKorean && !hasEnglish)
+            ? schema.required(m.validation_koreanNameRequired())
+            : schema,
+        otherwise: (schema) => schema // Optional for non-Korean
+    });
 
     const schema = yup.object(schemaFields);
 
     let me = data.user;
     let error_message = $state('');
-    const { form: felteForm, data: formData, errors, isSubmitting } = createForm({
+    let isSubmittingFinal = $state(false);
+    let checkoutModalOpen = $state(false);
+    let checkoutStatus = $state('processing'); // 'processing' or 'success'
+    let instituteDisplayName = $state('');
+
+    const { form: felteForm, data: formData, errors, isSubmitting, validate } = createForm({
         initialValues: {
             first_name: me?me.first_name:'',
             middle_initial: me?me.middle_initial:'',
             korean_name: me?(me.korean_name || ''):'',
             last_name: me?me.last_name:'',
             nationality: me?(me.nationality ? me.nationality.toString() : '1'):'1',
-            institute: me?me.institute:'',
+            institute: me && me.institute ? Number(me.institute) : null,
             department: me?me.department:'',
             job_title: me?me.job_title:'',
             disability: me?me.disability:'',
             dietary: me?me.dietary:'',
         },
-        onSubmit: async (data) => {
+        extend: validator({ schema }),
+        transform: (values) => ({
+            ...values,
+            institute: values.institute ? Number(values.institute) : null,
+        }),
+    });
+
+    // Handler for "Next Step" button - validates and shows summary
+    async function handleNextStep() {
+        await validate();
+
+        // Check $errors store for any validation errors
+        const errorValues = Object.values($errors).filter(err => err && err.length > 0);
+
+        if (errorValues.length === 0) {
+            error_message = '';
+            currentStep = 2;
+        } else {
+            error_message = 'Please fill in all required fields correctly.';
+        }
+    }
+
+    // Open checkout modal for paid events, or submit directly for free events
+    function handleFinalSubmit() {
+        error_message = '';
+        isSubmittingFinal = true;
+
+        if (!isFreeEvent) {
+            // Paid event - open checkout modal
+            checkoutStatus = 'processing';
+            checkoutModalOpen = true;
+
+            // Simulate payment processing
+            setTimeout(() => {
+                checkoutStatus = 'success';
+                // After showing success, proceed with registration
+                setTimeout(() => {
+                    checkoutModalOpen = false;
+                    submitRegistration();
+                }, 500);
+            }, 1000);
+        } else {
+            // Free event - submit directly
+            submitRegistration();
+        }
+    }
+
+    // Actual registration submission
+    async function submitRegistration() {
+        isSubmittingFinal = true;
+        error_message = '';
+
+        try {
             const response = await fetch('?/register',
                 {
                     method: 'POST',
@@ -89,22 +181,52 @@
                         'Content-Type': 'application/x-www-form-urlencoded',
                         'Accept': 'application/json',
                     },
-                    body: new URLSearchParams(data),
+                    body: new URLSearchParams($formData),
                 }
             );
+
             if (!response.ok || response.status !== 200) {
-                const rtn = await response.json();
-                throw rtn.error;
+                // Try to parse error response as JSON, fallback to text
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const rtn = await response.json();
+                        error_message = rtn.error?.message || 'Registration failed';
+                    } else {
+                        const text = await response.text();
+                        error_message = text || 'Registration failed';
+                    }
+                } catch (parseErr) {
+                    error_message = 'Registration failed';
+                }
+                isSubmittingFinal = false;
+                return;
             }
+
+            // Success - invalidate all cached data and redirect to event page
+            await invalidateAll();
             goto(`/event/${event.id}`);
-        },
-        extend: validator({ schema }),
-        onError: (errors) => {
-            // scroll to top
-            error_message = errors.message;
-            return errors;
+        } catch (err) {
+            console.error('Registration error:', err);
+            error_message = err.message || 'Registration failed';
+            isSubmittingFinal = false;
         }
+    }
+
+    function goBackStep() {
+        error_message = '';
+        currentStep = 1;
+    }
+
+    // Format registration fee
+    const formattedRegistrationFee = $derived(() => {
+        const fee = event.registration_fee || 0;
+        if (fee === 0) return m.eventDetail_registrationFeeFree();
+        const formattedAmount = fee.toLocaleString('ko-KR', {maximumFractionDigits: 0});
+        return languageTag() === 'ko' ? `${formattedAmount} 원` : `KRW ${formattedAmount}`;
     });
+
+    const isFreeEvent = event.registration_fee === null || event.registration_fee === 0;
 </script>
 
 {#snippet process_spaces(text)}
@@ -138,70 +260,194 @@
             </p>
         </div>
     {:else}
-        <!-- Registration Form -->
+        <!-- Registration Form with Stepper -->
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+            <!-- ProgressStepper -->
             <div class="mb-8">
-                <p class="text-gray-700 mb-2">
-                    {m.eventRegister_description()}
-                </p>
-                <ul class="list-disc ml-8 mb-4 text-gray-700 space-y-1">
-                    <li>
-                        <span class="font-medium">{m.eventRegister_eventName()}</span> {event.name}
-                    </li>
-                    <li>
-                        <span class="font-medium">{m.eventRegister_eventDates()}</span> {formatDateRange(event.start_date, event.end_date)}
-                    </li>
-                </ul>
-                <p class="text-gray-700 mb-4">
-                    {m.eventRegister_instructions()}
-                </p>
-                <Alert color="yellow" class="mb-0">
-                    {m.eventRegister_warning()}
-                </Alert>
+                <ProgressStepper {steps} current={currentStep} clickable={false} showCheckmarkForCompleted={false} />
+                <div class="flex justify-between mt-4 px-0">
+                    {#each steps as step}
+                        <div class="flex-1 text-center">
+                            <p class="text-sm font-medium {currentStep === step.id ? 'text-primary-600' : 'text-gray-500'}">
+                                {step.label}
+                            </p>
+                        </div>
+                    {/each}
+                </div>
             </div>
 
+            <!-- Single persistent form to preserve Felte state across steps -->
             <form use:felteForm method="post" class="space-y-6">
-                <RegistrationForm data={$formData} errors={$errors} config={form_config} institution_resolved={data.user?.institution_resolved} />
-
-                {#if data.questions.length > 0}
-                    <div class="pt-6 border-t border-gray-200">
-                        <h2 class="text-xl font-bold text-gray-900 mb-6">{m.eventRegister_eventSpecificInfo()}</h2>
-                        <div class="space-y-6">
-                            {#each data.questions as question}
-                                <div>
-                                    <Label for={question.id} class="block mb-2">{@render process_spaces(question.question.question)}</Label>
-                                    {#if question.question.type === 'select'}
-                                        <Select id={question.id} name={question.id} required>
-                                            {#each question.question.options as option, oidx}
-                                                <option value={option}>{option}</option>
-                                            {/each}
-                                        </Select>
-                                    {:else if question.question.type === 'checkbox'}
-                                        <div class="space-y-2">
-                                            {#each question.question.options as option, oidx}
-                                                <Checkbox id={`${question.id}_${oidx}`} name={`${question.id}_${oidx}`} checked>{option}</Checkbox>
-                                            {/each}
-                                        </div>
-                                    {:else if question.question.type === 'text'}
-                                        <Input type="text" id={question.id} name={question.id} />
-                                    {:else if question.question.type === 'textarea'}
-                                        <Textarea id={question.id} name={question.id} rows={4} />
-                                    {/if}
-                                </div>
-                            {/each}
-                        </div>
+                <!-- Step 1: Registration Form (always rendered, hidden when on step 2) -->
+                <div class:hidden={currentStep !== 1}>
+                    <div class="mb-8">
+                        <p class="text-gray-700 mb-2">
+                            {m.eventRegister_description()}
+                        </p>
+                        <ul class="list-disc ml-8 mb-4 text-gray-700 space-y-1">
+                            <li>
+                                <span class="font-medium">{m.eventRegister_eventName()}</span> {event.name}
+                            </li>
+                            <li>
+                                <span class="font-medium">{m.eventRegister_eventDates()}</span> {formatDateRange(event.start_date, event.end_date)}
+                            </li>
+                            {#if !isFreeEvent}
+                                <li>
+                                    <span class="font-medium">{m.eventDetail_registrationFee()}</span> {formattedRegistrationFee()}
+                                </li>
+                            {/if}
+                        </ul>
+                        <p class="text-gray-700 mb-4">
+                            {m.eventRegister_instructions()}
+                        </p>
+                        <Alert color="yellow" class="mb-0">
+                            {m.eventRegister_warning()}
+                        </Alert>
                     </div>
-                {/if}
 
-                {#if error_message}
-                    <Alert color="red" class="error">{error_message}</Alert>
-                {/if}
+                    <RegistrationForm data={$formData} errors={$errors} config={form_config} institution_resolved={data.user?.institution_resolved} bind:instituteDisplayName={instituteDisplayName} />
 
-                <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
-                    <Button type="submit" color="primary" size="lg" disabled={$isSubmitting}>{m.eventRegister_submit()}</Button>
-                    <Button color="alternative" href="/event/{event.id}" size="lg">{m.eventRegister_returnToEvent()}</Button>
+                    {#if data.questions.length > 0}
+                        <div class="pt-6 border-t border-gray-200">
+                            <h2 class="text-xl font-bold text-gray-900 mb-6">{m.eventRegister_eventSpecificInfo()}</h2>
+                            <div class="space-y-6">
+                                {#each data.questions as question}
+                                    <div>
+                                        <Label for={question.id} class="block mb-2">{@render process_spaces(question.question.question)}</Label>
+                                        {#if question.question.type === 'select'}
+                                            <Select id={question.id} name={question.id} required>
+                                                {#each question.question.options as option, oidx}
+                                                    <option value={option}>{option}</option>
+                                                {/each}
+                                            </Select>
+                                        {:else if question.question.type === 'checkbox'}
+                                            <div class="space-y-2">
+                                                {#each question.question.options as option, oidx}
+                                                    <Checkbox id={`${question.id}_${oidx}`} name={`${question.id}_${oidx}`} checked>{option}</Checkbox>
+                                                {/each}
+                                            </div>
+                                        {:else if question.question.type === 'text'}
+                                            <Input type="text" id={question.id} name={question.id} />
+                                        {:else if question.question.type === 'textarea'}
+                                            <Textarea id={question.id} name={question.id} rows={4} class="w-full" />
+                                        {/if}
+                                    </div>
+                                {/each}
+                            </div>
+                        </div>
+                    {/if}
+
+                    {#if error_message}
+                        <Alert color="red" class="error">{error_message}</Alert>
+                    {/if}
+
+                    <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
+                        <Button color="alternative" href="/event/{event.id}" size="lg">{m.eventRegister_returnToEvent()}</Button>
+                        <Button color="primary" type="button" size="lg" onclick={handleNextStep}>{m.eventRegister_nextStep()}</Button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Confirmation (always rendered, hidden when on step 1) -->
+                <div class:hidden={currentStep !== 2} class="space-y-6">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">{m.eventRegister_confirmTitle()}</h2>
+                        <p class="text-gray-700 mb-6">{m.eventRegister_confirmDescription()}</p>
+                    </div>
+
+                    <!-- Personal Information Review -->
+                    <div class="border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">{m.eventRegister_personalInfo()}</h3>
+                        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {#if hasEnglish}
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">{m.profile_firstName()}</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{$formData.first_name}</dd>
+                                </div>
+                                {#if $formData.middle_initial}
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">{m.profile_middleInitial()}</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">{$formData.middle_initial}</dd>
+                                    </div>
+                                {/if}
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">{m.profile_lastName()}</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{$formData.last_name}</dd>
+                                </div>
+                            {/if}
+                            {#if hasKorean && $formData.korean_name}
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">{m.profile_koreanName()}</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{$formData.korean_name}</dd>
+                                </div>
+                            {/if}
+                            {#if instituteDisplayName}
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">{m.form_institute()}</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{instituteDisplayName}</dd>
+                                </div>
+                            {/if}
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">{m.profile_jobTitle()}</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{$formData.job_title}</dd>
+                            </div>
+                            {#if $formData.department}
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">{m.profile_department()}</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{$formData.department}</dd>
+                                </div>
+                            {/if}
+                            {#if $formData.disability}
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">{m.profile_disability()}</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{$formData.disability}</dd>
+                                </div>
+                            {/if}
+                            {#if $formData.dietary}
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">{m.profile_dietary()}</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{$formData.dietary}</dd>
+                                </div>
+                            {/if}
+                        </dl>
+                    </div>
+
+                    <!-- Registration Fee (if not free) -->
+                    {#if !isFreeEvent}
+                        <div class="border border-gray-300 rounded-lg p-6 bg-gray-50">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-semibold text-gray-900">{m.eventDetail_registrationFee()}</span>
+                                <span class="text-2xl font-bold text-gray-900">{formattedRegistrationFee()}</span>
+                            </div>
+                        </div>
+                    {/if}
+
+                    {#if error_message}
+                        <Alert color="red" class="error">{error_message}</Alert>
+                    {/if}
+
+                    <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
+                        <Button color="alternative" type="button" size="lg" onclick={goBackStep} disabled={isSubmittingFinal}>{m.eventRegister_goBack()}</Button>
+                        <Button color="primary" type="button" size="lg" onclick={handleFinalSubmit} disabled={isSubmittingFinal}>
+                            {isFreeEvent ? m.eventRegister_register() : m.eventRegister_checkout()}
+                        </Button>
+                    </div>
                 </div>
             </form>
         </div>
+
+        <!-- Checkout Modal (for paid events) -->
+        <Modal bind:open={checkoutModalOpen} size="sm" dismissable={false} class="text-center">
+            <div class="py-8">
+                {#if checkoutStatus === 'processing'}
+                    <Spinner size="12" class="mx-auto mb-4" />
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">{m.eventRegister_processingPayment()}</h3>
+                    <p class="text-gray-600">{m.eventRegister_pleaseWait()}</p>
+                {:else if checkoutStatus === 'success'}
+                    <CheckCircleOutline class="w-16 h-16 mx-auto mb-4 text-green-500" />
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">{m.eventRegister_paymentSuccess()}</h3>
+                    <p class="text-gray-600">{m.eventRegister_completingRegistration()}</p>
+                {/if}
+            </div>
+        </Modal>
     {/if}
 </div>

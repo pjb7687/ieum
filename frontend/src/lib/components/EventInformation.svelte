@@ -43,7 +43,7 @@
     }
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.eventInfo_title()}</Heading>
+<Heading tag="h2" class="text-xl font-bold mb-3">{m.eventInfo_title()}</Heading>
 <p class="font-light mb-6">{m.eventInfo_description()}</p>
 <form method="POST" action="?/update_event" use:enhance={afterSubmit} on:submit={handleSubmit}>
     <EventAdminForm bind:data={eventFormData} />

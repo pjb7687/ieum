@@ -245,7 +245,7 @@
     };
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.onsiteAttendees_title()}</Heading>
+<Heading tag="h2" class="text-xl font-bold mb-3">{m.onsiteAttendees_title()}</Heading>
 <p class="font-light mb-6">{m.onsiteAttendees_description()}</p>
 
 <div class="flex justify-end items-center gap-2 mb-4">

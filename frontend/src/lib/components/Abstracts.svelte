@@ -128,10 +128,10 @@
     };
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.abstracts_title()}</Heading>
+<Heading tag="h2" class="text-xl font-bold mb-3">{m.abstracts_title()}</Heading>
 <p class="font-light mb-6">{m.abstracts_description()}</p>
 
-<Heading tag="h3" customSize="text-lg font-bold" class="mb-3">{m.abstracts_reviewersTitle()}</Heading>
+<Heading tag="h3" class="text-lg font-bold mb-3">{m.abstracts_reviewersTitle()}</Heading>
 <div class="flex justify-end gap-2">
     <Button color="primary" size="sm" disabled={selectedReviewers.length === 0} onclick={showSendEmailModal}>{m.abstracts_sendEmailToSelected()}</Button>
     <Button color="primary" size="sm" onclick={addReviewerModal}>{m.abstracts_addReviewer()}</Button>
@@ -186,7 +186,7 @@
     </TableBody>
 </TableSearch>
 
-<Heading tag="h3" customSize="text-lg font-bold" class="mt-12 mb-3">{m.abstracts_abstractsTitle()}</Heading>
+<Heading tag="h3" class="text-lg font-bold mt-12 mb-3">{m.abstracts_abstractsTitle()}</Heading>
 <TableSearch placeholder={m.abstracts_searchAbstractPlaceholder()} hoverable={true}>
     <TableHead>
         <TableHeadCell>{m.abstracts_title()}</TableHeadCell>
@@ -278,7 +278,7 @@
         </div>
         <div class="mb-6">
             <Label for="body" class="block mb-2">{m.abstracts_message()}</Label>
-            <Textarea id="body" name="body" rows="10" />
+            <Textarea id="body" name="body" rows="10" class="w-full" />
         </div>
         {#if message_send_email.type === 'error'}
             <Alert type="error" color="red" class="mb-6">{message_send_email.message}</Alert>
@@ -322,7 +322,7 @@
         </div>
         <div class="mb-6">
             <Label for="abstract" class="block mb-2">{m.abstracts_preview()}</Label>
-            <Card size="none">
+            <Card size="xl">
                 {@html selected_abstract?selected_abstract.body:''}
             </Card>
         </div>

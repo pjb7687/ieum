@@ -1,6 +1,6 @@
 <script>
     import { Button, Alert, Checkbox } from 'flowbite-svelte';
-    import { UserCircleSolid, FileLinesSolid } from 'flowbite-svelte-icons';
+    import { UserCircleSolid, FileLinesSolid, ClipboardListSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
 
@@ -9,10 +9,14 @@
     let attendee = data.attendee;
     let my_abstract = data.my_abstract;
 
-    // Display based on UI language
+    // Determine which languages are included in the event
+    const hasEnglish = event.main_languages && event.main_languages.includes('en');
+    const hasKorean = event.main_languages && event.main_languages.includes('ko');
+
+    // Display based on event language
     const currentLang = languageTag();
-    const showKoreanName = currentLang === 'ko';
-    const showEnglishName = currentLang === 'en';
+    const showEnglishName = hasEnglish; // Always show English name if event has English
+    const showKoreanName = hasKorean || currentLang === 'ko'; // Show Korean if event has Korean OR UI is Korean
 
     // Helper to get nationality display text
     function getNationalityText(nationality) {
@@ -99,7 +103,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-500">{m.form_institute()}</p>
-                        <p class="text-base text-gray-900">{showKoreanName && attendee.institute_ko ? attendee.institute_ko : attendee.institute}</p>
+                        <p class="text-base text-gray-900">{hasEnglish ? attendee.institute : (showKoreanName && attendee.institute_ko ? attendee.institute_ko : attendee.institute)}</p>
                     </div>
                     {#if attendee.department}
                         <div>
@@ -131,7 +135,10 @@
             <!-- Event-Specific Answers Section -->
             {#if attendee.custom_answers && attendee.custom_answers.length > 0}
                 <div class="pt-6 border-t border-gray-200">
-                    <h2 class="text-xl font-bold text-gray-900 mb-4">{m.myRegistration_eventSpecificAnswers()}</h2>
+                    <div class="flex items-center gap-2 mb-4">
+                        <ClipboardListSolid class="w-6 h-6 text-gray-700" />
+                        <h2 class="text-xl font-bold text-gray-900">{m.myRegistration_eventSpecificAnswers()}</h2>
+                    </div>
                     <div class="space-y-4 pl-8">
                         {#each attendee.custom_answers as answer}
                             <div>

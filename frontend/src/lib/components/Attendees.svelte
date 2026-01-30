@@ -455,7 +455,7 @@
     {@html text.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}
 {/snippet}
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.attendees_title()}</Heading>
+<Heading tag="h2" class="text-xl font-bold mb-3">{m.attendees_title()}</Heading>
 <p class="font-light mb-6">{m.attendees_description()}</p>
 <div class="flex justify-end sm:flex-row flex-col">
     <div class="flex items-center gap-2">
@@ -556,7 +556,7 @@
 <Modal id="attendee_modal" size="xl" title={m.attendees_detailsTitle()} bind:open={attendee_modal} outsideclose>
     <form method="post" action="?/update_attendee" use:enhance={afterSuccessfulSubmitDefaultAnswerChanges}>
         <input type="hidden" name="id" value={table_data_attendees[selected_idx].id} />
-        <Heading tag="h2" customSize="text-lg font-bold" class="pt-3 mb-6">{m.attendees_basicInformation()}</Heading>
+        <Heading tag="h2" class="text-lg font-bold pt-3 mb-6">{m.attendees_basicInformation()}</Heading>
         <RegistrationForm data={table_data_attendees[selected_idx]} config={form_config} />
         {#if message_default_answer_changes.type === 'success'}
             <Alert type="success" color="green">{message_default_answer_changes.message}</Alert>
@@ -567,7 +567,7 @@
             <Button color="primary" type="submit">{m.attendees_updateAttendee()}</Button>
         </div>
     </form>
-    <Heading tag="h2" customSize="text-lg font-bold" class="pt-3 mb-6">{m.attendees_answersTitle()}</Heading>
+    <Heading tag="h2" class="text-lg font-bold pt-3 mb-6">{m.attendees_answersTitle()}</Heading>
     <form method="post" action="?/update_answers" use:enhance={afterSuccessfulSubmitCustomAnswerChanges}>
         <div class="flex justify-center gap-2 mb-6">
             <Button color="primary" onclick={resetCustomAnswerChanges}>{m.attendees_resetChanges()}</Button>
@@ -576,7 +576,7 @@
         <input type="hidden" name="attendee_id" value={table_data_attendees[selected_idx].id} />
         {#if custom_answers.length > 0}
             {#each custom_answers as answer, idx}
-                <Card size="none" class="mb-6">
+                <Card size="xl" class="mb-6">
                     <div class="mb-6">
                         <Label for={`answer_reference_id_${idx}`} class="block mb-2">{m.attendees_referenceQuestion()}</Label>
                         <Select id={`answer_reference_id_${idx}`} name="answer_reference_id[]" items={data.questions.map(q => ({
@@ -591,11 +591,11 @@
                     </div>
                     <div class="mb-6">
                         <Label for={`answer_question_${idx}`} class="block mb-2">{m.attendees_question()}</Label>
-                        <Textarea class="mb-2" id={`answer_question_${idx}`} name="answer_question[]" bind:value={answer.question} readonly={answer.reference.question !== ""} />
+                        <Textarea class="mb-2 w-full" id={`answer_question_${idx}`} name="answer_question[]" bind:value={answer.question} readonly={answer.reference.question !== ""} />
                     </div>
                     <div class="mb-6">
                         <Label for={`answer_answer_${idx}`} class="block mb-2">{m.attendees_answer()}</Label>
-                        <Textarea id={`answer_answer_${idx}`} name="answer_answer[]" bind:value={answer.answer} />
+                        <Textarea id={`answer_answer_${idx}`} name="answer_answer[]" bind:value={answer.answer} class="w-full" />
                     </div>
                     <div class="flex justify-center gap-2">
                         <Button color="red" onclick={
@@ -647,7 +647,7 @@
         </div>
         <div class="mb-6">
             <Label for="body" class="block mb-2">{m.attendees_message()}</Label>
-            <Textarea id="body" name="body" rows="10" />
+            <Textarea id="body" name="body" rows="10" class="w-full" />
         </div>
         {#if message_send_email.type === 'error'}
             <Alert type="error" color="red" class="mb-6">{message_send_email.message}</Alert>

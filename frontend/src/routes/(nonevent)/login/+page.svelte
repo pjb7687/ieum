@@ -77,13 +77,13 @@
 </script>
 
 <div class="container mx-auto max-w-4xl my-10 px-3 sm:px-7">
-    <Card size="none" padding="none" class="grid md:grid-cols-2">
-        <div class="p-8 flex flex-col space-y-8 border-l border-b">
+    <Card size="xl" padding="none" class="grid md:grid-cols-2">
+        <div class="p-8 flex flex-col space-y-8 border-l border-b border-gray-300">
             <h3 class="text-xl font-medium text-gray-900 dark:text-white">{m.login_createAccountTitle()}</h3>
             <p class="text-sm !mt-2">{m.login_createAccountDescription()}</p>
             <Button class="w-full" href="/registration?next={encodeURIComponent(data.next || '/')}">{m.login_createAccountButton()}</Button>
         </div>
-        <div class="border-l border-b p-8">
+        <div class="border-l border-b border-gray-300 p-8">
             <h3 class="text-xl font-medium text-gray-900 dark:text-white">{m.login_title()}</h3>
             <p class="text-sm !mt-2">{m.login_description()}</p>
             <form method="POST" action="?/login" class="space-y-4 mt-6">

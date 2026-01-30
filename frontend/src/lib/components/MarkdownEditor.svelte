@@ -50,13 +50,13 @@
             bind:value={value}
             {placeholder}
             {rows}
-            class="font-mono"
+            class="font-mono w-full"
         />
         <p class="text-sm text-gray-500 mt-2">{m.markdownEditor_supportsMarkdown()}</p>
     </TabItem>
 
     <TabItem open={activeTab === 'preview'} title={m.markdownEditor_preview()}>
-        <Card size="none" class="p-4 min-h-[200px] prose prose-sm max-w-none dark:prose-invert">
+        <Card size="xl" class="p-4 min-h-[200px] prose prose-sm max-w-none dark:prose-invert">
             {#if value}
                 {@html previewHtml}
             {:else}
@@ -75,12 +75,12 @@
                     bind:value={value}
                     {placeholder}
                     {rows}
-                    class="font-mono"
+                    class="font-mono w-full"
                 />
             </div>
             <div>
                 <p class="text-sm font-medium mb-2">{m.markdownEditor_preview()}</p>
-                <Card size="none" class="p-4 min-h-[200px] prose prose-sm max-w-none dark:prose-invert overflow-auto">
+                <Card size="xl" class="p-4 min-h-[200px] prose prose-sm max-w-none dark:prose-invert overflow-auto">
                     {#if value && previewHtml}
                         {@html previewHtml}
                     {:else}

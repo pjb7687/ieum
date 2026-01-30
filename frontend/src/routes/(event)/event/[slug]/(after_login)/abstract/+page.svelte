@@ -117,17 +117,17 @@
     };
 </script>
 
-<Heading tag="h1" customSize="text-2xl font-bold" class="mb-3">Abstract Submittion</Heading>
+<Heading tag="h1" class="text-2xl font-bold mb-3">Abstract Submittion</Heading>
 {#if data.abstract_submitted}
 <p class="mb-10 font-light">Thank you for submitting your abstract. You can preview your submission below. If you need to make any changes, please contact the event organizers.</p>
-<Card size="none" class="text-black mb-10">
+<Card size="xl" class="text-black mb-10">
     <div class="text-center">
         <h3 class="text-lg font-bold">{abstract.title}</h3>
         <p class="text-sm text-gray-600 mb-6">Presented by {me.first_name} {#if me.middle_initial}{me.middle_initial}{/if} {me.last_name}</p>
     </div>
-    <hr class="mb-5" />
+    <hr class="mb-5 border-gray-200" />
     {@html abstract.body}
-    <hr class="mb-5" />
+    <hr class="mb-5 border-gray-200" />
 </Card>
 <div class="flex flex-col md:flex-row justify-center gap-4">
     <Button href={abstract.link} color="primary" size="lg" data-sveltekit-reload>Download Submission</Button>

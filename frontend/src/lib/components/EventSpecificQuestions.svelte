@@ -56,7 +56,7 @@
     });
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.eventQuestions_title()}</Heading>
+<Heading tag="h2" class="text-xl font-bold mb-3">{m.eventQuestions_title()}</Heading>
 <p class="font-light mb-6">{m.eventQuestions_description()}</p>
 <List class="mb-6">
     <Li>{m.eventQuestions_defaultInfo()}</Li>
@@ -68,7 +68,7 @@
         <Button type="submit" color="primary">{m.eventQuestions_applyChanges()}</Button>
     </div>
     {#each custom_questions as question}
-    <Card size="none" class="mb-6">
+    <Card size="xl" class="mb-6 p-5">
         <div class="mb-6">
             <Label for="question_type" class="block mb-2">{m.eventQuestions_questionType()}</Label>
             <Select id="question_type" name="question_type[]" bind:value={question.question.type} items={[
@@ -80,12 +80,12 @@
         </div>
         <div class="mb-6">
             <Label for="question_question" class="block mb-2">{m.eventQuestions_question()}</Label>
-            <Textarea id="question_question" name="question_question[]" bind:value={question.question.question} />
+            <Textarea id="question_question" name="question_question[]" bind:value={question.question.question} class="w-full" />
         </div>
         {#if question.question.type === 'checkbox' || question.question.type === 'select'}
         <div class="mb-6">
             <Label for="question_options" class="block mb-2">{m.eventQuestions_options()}</Label>
-            <Textarea id="question_options" name="question_options[]" rows="3" bind:value={question.question.options} />
+            <Textarea id="question_options" name="question_options[]" rows="3" bind:value={question.question.options} class="w-full" />
         </div>
         {/if}
         <Input type="hidden" name="question_id[]" bind:value={question.id} />

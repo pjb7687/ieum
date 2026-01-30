@@ -1,7 +1,9 @@
 <script>
     let { data } = $props();
 
-    import { Card, Button, Alert, Spinner } from 'flowbite-svelte';
+    import { Button, Alert, Spinner } from 'flowbite-svelte';
+    import { CheckCircleSolid, EnvelopeSolid } from 'flowbite-svelte-icons';
+    import { goto } from '$app/navigation';
     import * as m from '$lib/paraglide/messages.js';
 
     let verifying = $state(false);
@@ -29,33 +31,32 @@
             errorMessage = rtn.error?.message || 'An error occurred during verification.';
         } else {
             success = true;
-            // Redirect will happen automatically from server action
+            // Show success message briefly, then redirect to login
+            setTimeout(() => {
+                goto('/login');
+            }, 2000);
         }
     };
 </script>
 
 <div class="container mx-auto max-w-2xl my-10 px-3 sm:px-7">
-    <Card size="xl" padding="xl">
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
         <div class="text-center mb-6">
             {#if success}
-                <svg class="mx-auto mb-4 text-green-600 w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+                <CheckCircleSolid class="mx-auto mb-4 text-green-600 w-16 h-16" />
             {:else if verifying}
                 <div class="flex justify-center mb-4">
                     <Spinner size="12" color="blue" />
                 </div>
             {:else}
-                <svg class="mx-auto mb-4 text-blue-600 w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
+                <EnvelopeSolid class="mx-auto mb-4 text-blue-600 w-16 h-16" />
             {/if}
 
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+            <h1 class="text-3xl font-bold text-gray-900 mb-3">
                 {m.verifyEmail_title()}
             </h1>
 
-            <p class="text-base text-gray-600 dark:text-gray-400">
+            <p class="text-base text-gray-600">
                 {#if success}
                     {m.verifyEmail_successMessage()}
                 {:else if verifying}
@@ -79,5 +80,5 @@
                 </Button>
             </div>
         {/if}
-    </Card>
+    </div>
 </div>

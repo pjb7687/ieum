@@ -97,7 +97,7 @@
     };
 </script>
 
-<Heading tag="h2" customSize="text-xl font-bold" class="mb-3">{m.speakers_title()}</Heading>
+<Heading tag="h2" class="text-xl font-bold mb-3">{m.speakers_title()}</Heading>
 <p class="font-light mb-6">{m.speakers_description()}</p>
 <div class="flex justify-end gap-2">
     <Button color="primary" size="sm" disabled={selectedSpeakers.length === 0} onclick={showSendEmailModal}>{m.speakers_sendEmailToSelected()}</Button>
@@ -177,7 +177,7 @@
                     }
                 } />
             </div>
-            <hr class="mb-6" />
+            <hr class="mb-6 border-gray-200" />
         {/if}
         <div class="mb-6">
             <Label for="name" class="block mb-2">{m.speakers_name()}*</Label>
@@ -236,7 +236,7 @@
         </div>
         <div class="mb-6">
             <Label for="body" class="block mb-2">{m.speakers_message()}</Label>
-            <Textarea id="body" name="body" rows="10" />
+            <Textarea id="body" name="body" rows="10" class="w-full" />
         </div>
         {#if message_send_email.type === 'error'}
             <Alert type="error" color="red" class="mb-6">{message_send_email.message}</Alert>

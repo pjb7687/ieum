@@ -14,7 +14,7 @@
         <div class="flex justify-center mb-4">
             <CheckCircleSolid class="w-16 h-16 text-green-500" />
         </div>
-        <Heading tag="h1" customSize="text-2xl font-bold" class="mb-3">{m.onsiteRegistration_complete()}</Heading>
+        <Heading tag="h1" class="text-2xl font-bold mb-3">{m.onsiteRegistration_complete()}</Heading>
         <p class="mb-6 text-gray-600">
             {#if languageTag() === 'ko'}
                 <span class="font-semibold">{event.name}</span>{m.onsiteRegistration_thankYou()}

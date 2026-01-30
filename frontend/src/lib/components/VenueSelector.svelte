@@ -364,10 +364,10 @@
     </p>
   </div>
 
-  <svelte:fragment slot="footer">
+  {#snippet footer()}
     <div class="flex justify-end gap-2 w-full">
       <Button color="alternative" onclick={closeModal}>{m.common_cancel()}</Button>
       <Button color="primary" onclick={closeModal}>{m.common_confirm()}</Button>
     </div>
-  </svelte:fragment>
+  {/snippet}
 </Modal>
