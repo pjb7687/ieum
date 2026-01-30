@@ -625,8 +625,8 @@ def register_event(request, event_id: int):
     event.attendees.add(attendee)
 
     send_mail.delay(
-        Template(event.email_template_registration.subject).render(Context({"event": event, "attendee": attendee})),
-        Template(event.email_template_registration.body).render(Context({"event": event, "attendee": attendee})),
+        Template(event.email_template_registration.subject).render(Context({"event": event, "attendee": attendee}, autoescape=False)),
+        Template(event.email_template_registration.body).render(Context({"event": event, "attendee": attendee}, autoescape=False)),
         user.email
     )
 
@@ -689,8 +689,8 @@ def submit_abstract(request, event_id: int):
     )
 
     send_mail.delay(
-        Template(event.email_template_abstract_submission.subject).render(Context({"event": event, "abstract": Abstract.objects.get(attendee=attendee, event=event)})),
-        Template(event.email_template_abstract_submission.body).render(Context({"attendee": attendee, "event": event, "abstract": Abstract.objects.get(attendee=attendee, event=event)})),
+        Template(event.email_template_abstract_submission.subject).render(Context({"event": event, "abstract": Abstract.objects.get(attendee=attendee, event=event)}, autoescape=False)),
+        Template(event.email_template_abstract_submission.body).render(Context({"attendee": attendee, "event": event, "abstract": Abstract.objects.get(attendee=attendee, event=event)}, autoescape=False)),
         attendee.user.email
     )
 
