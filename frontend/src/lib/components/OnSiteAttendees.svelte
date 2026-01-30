@@ -12,7 +12,7 @@
     let { data } = $props();
 
     // Create a sorted derived value for attendees
-    let sortedAttendees = $derived([...data.attendees].sort((a, b) => a.id - b.id));
+    let sortedAttendees = $derived([...data.onsite_attendees].sort((a, b) => a.id - b.id));
 
     const exportAttendeesAsCSV = () => {
         const csv = [
@@ -182,9 +182,9 @@
     <TableHead>
         <TableHeadCell class="w-1">
             <Checkbox
-                checked={selectedAttendees.length > 0 && selectedAttendees.length === data.attendees.length}
+                checked={selectedAttendees.length > 0 && selectedAttendees.length === data.onsite_attendees.length}
                 intermediate={
-                    selectedAttendees.length > 0 && (selectedAttendees.length < data.attendees.length)
+                    selectedAttendees.length > 0 && (selectedAttendees.length < data.onsite_attendees.length)
                 }
                 onclick={(e) => {
                     if (e.target.checked) {
