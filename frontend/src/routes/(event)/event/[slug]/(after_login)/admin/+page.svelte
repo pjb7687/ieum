@@ -72,7 +72,7 @@
         <div class="relative z-10">
             <h1 class="text-3xl font-bold text-white">{data.event.name}</h1>
             <p class="text-slate-200 mt-2">
-                <a href="/events" class="hover:underline">Events</a>
+                <a href="/" class="hover:underline">Events</a>
                 <span class="mx-2">/</span>
                 <a href="/event/{data.event.id}" class="hover:underline">{data.event.name}</a>
                 <span class="mx-2">/</span>

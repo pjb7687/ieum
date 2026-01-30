@@ -118,7 +118,7 @@
         <div class="relative z-10">
             <h1 class="text-3xl font-bold text-white">{m.eventRegister_title()}</h1>
             <p class="text-slate-200 mt-2">
-                <a href="/events" class="hover:underline">{m.eventDetail_breadcrumbEvents()}</a>
+                <a href="/" class="hover:underline">{m.eventDetail_breadcrumbEvents()}</a>
                 <span class="mx-2">/</span>
                 <a href="/event/{event.id}" class="hover:underline">{event.name}</a>
                 <span class="mx-2">/</span>
