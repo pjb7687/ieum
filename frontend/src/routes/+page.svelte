@@ -7,6 +7,7 @@
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
+    import YearSelector from '$lib/components/YearSelector.svelte';
 
     let { data } = $props();
 
@@ -24,16 +25,6 @@
 
     // Debounce timer for search
     let searchTimer;
-
-    // Year navigation
-    const currentYear = new Date().getFullYear();
-    let yearOffset = $state(0);
-
-    // Get years to display (3 years centered on current + offset)
-    let displayYears = $derived(() => {
-        const centerYear = currentYear + yearOffset;
-        return [centerYear - 1, centerYear, centerYear + 1];
-    });
 
     // Update events when data changes (from server load)
     $effect(() => {
@@ -79,13 +70,8 @@
         });
     }
 
-    function selectYear(year) {
-        selectedYear = year.toString();
+    function handleYearChange(year) {
         updateURL(true);
-    }
-
-    function navigateYears(direction) {
-        yearOffset += direction;
     }
 
     // Handle search with debounce
@@ -106,7 +92,6 @@
         searchKeyword = '';
         showOnlyOpen = false;
         selectedYear = 'all';
-        yearOffset = 0;
         updateURL(true);
     }
 
@@ -184,7 +169,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <!-- Left Sidebar - Filters -->
         <div class="lg:col-span-1">
             <div class="sticky top-8">
@@ -205,41 +190,7 @@
                     </div>
 
                     <!-- Year Selector -->
-                    <div>
-                        <Label class="mb-3 text-sm font-semibold text-gray-700">{m.events_year()}</Label>
-                        <div class="flex items-center justify-between gap-2">
-                            <button
-                                type="button"
-                                onclick={() => navigateYears(-1)}
-                                class="p-1 hover:bg-gray-100 rounded transition-colors"
-                                aria-label="Previous years"
-                            >
-                                <span class="text-gray-600 font-bold text-lg">&lt;</span>
-                            </button>
-                            <div class="flex items-center gap-2 flex-1 justify-center">
-                                {#each displayYears() as year}
-                                    <button
-                                        type="button"
-                                        onclick={() => selectYear(year)}
-                                        class={`px-3 py-1 text-sm rounded transition-colors cursor-pointer
-                                            ${selectedYear === year.toString() ? 'bg-blue-600 text-white font-bold' : 'hover:bg-gray-100 text-gray-600'}
-                                            ${year === currentYear && selectedYear !== year.toString() ? 'font-bold text-gray-900' : ''}
-                                        `}
-                                    >
-                                        {year}
-                                    </button>
-                                {/each}
-                            </div>
-                            <button
-                                type="button"
-                                onclick={() => navigateYears(1)}
-                                class="p-1 hover:bg-gray-100 rounded transition-colors"
-                                aria-label="Next years"
-                            >
-                                <span class="text-gray-600 font-bold text-lg">&gt;</span>
-                            </button>
-                        </div>
-                    </div>
+                    <YearSelector bind:selectedYear onYearChange={handleYearChange} />
 
                     <!-- Status Filter -->
                     <div>
@@ -262,7 +213,7 @@
         </div>
 
         <!-- Right Content - Events List -->
-        <div class="lg:col-span-3">
+        <div class="lg:col-span-2 xl:col-span-3">
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
                 {#if navigating && allEvents.length === 0}
                     <div class="text-center py-16">
