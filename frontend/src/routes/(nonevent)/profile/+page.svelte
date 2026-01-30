@@ -47,7 +47,7 @@
             korean_name: me.korean_name || '',
             last_name: me.last_name,
             nationality: me.nationality ? me.nationality.toString() : undefined,
-            institute: me.institute,
+            institute: me.institute ? me.institute.toString() : '',
             department: me.department,
             job_title: me.job_title,
             disability: me.disability,

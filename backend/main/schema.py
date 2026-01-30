@@ -1,7 +1,7 @@
 
 from ninja import Schema
 
-from typing import List, Union
+from typing import List, Union, Optional
 from datetime import date
 
 from main.models import User, Attendee, Abstract, OnSiteAttendee, Institution
@@ -47,6 +47,7 @@ class UserSchema(Schema):
     nationality: int
     job_title: str
     department: str
+    institute: Optional[int]
     institute_en: str
     institute_ko: str
     disability: str
@@ -55,6 +56,12 @@ class UserSchema(Schema):
     is_active: bool
     date_joined: str
     email_verified: bool
+
+    @staticmethod
+    def resolve_institute(user: User) -> Optional[int]:
+        if user.institute:
+            return user.institute.id
+        return None
 
     @staticmethod
     def resolve_institute_en(user: User) -> str:
