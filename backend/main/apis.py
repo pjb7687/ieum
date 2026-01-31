@@ -64,13 +64,23 @@ def get_user(request):
 @api.post("/me", response=UserSchema)
 def update_user(request):
     data = json.loads(request.body)
-    # check if mandatory fields are filled
+    # check if mandatory fields are filled (English name required for all)
     if not data["first_name"] or not data["last_name"] or not data["nationality"] or not data["institute"]:
         return api.create_response(
             request,
             {"errors": [{"message": "Required fields are not filled", "code": "invalid"}]},
             status=400,
         )
+
+    # Korean nationals (nationality == 1) must also provide korean_name
+    nationality = int(data["nationality"])
+    if nationality == 1 and not data.get("korean_name", "").strip():
+        return api.create_response(
+            request,
+            {"errors": [{"message": "Korean name is required for Korean nationals", "code": "invalid"}]},
+            status=400,
+        )
+
     user = request.user
 
     # Fix username to match email if mismatched (can happen with social signups)
@@ -82,7 +92,7 @@ def update_user(request):
     user.last_name = data["last_name"]
     user.middle_initial = data.get("middle_initial", "")
     user.korean_name = data.get("korean_name", "")
-    user.nationality = int(data["nationality"])
+    user.nationality = nationality
     user.job_title = data.get("job_title", "")
     user.department = data.get("department", "")
 

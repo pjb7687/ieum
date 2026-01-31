@@ -17,26 +17,14 @@
 
     const schema = yup.object({
         email: yup.string().email().required(),
-        first_name: yup.string().when('nationality', {
-            is: (val) => val === '2' || val === '3',
-            then: (schema) => schema.required(m.validation_firstNameRequired()),
-            otherwise: (schema) => schema
-        }),
-        last_name: yup.string().when('nationality', {
-            is: (val) => val === '2' || val === '3',
-            then: (schema) => schema.required(m.validation_lastNameRequired()),
-            otherwise: (schema) => schema
-        }),
+        // English name is always required for all users
+        first_name: yup.string().required(m.validation_firstNameRequired()),
+        last_name: yup.string().required(m.validation_lastNameRequired()),
         middle_initial: yup.string().max(1),
+        // Korean name is required for Korean nationals, optional for others
         korean_name: yup.string().when('nationality', {
             is: '1',
-            then: (schema) => schema.test('korean-or-english', m.validation_nameRequired(), function(value) {
-                const { first_name, last_name } = this.parent;
-                // Either korean_name OR (first_name AND last_name) must be provided
-                const hasKoreanName = value && value.trim() !== '';
-                const hasEnglishName = first_name && first_name.trim() !== '' && last_name && last_name.trim() !== '';
-                return hasKoreanName || hasEnglishName;
-            }),
+            then: (schema) => schema.required(m.validation_koreanNameRequired()),
             otherwise: (schema) => schema
         }),
         nationality: yup.string().required(m.validation_nationalityRequired()),
@@ -54,6 +42,8 @@
         action: 'complete-profile',
         hide_password: true,
         hide_login_info: true,
+        show_english_name: true,
+        show_korean_name: true,
         csrf_token: page_data.csrf_token,
     }
 

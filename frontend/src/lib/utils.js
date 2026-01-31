@@ -132,9 +132,9 @@ export function sanitizeRedirectUrl(url) {
 /**
  * Check if a user profile is complete with all required fields.
  * Required fields depend on nationality:
- * - For all: nationality, job_title, institute, username must match email
- * - For Korean (1): korean_name OR (first_name AND last_name)
- * - For non-Korean (2, 3): first_name AND last_name
+ * - For all: nationality, job_title, institute, username must match email, first_name, last_name
+ * - For Korean (1): additionally requires korean_name
+ * - For non-Korean (2, 3): korean_name is optional
  * @param {Object} user - User object from API
  * @returns {boolean} - True if profile is complete
  */
@@ -151,21 +151,15 @@ export function isProfileComplete(user) {
         return false;
     }
 
-    // Check name fields based on nationality
-    const nationality = user.nationality;
+    // English name is always required for all users
+    if (!user.first_name || user.first_name.trim() === '' ||
+        !user.last_name || user.last_name.trim() === '') {
+        return false;
+    }
 
-    if (nationality === 1) {
-        // Korean: need korean_name OR (first_name AND last_name)
-        const hasKoreanName = user.korean_name && user.korean_name.trim() !== '';
-        const hasEnglishName = user.first_name && user.first_name.trim() !== '' &&
-                              user.last_name && user.last_name.trim() !== '';
-        if (!hasKoreanName && !hasEnglishName) {
-            return false;
-        }
-    } else {
-        // Non-Korean: need first_name AND last_name
-        if (!user.first_name || user.first_name.trim() === '' ||
-            !user.last_name || user.last_name.trim() === '') {
+    // Korean nationals must also provide korean_name
+    if (user.nationality === 1) {
+        if (!user.korean_name || user.korean_name.trim() === '') {
             return false;
         }
     }

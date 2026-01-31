@@ -177,7 +177,7 @@
 {#if config.show_english_name || data.nationality === '2' || data.nationality === '3'}
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
   <div class="mb-6">
-    <Label for="first_name" class="block mb-2">{m.form_firstName()}{#if config.show_english_name || data.nationality === '2' || data.nationality === '3'} <span class="text-red-500">*</span>{/if}</Label>
+    <Label for="first_name" class="block mb-2">{m.form_firstName()} <span class="text-red-500">*</span></Label>
     <Input id="first_name" name="first_name" bind:value={data.first_name} />
     {#if errors.first_name}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -190,7 +190,7 @@
     <Input id="middle_initial" name="middle_initial" maxlength="1" bind:value={data.middle_initial} />
   </div>
   <div class="mb-6">
-    <Label for="last_name" class="block mb-2">{m.form_lastName()}{#if data.nationality === '2' || data.nationality === '3'} <span class="text-red-500">*</span>{:else if config.show_english_name} <span class="text-red-500">*</span>{/if}</Label>
+    <Label for="last_name" class="block mb-2">{m.form_lastName()} <span class="text-red-500">*</span></Label>
     <Input id="last_name" name="last_name" bind:value={data.last_name} />
     {#if errors.last_name}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -203,7 +203,7 @@
 
 {#if config.show_korean_name || data.nationality === '1' || data.nationality === '2' || data.nationality === '3'}
 <div class="mb-6">
-  <Label for="korean_name" class="block mb-2">{m.form_koreanName()} {#if data.nationality === '1' && !config.show_english_name}<span class="text-red-500">*</span>{/if}</Label>
+  <Label for="korean_name" class="block mb-2">{m.form_koreanName()} {#if data.nationality === '1'}<span class="text-red-500">*</span>{/if}</Label>
   <Input id="korean_name" name="korean_name" bind:value={data.korean_name} />
   {#if errors.korean_name}
     <Alert type="error" color="red" class="mb-6 mt-3">
