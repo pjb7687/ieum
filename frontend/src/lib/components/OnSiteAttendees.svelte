@@ -5,13 +5,18 @@
     import { enhance } from '$app/forms';
     import { UserEditSolid, UserRemoveSolid, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
+    import { generateNametagPDF, generateCertificatePDF, loadKoreanFonts } from '$lib/pdfUtils.js';
 
     import OnSiteRegistrationForm from './OnSiteRegistrationForm.svelte';
     import TablePagination from '$lib/components/TablePagination.svelte';
-    import jsPDF from 'jspdf';
     import QRCode from 'qrcode';
 
     let { data } = $props();
+
+    // Preload fonts on component mount
+    $effect(() => {
+        loadKoreanFonts();
+    });
 
     // Create a sorted derived value for attendees
     let sortedAttendees = $derived([...data.onsite_attendees].sort((a, b) => a.id - b.id));
@@ -115,44 +120,82 @@
     };
 
     let nametag_modal = $state(false);
-    let selected_nametag = $state({});
+    let selected_nametag = $state('');
     let selected_nametag_id = $state(null);
     let selected_role = $state('Participant');
 
-    const generateNametag = (id, role) => {
-        const doc = new jsPDF({
-            orientation: "portrait",
-            unit: "mm",
-            format: [90, 100]
+    const generateNametag = async (id, role) => {
+        const p = sortedAttendees.find(a => a.id === id);
+        selected_nametag = await generateNametagPDF({
+            name: p.name,
+            institute: p.institute,
+            role
         });
-        let p = sortedAttendees.find(a => a.id === id);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(30);
-        let splitName = doc.splitTextToSize(p.name, 80);
-        doc.text(splitName, 45, 45 - (splitName.length - 1) * 12, 'center');
-        doc.setFontSize(20);
-        let splitInstitute = doc.splitTextToSize(p.institute, 80);
-        doc.text(splitInstitute, 45, 55, 'center');
-        doc.setFontSize(23);
-        doc.setLineWidth(1);
-        doc.line(5, 82, 85, 82);
-        doc.text(role, 45, 93, 'center');
-        selected_nametag = doc.output('bloburi');
     };
 
     const showNametagModal = async (id) => {
         selected_nametag_id = id;
         selected_role = 'Participant';
-        generateNametag(id, selected_role);
+        await generateNametag(id, selected_role);
         nametag_modal = true;
     };
 
-    const applyRole = () => {
-        generateNametag(selected_nametag_id, selected_role);
+    const applyRole = async () => {
+        await generateNametag(selected_nametag_id, selected_role);
     };
 
     let cert_modal = $state(false);
-    let selected_cert = $state({});
+    let selected_cert = $state('');
+    let cert_email = $state('');
+    let cert_sending = $state(false);
+    let cert_message = $state({});
+    let selected_cert_onsite_id = $state(null);
+
+    // Bulk certificate sending
+    let bulk_cert_sending = $state(false);
+    let bulk_cert_message = $state({});
+
+    const sendCertificatesToSelected = async () => {
+        if (selectedAttendees.length === 0 || bulk_cert_sending) return;
+        bulk_cert_sending = true;
+        bulk_cert_message = {};
+        try {
+            for (const id of selectedAttendees) {
+                const p = sortedAttendees.find(a => a.id === id);
+                if (!p.email) continue;
+                const pdfDataUri = await generateCertificatePDF({
+                    attendee: { name: p.name, institute: p.institute },
+                    event: data.event,
+                    messages: {
+                        certIssueDate: m.attendees_certIssueDate,
+                        certTitle: m.attendees_certTitle,
+                        certName: m.attendees_certName,
+                        certInstitute: m.attendees_certInstitute,
+                        certHasAttended: m.attendees_certHasAttended,
+                        certOn: m.attendees_certOn,
+                        certHeldAt: m.attendees_certHeldAt,
+                        certAsParticipant: m.attendees_certAsParticipant,
+                        certFooter: m.attendees_certFooter
+                    },
+                    outputFormat: 'datauristring'
+                });
+                const base64Pdf = pdfDataUri.split(',')[1];
+                const formData = new FormData();
+                formData.append('email', p.email);
+                formData.append('pdf_base64', base64Pdf);
+                formData.append('attendee_name', p.name);
+                await fetch('?/send_certificate', {
+                    method: 'POST',
+                    body: formData
+                });
+            }
+            bulk_cert_message = { type: 'success', message: m.attendees_sendCertificatesComplete() };
+        } catch (error) {
+            bulk_cert_message = { type: 'error', message: m.attendees_sendCertificateError() };
+        } finally {
+            bulk_cert_sending = false;
+        }
+    };
 
     let qr_modal = $state(false);
     let qr_code_url = $state('');
@@ -217,56 +260,80 @@
     };
 
     const showCertificateModal = async (id) => {
-        const doc = new jsPDF({
-            orientation: "portrait",
-            unit: "mm",
-            format: [210, 297]
-        });
-        let p = sortedAttendees.find(a => a.id === id);
-        let curr_y = 45;
-        const add_line = (text, font_weight, font_size, y) => {
-            doc.setFont("helvetica", font_weight?font_weight:'normal');
-            doc.setFontSize(font_size?font_size:15);
-            let splitText = doc.splitTextToSize(text, 150);
-            if (y) {
-                splitText.forEach((line, index) => {
-                    doc.text(line, 105, y, 'center');
-                });
-            } else {
-                splitText.forEach((line, index) => {
-                    doc.text(line, 105, curr_y + (index * 10), 'center');
-                });
-                curr_y += (splitText.length * 12);
+        const p = sortedAttendees.find(a => a.id === id);
+        selected_cert_onsite_id = id;
+        cert_email = p.email || '';
+        cert_message = {};
+        selected_cert = await generateCertificatePDF({
+            attendee: { name: p.name, institute: p.institute },
+            event: data.event,
+            messages: {
+                certIssueDate: m.attendees_certIssueDate,
+                certTitle: m.attendees_certTitle,
+                certName: m.attendees_certName,
+                certInstitute: m.attendees_certInstitute,
+                certHasAttended: m.attendees_certHasAttended,
+                certOn: m.attendees_certOn,
+                certHeldAt: m.attendees_certHeldAt,
+                certAsParticipant: m.attendees_certAsParticipant,
+                certFooter: m.attendees_certFooter
             }
-        };
-        add_line(`Issue date: ${new Date().toLocaleDateString()}`, 'italic', 10, 10);
-        add_line(`Certificate of Attendance`, 'bold', 30);
-        curr_y += 15;
-        add_line(`This is to certify that below person`);
-        add_line(p.name, 'bold');
-        add_line(p.institute, 'bold');
-        add_line(`has attended`);
-        add_line(data.event.name, 'bold');
-        add_line(`on`);
-        add_line(data.event.start_date, 'bold');
-        add_line(`to`);
-        add_line(data.event.end_date, 'bold');
-        add_line(`held at`);
-        add_line(data.event.venue, 'bold');
-        add_line(`as a participant.`);
-        curr_y += 20;
-        add_line(data.event.organizers, 'bold');
-        add_line('This certificate was machine generated and is valid without a signature.', 'italic', 10, 287);
-
-        selected_cert = doc.output('bloburi');
+        });
         cert_modal = true;
+    };
+
+    const sendCertificate = async () => {
+        if (!cert_email || cert_sending) return;
+        cert_sending = true;
+        cert_message = {};
+        try {
+            const p = sortedAttendees.find(a => a.id === selected_cert_onsite_id);
+            const pdfDataUri = await generateCertificatePDF({
+                attendee: { name: p.name, institute: p.institute },
+                event: data.event,
+                messages: {
+                    certIssueDate: m.attendees_certIssueDate,
+                    certTitle: m.attendees_certTitle,
+                    certName: m.attendees_certName,
+                    certInstitute: m.attendees_certInstitute,
+                    certHasAttended: m.attendees_certHasAttended,
+                    certOn: m.attendees_certOn,
+                    certHeldAt: m.attendees_certHeldAt,
+                    certAsParticipant: m.attendees_certAsParticipant,
+                    certFooter: m.attendees_certFooter
+                },
+                outputFormat: 'datauristring'
+            });
+            // Extract base64 from data URI (format: data:application/pdf;filename=generated.pdf;base64,...)
+            const base64Pdf = pdfDataUri.split(',')[1];
+            const formData = new FormData();
+            formData.append('email', cert_email);
+            formData.append('pdf_base64', base64Pdf);
+            formData.append('attendee_name', p.name);
+            const response = await fetch('?/send_certificate', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                cert_message = { type: 'success', message: m.attendees_sendCertificateSuccess() };
+            } else {
+                cert_message = { type: 'error', message: m.attendees_sendCertificateError() };
+            }
+        } catch (error) {
+            cert_message = { type: 'error', message: m.attendees_sendCertificateError() };
+        } finally {
+            cert_sending = false;
+        }
     };
 </script>
 
 <Heading tag="h2" class="text-xl font-bold mb-3">{m.onsiteAttendees_title()}</Heading>
 <p class="font-light mb-6">{m.onsiteAttendees_description()}</p>
 
-<div class="flex justify-end items-center gap-2 mb-4">
+<div class="flex justify-end items-center gap-2 flex-wrap mb-4">
+    <Button color="primary" size="sm" onclick={sendCertificatesToSelected} disabled={selectedAttendees.length === 0 || bulk_cert_sending}>
+        {bulk_cert_sending ? m.attendees_sendingCertificates() : m.attendees_sendCertificatesToSelected()}
+    </Button>
     <Button color="primary" size="sm" onclick={showQRCodeModal}>
         {m.onsiteRegistration_qrCode()}
     </Button>
@@ -274,6 +341,11 @@
         {m.onsiteAttendees_exportCSV()}
     </Button>
 </div>
+{#if bulk_cert_message.type === 'success'}
+    <Alert type="success" color="green" class="mt-3">{bulk_cert_message.message}</Alert>
+{:else if bulk_cert_message.type === 'error'}
+    <Alert type="error" color="red" class="mt-3">{bulk_cert_message.message}</Alert>
+{/if}
 <p class="mt-5 mb-3 text-sm text-right">{sortedAttendees.length} {m.onsiteAttendees_peopleRegistered()}</p>
 <TableSearch placeholder={m.onsiteAttendees_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermAttendee}>
     <TableHead>
@@ -398,6 +470,17 @@
     <iframe id="cert" class="w-full h-[500px]" src={selected_cert} title="Certificate">
         Your browser does not support iframes.
     </iframe>
+    <div class="mt-4 flex gap-2 items-center">
+        <Input type="email" bind:value={cert_email} placeholder={m.attendees_emailPlaceholder()} class="flex-1" />
+        <Button color="green" onclick={sendCertificate} disabled={cert_sending || !cert_email}>
+            {cert_sending ? '...' : m.attendees_sendCertificate()}
+        </Button>
+    </div>
+    {#if cert_message.type === 'success'}
+        <Alert type="success" color="green" class="mt-2">{cert_message.message}</Alert>
+    {:else if cert_message.type === 'error'}
+        <Alert type="error" color="red" class="mt-2">{cert_message.message}</Alert>
+    {/if}
     <div class="flex justify-center mt-6 gap-2">
         <Button color="primary" onclick={() => {
             const iframe = document.getElementById('cert');

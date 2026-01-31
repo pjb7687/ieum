@@ -66,6 +66,8 @@ export const actions = {
             email_template_registration_body: formdata.get('email_template_registration_body'),
             email_template_abstract_submission_subject: formdata.get('email_template_abstract_submission_subject'),
             email_template_abstract_submission_body: formdata.get('email_template_abstract_submission_body'),
+            email_template_certificate_subject: formdata.get('email_template_certificate_subject'),
+            email_template_certificate_body: formdata.get('email_template_certificate_body'),
         }, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
@@ -315,9 +317,8 @@ export const actions = {
     update_onsite_attendee: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
         const response = await post(`api/event/${params.slug}/onsite/${formdata.get('id')}/update`, {
-            first_name: formdata.get('first_name'),
-            middle_initial: formdata.get('middle_initial'),
-            last_name: formdata.get('last_name'),
+            name: formdata.get('name'),
+            email: formdata.get('email'),
             institute: formdata.get('institute'),
             job_title: formdata.get('job_title'),
         }, cookies);
@@ -331,6 +332,20 @@ export const actions = {
     remove_onsite_attendee: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
         const response = await post(`api/event/${params.slug}/onsite/${formdata.get('id')}/delete`, {}, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
+    send_certificate: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/send_certificate`, {
+            email: formdata.get('email'),
+            pdf_base64: formdata.get('pdf_base64'),
+            attendee_name: formdata.get('attendee_name'),
+        }, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
         } else {

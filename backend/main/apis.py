@@ -19,7 +19,7 @@ from django.conf import settings
 from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution
 from main.schema import *
 
-from .tasks import send_mail
+from .tasks import send_mail, send_mail_with_attachment
 
 api = NinjaAPI(csrf=True, auth=django_auth)
 
@@ -284,7 +284,7 @@ def add_event(request):
             "If you have any questions, please contact us at: " + settings.EMAIL_FROM + "\n\n"
             "We look forward to seeing you at the event!\n\n"
             "Warm regards,\n"
-            "{{ event.organizers }}"
+            "{{ event.organizers_en }}"
     )
     email_template_abstract_submission = EmailTemplate.objects.create(
         subject=settings.ACCOUNT_EMAIL_SUBJECT_PREFIX+"Abstract Submission Confirmation for {{ event.name }}",
@@ -296,7 +296,15 @@ def add_event(request):
             "If you need to make any changes to your submission, please contact us at: " + settings.EMAIL_FROM + "\n\n"
             "Thank you for your contribution to {{ event.name }}. We appreciate your participation.\n\n"
             "Warm regards,\n"
-            "{{ event.organizers }}"
+            "{{ event.organizers_en }}"
+    )
+    email_template_certificate = EmailTemplate.objects.create(
+        subject=settings.ACCOUNT_EMAIL_SUBJECT_PREFIX+"Certificate of Attendance for {{ event.name }}",
+        body="Dear {{ attendee.first_name }},\n\n"
+            "Please find attached your certificate of attendance for {{ event.name }}.\n\n"
+            "Thank you for your participation.\n\n"
+            "Best regards,\n"
+            "{{ event.organizers_en }}"
     )
 
     # Use provided link_info or default to empty (will be set after event creation)
@@ -320,6 +328,7 @@ def add_event(request):
         accepts_abstract=data["accepts_abstract"] == "true",
         email_template_registration=email_template_registration,
         email_template_abstract_submission=email_template_abstract_submission,
+        email_template_certificate=email_template_certificate,
     )
 
     # Set default link_info if not provided
@@ -433,6 +442,18 @@ def update_event_emailtemplates(request, event_id: int):
     event.email_template_abstract_submission.subject = data["email_template_abstract_submission_subject"]
     event.email_template_abstract_submission.body = data["email_template_abstract_submission_body"]
     event.email_template_abstract_submission.save()
+    # Handle certificate template (may not exist for older events)
+    if event.email_template_certificate:
+        event.email_template_certificate.subject = data["email_template_certificate_subject"]
+        event.email_template_certificate.body = data["email_template_certificate_body"]
+        event.email_template_certificate.save()
+    else:
+        # Create certificate template if it doesn't exist
+        event.email_template_certificate = EmailTemplate.objects.create(
+            subject=data["email_template_certificate_subject"],
+            body=data["email_template_certificate_body"]
+        )
+        event.save()
     return {"code": "success", "message": "Email templates updated."}
 
 @api.get("/event/{event_id}/registered", response=RegistrationStatusSchema)
@@ -777,6 +798,48 @@ def send_emails(request, event_id: int):
             receipent
         )
     return {"code": "success", "message": "Emails sent."}
+
+@api.post("/event/{event_id}/send_certificate", response=MessageSchema)
+@ensure_event_staff
+def send_certificate(request, event_id: int):
+    """Send a certificate PDF to an email address."""
+    data = json.loads(request.body)
+    email = data.get("email")
+    pdf_base64 = data.get("pdf_base64")
+    attendee_name = data.get("attendee_name", "Participant")
+
+    if not email or not pdf_base64:
+        return api.create_response(
+            request,
+            {"code": "missing_data", "message": "Email and PDF data are required."},
+            status=400,
+        )
+
+    event = Event.objects.get(id=event_id)
+
+    # Use certificate template if available, otherwise use default
+    if event.email_template_certificate:
+        # Create attendee-like object for template compatibility
+        class AttendeeContext:
+            def __init__(self, name):
+                self.first_name = name
+                self.name = name
+        attendee = AttendeeContext(attendee_name)
+        context = Context({"event": event, "attendee": attendee, "attendee_name": attendee_name}, autoescape=False)
+        subject = Template(event.email_template_certificate.subject).render(context)
+        body = Template(event.email_template_certificate.body).render(context)
+    else:
+        subject = f"Certificate of Attendance - {event.name}"
+        body = f"Dear {attendee_name},\n\nPlease find attached your certificate of attendance for {event.name}.\n\nBest regards,\n{event.name} Organizing Committee"
+
+    send_mail_with_attachment.delay(
+        subject,
+        body,
+        email,
+        f"Certificate_{attendee_name.replace(' ', '_')}.pdf",
+        pdf_base64
+    )
+    return {"code": "success", "message": "Certificate sent."}
 
 @api.get("/event/{event_id}/reviewers", response=List[AttendeeSchema])
 @ensure_event_staff
@@ -1198,13 +1261,14 @@ def delete_organizer(request, event_id: int, organizer_id: int):
     event.organizers.remove(user)
     return {"code": "success", "message": "Organizer deleted."}
 
-@api.get("/event/{event_id}/email_templates", response=dict[str, EmailTemplateSchema])
+@api.get("/event/{event_id}/email_templates", response=dict[str, EmailTemplateSchema | None])
 @ensure_event_staff
 def get_email_templates(request, event_id: int):
     event = Event.objects.get(id=event_id)
     rtn = {
         "registration": event.email_template_registration,
-        "abstract": event.email_template_abstract_submission
+        "abstract": event.email_template_abstract_submission,
+        "certificate": event.email_template_certificate
     }
     return rtn
 
@@ -1213,10 +1277,18 @@ def register_on_site(request, event_id: int):
     event = Event.objects.get(id=event_id)
     data = json.loads(request.body)
 
+    email = data.get("email", "").strip()
+    if not email:
+        return api.create_response(
+            request,
+            {"code": "email_required", "message": "Email is required."},
+            status=400,
+        )
+
     oa = OnSiteAttendee.objects.create(
         event=event,
         name=data.get("name"),
-        email=data.get("email", ""),
+        email=email,
         institute=data.get("institute", ""),
         job_title=data.get("job_title", "")
     )
@@ -1242,8 +1314,15 @@ def update_on_site_attendee(request, event_id: int, onsite_id: int):
     event = Event.objects.get(id=event_id)
     oa = OnSiteAttendee.objects.get(id=onsite_id, event=event)
     data = json.loads(request.body)
+    email = data.get("email", "").strip()
+    if not email:
+        return api.create_response(
+            request,
+            {"code": "email_required", "message": "Email is required."},
+            status=400,
+        )
     oa.name = data.get("name")
-    oa.email = data.get("email", "")
+    oa.email = email
 
     # Auto-create institution if it doesn't exist
     institute_name = data.get("institute", "")

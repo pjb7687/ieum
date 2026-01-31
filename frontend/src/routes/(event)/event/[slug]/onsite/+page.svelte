@@ -14,15 +14,15 @@
 
     let { data, form } = $props();
 
-    let event = data.event;
-    
+    let event = $derived(data.event);
+
     let form_config = {
         hide_login_info: true,
     };
 
     const schema = yup.object({
         name: yup.string().required(m.onsiteRegistration_nameRequired()),
-        email: yup.string().email(m.onsiteRegistration_emailInvalid()),
+        email: yup.string().required(m.onsiteRegistration_emailRequired()).email(m.onsiteRegistration_emailInvalid()),
         institute: yup.string().required(m.onsiteRegistration_instituteRequired()),
         job_title: yup.string().required(m.onsiteRegistration_jobTitleRequired()),
     });

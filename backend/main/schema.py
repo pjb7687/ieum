@@ -165,6 +165,7 @@ class EventAdminSchema(Schema):
     max_votes: Union[int, None]
     email_template_registration: Union[EmailTemplateSchema, None]
     email_template_abstract_submission: Union[EmailTemplateSchema, None]
+    email_template_certificate: Union[EmailTemplateSchema, None]
     published: bool
 
 class RegistrationStatusSchema(Schema):

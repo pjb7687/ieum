@@ -4,53 +4,18 @@
     import { Alert } from 'flowbite-svelte';
     import { enhance } from '$app/forms';
     import { UserEditSolid, UserRemoveSolid, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
-    import { jsPDF } from "jspdf";
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
+    import { generateNametagPDF, generateCertificatePDF, loadKoreanFonts } from '$lib/pdfUtils.js';
 
     import RegistrationForm from './RegistrationForm.svelte';
     import TablePagination from '$lib/components/TablePagination.svelte';
 
     let { data } = $props();
 
-    // Load Korean font for PDF
-    let fontLoaded = $state(false);
-    let fontBase64Regular = $state('');
-    let fontBase64Bold = $state('');
-
-    async function loadKoreanFont() {
-        if (fontLoaded) return;
-        try {
-            // Helper to load a font file as base64
-            const loadFont = async (url) => {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(blob);
-                });
-            };
-
-            // Load both regular and bold fonts
-            const [regular, bold] = await Promise.all([
-                loadFont('/fonts/NotoSansKR-Regular.ttf'),
-                loadFont('/fonts/NotoSansKR-Bold.ttf')
-            ]);
-
-            fontBase64Regular = regular;
-            fontBase64Bold = bold;
-            fontLoaded = true;
-        } catch (error) {
-            console.error('Failed to load Korean font:', error);
-            // Fallback - font will use default helvetica
-        }
-    }
-
-    // Load font on component mount
+    // Preload fonts on component mount
     $effect(() => {
-        loadKoreanFont();
+        loadKoreanFonts();
     });
 
     function sortAttendeesById(a, b) {
@@ -355,46 +320,18 @@
     };
 
     let nametag_modal = $state(false);
-    let selected_nametag = $state({});
+    let selected_nametag = $state('');
     let selected_nametag_id = $state(null);
     let selected_role = $state('Participant');
 
     const generateNametag = async (id, role) => {
-        // Wait for font to load
-        if (!fontLoaded) {
-            await loadKoreanFont();
-        }
-
-        const doc = new jsPDF({
-            orientation: "portrait",
-            unit: "mm",
-            format: [90, 100]
+        const p = table_data_attendees.find(a => a.id === id);
+        selected_nametag = await generateNametagPDF({
+            name: p.name,
+            institute: p.institute,
+            role,
+            id: p.id
         });
-
-        // Add Korean font to PDF
-        if (fontLoaded && fontBase64Regular && fontBase64Bold) {
-            doc.addFileToVFS("NotoSansKR-Regular.ttf", fontBase64Regular);
-            doc.addFileToVFS("NotoSansKR-Bold.ttf", fontBase64Bold);
-            doc.addFont("NotoSansKR-Regular.ttf", "NotoSansKR", "normal");
-            doc.addFont("NotoSansKR-Bold.ttf", "NotoSansKR", "bold");
-        }
-
-        let p = table_data_attendees.find(a => a.id === id);
-
-        doc.setFont(fontLoaded ? "NotoSansKR" : "helvetica", "bold");
-        doc.setFontSize(10);
-        doc.text(`${p.id}`, 45, 10, 'center');
-        doc.setFontSize(30);
-        let splitName = doc.splitTextToSize(p.name, 80);
-        doc.text(splitName, 45, 45 - (splitName.length - 1) * 12, 'center');
-        doc.setFontSize(20);
-        let splitInstitute = doc.splitTextToSize(p.institute, 80);
-        doc.text(splitInstitute, 45, 55, 'center');
-        doc.setFontSize(23);
-        doc.setLineWidth(1);
-        doc.line(5, 82, 85, 82);
-        doc.text(role, 45, 93, 'center');
-        selected_nametag = doc.output('bloburi');
     };
 
     const showNametagModal = async (id) => {
@@ -409,69 +346,123 @@
     };
 
     let cert_modal = $state(false);
-    let selected_cert = $state({});
-    const showCertificateModal = async (id) => {
-        // Wait for font to load
-        if (!fontLoaded) {
-            await loadKoreanFont();
-        }
+    let selected_cert = $state('');
+    let cert_email = $state('');
+    let cert_sending = $state(false);
+    let cert_message = $state({});
+    let selected_cert_attendee_id = $state(null);
 
-        const doc = new jsPDF({
-            orientation: "portrait",
-            unit: "mm",
-            format: [210, 297]
-        });
+    // Bulk certificate sending
+    let bulk_cert_sending = $state(false);
+    let bulk_cert_message = $state({});
 
-        // Add Korean font to PDF
-        if (fontLoaded && fontBase64Regular && fontBase64Bold) {
-            doc.addFileToVFS("NotoSansKR-Regular.ttf", fontBase64Regular);
-            doc.addFileToVFS("NotoSansKR-Bold.ttf", fontBase64Bold);
-            doc.addFont("NotoSansKR-Regular.ttf", "NotoSansKR", "normal");
-            doc.addFont("NotoSansKR-Bold.ttf", "NotoSansKR", "bold");
-        }
-
-        let p = table_data_attendees.find(a => a.id === id);
-        let curr_y = 45;
-        const add_line = (text, font_weight, font_size, y) => {
-            doc.setFont(fontLoaded ? "NotoSansKR" : "helvetica", font_weight?font_weight:'normal');
-            doc.setFontSize(font_size?font_size:15);
-            let splitText = doc.splitTextToSize(text, 150);
-            if (y) {
-                splitText.forEach((line, index) => {
-                    doc.text(line, 105, y, 'center');
+    const sendCertificatesToSelected = async () => {
+        if (selectedAttendees.length === 0 || bulk_cert_sending) return;
+        bulk_cert_sending = true;
+        bulk_cert_message = {};
+        try {
+            for (const id of selectedAttendees) {
+                const p = table_data_attendees.find(a => a.id === id);
+                if (!p.email) continue;
+                const pdfDataUri = await generateCertificatePDF({
+                    attendee: { name: p.name, institute: p.institute },
+                    event: data.event,
+                    messages: {
+                        certIssueDate: m.attendees_certIssueDate,
+                        certTitle: m.attendees_certTitle,
+                        certName: m.attendees_certName,
+                        certInstitute: m.attendees_certInstitute,
+                        certHasAttended: m.attendees_certHasAttended,
+                        certOn: m.attendees_certOn,
+                        certHeldAt: m.attendees_certHeldAt,
+                        certAsParticipant: m.attendees_certAsParticipant,
+                        certFooter: m.attendees_certFooter
+                    },
+                    outputFormat: 'datauristring'
                 });
-            } else {
-                splitText.forEach((line, index) => {
-                    doc.text(line, 105, curr_y + (index * 10), 'center');
+                const base64Pdf = pdfDataUri.split(',')[1];
+                const formData = new FormData();
+                formData.append('email', p.email);
+                formData.append('pdf_base64', base64Pdf);
+                formData.append('attendee_name', p.name);
+                await fetch('?/send_certificate', {
+                    method: 'POST',
+                    body: formData
                 });
-                curr_y += (splitText.length * 10);
             }
-        };
-        add_line(`${m.attendees_certIssueDate()}: ${new Date().toLocaleDateString()}`, 'normal', 10, 10);
-        add_line(m.attendees_certTitle(), 'bold', 30);
-        curr_y += 15;
-        add_line(m.attendees_certIntro(), 'bold');
-        add_line(p.name);
-        add_line(p.institute);
-        curr_y += 10;
-        add_line(m.attendees_certHasAttended(), 'bold');
-        add_line(data.event.name);
-        curr_y += 10;
-        add_line(m.attendees_certOn(), 'bold');
-        add_line(data.event.start_date);
-        add_line(m.attendees_certTo());
-        add_line(data.event.end_date);
-        curr_y += 10;
-        add_line(m.attendees_certHeldAt(), 'bold');
-        add_line(data.event.venue);
-        curr_y += 10;
-        add_line(m.attendees_certAsParticipant(), 'bold');
-        curr_y += 20;
-        add_line(languageTag() === 'ko' ? data.event.organizers_ko : data.event.organizers_en, 'bold');
-        add_line(m.attendees_certFooter(), 'normal', 10, 287);
+            bulk_cert_message = { type: 'success', message: m.attendees_sendCertificatesComplete() };
+        } catch (error) {
+            bulk_cert_message = { type: 'error', message: m.attendees_sendCertificateError() };
+        } finally {
+            bulk_cert_sending = false;
+        }
+    };
 
-        selected_cert = doc.output('bloburi');
+    const showCertificateModal = async (id) => {
+        const p = table_data_attendees.find(a => a.id === id);
+        selected_cert_attendee_id = id;
+        cert_email = p.email;
+        cert_message = {};
+        selected_cert = await generateCertificatePDF({
+            attendee: { name: p.name, institute: p.institute },
+            event: data.event,
+            messages: {
+                certIssueDate: m.attendees_certIssueDate,
+                certTitle: m.attendees_certTitle,
+                certName: m.attendees_certName,
+                certInstitute: m.attendees_certInstitute,
+                certHasAttended: m.attendees_certHasAttended,
+                certOn: m.attendees_certOn,
+                certHeldAt: m.attendees_certHeldAt,
+                certAsParticipant: m.attendees_certAsParticipant,
+                certFooter: m.attendees_certFooter
+            }
+        });
         cert_modal = true;
+    };
+
+    const sendCertificate = async () => {
+        if (!cert_email || cert_sending) return;
+        cert_sending = true;
+        cert_message = {};
+        try {
+            const p = table_data_attendees.find(a => a.id === selected_cert_attendee_id);
+            const pdfDataUri = await generateCertificatePDF({
+                attendee: { name: p.name, institute: p.institute },
+                event: data.event,
+                messages: {
+                    certIssueDate: m.attendees_certIssueDate,
+                    certTitle: m.attendees_certTitle,
+                    certName: m.attendees_certName,
+                    certInstitute: m.attendees_certInstitute,
+                    certHasAttended: m.attendees_certHasAttended,
+                    certOn: m.attendees_certOn,
+                    certHeldAt: m.attendees_certHeldAt,
+                    certAsParticipant: m.attendees_certAsParticipant,
+                    certFooter: m.attendees_certFooter
+                },
+                outputFormat: 'datauristring'
+            });
+            // Extract base64 from data URI (format: data:application/pdf;filename=generated.pdf;base64,...)
+            const base64Pdf = pdfDataUri.split(',')[1];
+            const formData = new FormData();
+            formData.append('email', cert_email);
+            formData.append('pdf_base64', base64Pdf);
+            formData.append('attendee_name', p.name);
+            const response = await fetch('?/send_certificate', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                cert_message = { type: 'success', message: m.attendees_sendCertificateSuccess() };
+            } else {
+                cert_message = { type: 'error', message: m.attendees_sendCertificateError() };
+            }
+        } catch (error) {
+            cert_message = { type: 'error', message: m.attendees_sendCertificateError() };
+        } finally {
+            cert_sending = false;
+        }
     };
 
     let custom_headers_attendees = $state([]);
@@ -490,12 +481,20 @@
 <Heading tag="h2" class="text-xl font-bold mb-3">{m.attendees_title()}</Heading>
 <p class="font-light mb-6">{m.attendees_description()}</p>
 <div class="flex justify-end sm:flex-row flex-col">
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
         <Button color="primary" size="sm" onclick={showSendEmailModal} disabled={selectedAttendees.length === 0}>{m.attendees_sendEmailToSelected()}</Button>
+        <Button color="primary" size="sm" onclick={sendCertificatesToSelected} disabled={selectedAttendees.length === 0 || bulk_cert_sending}>
+            {bulk_cert_sending ? m.attendees_sendingCertificates() : m.attendees_sendCertificatesToSelected()}
+        </Button>
         <Button color="primary" size="sm" onclick={() => expand_attendees = !expand_attendees}>{expand_attendees ? m.attendees_collapseHeaders() : m.attendees_expandHeaders()}</Button>
         <Button color="primary" size="sm" onclick={exportAttendeesAsCSV}>{m.attendees_exportCSV()}</Button>
     </div>
 </div>
+{#if bulk_cert_message.type === 'success'}
+    <Alert type="success" color="green" class="mt-3">{bulk_cert_message.message}</Alert>
+{:else if bulk_cert_message.type === 'error'}
+    <Alert type="error" color="red" class="mt-3">{bulk_cert_message.message}</Alert>
+{/if}
 <p class="mt-5 mb-3 text-sm text-right">{table_data_attendees.length} {m.attendees_peopleRegistered()}</p>
 <TableSearch placeholder={m.attendees_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermAttendee}>
     <TableHead>
@@ -721,6 +720,17 @@
     <iframe id="cert" class="w-full h-[500px]" src={selected_cert} title={m.attendees_certificate()}>
         {m.attendees_iframeNotSupported()}
     </iframe>
+    <div class="mt-4 flex gap-2 items-center">
+        <Input type="email" bind:value={cert_email} placeholder={m.attendees_emailPlaceholder()} class="flex-1" />
+        <Button color="green" onclick={sendCertificate} disabled={cert_sending || !cert_email}>
+            {cert_sending ? '...' : m.attendees_sendCertificate()}
+        </Button>
+    </div>
+    {#if cert_message.type === 'success'}
+        <Alert type="success" color="green" class="mt-2">{cert_message.message}</Alert>
+    {:else if cert_message.type === 'error'}
+        <Alert type="error" color="red" class="mt-2">{cert_message.message}</Alert>
+    {/if}
     <div class="flex justify-center mt-6 gap-2">
         <Button color="primary" onclick={() => {
             const iframe = document.getElementById('cert');

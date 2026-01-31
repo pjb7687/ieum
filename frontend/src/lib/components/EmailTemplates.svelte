@@ -43,6 +43,15 @@
         <Label for="email_template_abstract_submission_body" class="block mb-2">{m.emailTemplates_body()}</Label>
         <Textarea id="email_template_abstract_submission_body" name="email_template_abstract_submission_body" rows="10" value={data.event.email_template_abstract_submission.body} class="w-full" />
     </div>
+    <Heading tag="h3" class="text-lg font-bold mb-6">{m.emailTemplates_certificate()}</Heading>
+    <div class="mb-6">
+        <Label for="email_template_certificate_subject" class="block mb-2">{m.emailTemplates_subject()}</Label>
+        <Input id="email_template_certificate_subject" name="email_template_certificate_subject" value={data.event.email_template_certificate?.subject ?? ''} />
+    </div>
+    <div class="mb-6">
+        <Label for="email_template_certificate_body" class="block mb-2">{m.emailTemplates_body()}</Label>
+        <Textarea id="email_template_certificate_body" name="email_template_certificate_body" rows="10" value={data.event.email_template_certificate?.body ?? ''} class="w-full" />
+    </div>
     <div class="mb-6">
         {#if success}
             <Alert color="green">{success}</Alert>

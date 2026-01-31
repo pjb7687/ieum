@@ -131,6 +131,7 @@ class Event(models.Model):
     max_votes = models.IntegerField(null=True)
     email_template_registration = models.ForeignKey('EmailTemplate', on_delete=models.SET_NULL, blank=True, null=True, related_name='email_template_registration')
     email_template_abstract_submission = models.ForeignKey('EmailTemplate', on_delete=models.SET_NULL, blank=True, null=True, related_name='email_template_abstract_submission')
+    email_template_certificate = models.ForeignKey('EmailTemplate', on_delete=models.SET_NULL, blank=True, null=True, related_name='email_template_certificate')
     attendees = models.ManyToManyField('Attendee', related_name='events', blank=True)
     reviewers = models.ManyToManyField('Attendee', related_name='reviewed_events', blank=True)
     admins = models.ManyToManyField('User', related_name='admins', blank=True)
@@ -160,8 +161,8 @@ class Event(models.Model):
         for org in self.organizers.all():
             # Use Korean name if available, otherwise fall back to English name
             name = org.korean_name if org.korean_name else f"{org.first_name} {org.last_name}"
-            # Get institution Korean name
-            institute = org.institute.name_ko if org.institute else ""
+            # Get institution Korean name, fall back to English if not available
+            institute = (org.institute.name_ko or org.institute.name_en) if org.institute else ""
             if institute:
                 organizer_list.append(f"{name} ({institute})")
             else:
@@ -173,6 +174,8 @@ class Event(models.Model):
             self.email_template_registration.delete()
         if self.email_template_abstract_submission:
             self.email_template_abstract_submission.delete()
+        if self.email_template_certificate:
+            self.email_template_certificate.delete()
         super().delete(*args, **kwargs)
 
 class Speaker(models.Model):
