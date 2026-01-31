@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { formatDateRange, getDisplayOrganizers } from '$lib/utils.js';
+import { formatDateRange, getDisplayOrganizers, getDisplayVenue } from '$lib/utils.js';
 
 // Font state (shared across calls)
 let fontLoaded = false;
@@ -239,7 +239,7 @@ export async function generateCertificatePDF({ attendee, event, messages, output
         { label: '', value: '' }, // spacer
         { label: messages.certOn(), value: formatDateRange(event.start_date, event.end_date) },
         { label: '', value: '' }, // spacer
-        { label: messages.certHeldAt(), value: event.venue },
+        { label: messages.certHeldAt(), value: getDisplayVenue(event) },
         { label: '', value: '' }, // spacer
         { label: '', value: '' }, // spacer
         { label: '', value: '' }, // spacer
