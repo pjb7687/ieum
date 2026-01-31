@@ -18,6 +18,7 @@ from django.conf import settings
 
 from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution
 from main.schema import *
+from main.utils import validate_abstract_file, sanitize_filename
 
 from .tasks import send_mail, send_mail_with_attachment
 
@@ -716,8 +717,27 @@ def submit_abstract(request, event_id: int):
     # create the abstract with the post json data
     data = json.loads(request.body)
     file_name = data["file_name"]
-    file_content = base64.b64decode(data["file_content"].split(",")[1])
-    file_path = f"abstracts/{uuid.uuid4()}/{file_name}"
+    try:
+        file_content = base64.b64decode(data["file_content"].split(",")[1])
+    except (ValueError, IndexError):
+        return api.create_response(
+            request,
+            {"code": "invalid_file", "message": "Invalid file content encoding."},
+            status=400,
+        )
+
+    # Validate file upload for security
+    is_valid, error_message = validate_abstract_file(file_name, file_content)
+    if not is_valid:
+        return api.create_response(
+            request,
+            {"code": "invalid_file", "message": error_message},
+            status=400,
+        )
+
+    # Use sanitized filename
+    safe_filename = sanitize_filename(file_name)
+    file_path = f"abstracts/{uuid.uuid4()}/{safe_filename}"
     file = ContentFile(file_content)
     default_storage.save(file_path, file)
 

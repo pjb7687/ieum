@@ -4,6 +4,88 @@ from docx.text.hyperlink import Hyperlink
 
 import zipfile
 import xml.etree.ElementTree as ET
+import os
+import re
+import io
+
+# File upload validation constants
+ALLOWED_EXTENSIONS = {'.docx', '.odt'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def validate_abstract_file(file_name: str, file_content: bytes) -> tuple[bool, str]:
+    """
+    Validate abstract file uploads for security.
+    Returns (is_valid, error_message).
+    """
+    # 1. Validate file size
+    if len(file_content) > MAX_FILE_SIZE:
+        return False, "File size exceeds maximum allowed (10MB)."
+
+    if len(file_content) == 0:
+        return False, "File is empty."
+
+    # 2. Sanitize and validate filename
+    # Extract only the basename to prevent path traversal
+    safe_name = os.path.basename(file_name)
+
+    # Check for suspicious patterns
+    if not safe_name or safe_name.startswith('.'):
+        return False, "Invalid filename."
+
+    # Validate extension
+    _, ext = os.path.splitext(safe_name.lower())
+    if ext not in ALLOWED_EXTENSIONS:
+        return False, "Invalid file type. Only DOCX and ODT files are allowed."
+
+    # 3. Validate file magic bytes (both DOCX and ODT are ZIP-based)
+    # ZIP magic bytes: PK (0x50 0x4B)
+    if len(file_content) < 4 or file_content[:2] != b'PK':
+        return False, "Invalid file format. File does not appear to be a valid DOCX or ODT."
+
+    # 4. Verify it's actually a valid ZIP and contains expected content
+    try:
+        with zipfile.ZipFile(io.BytesIO(file_content), 'r') as zf:
+            file_list = zf.namelist()
+
+            if ext == '.docx':
+                # DOCX must contain [Content_Types].xml and word/ directory
+                if '[Content_Types].xml' not in file_list:
+                    return False, "Invalid DOCX file structure."
+                if not any(f.startswith('word/') for f in file_list):
+                    return False, "Invalid DOCX file structure."
+
+            elif ext == '.odt':
+                # ODT must contain mimetype and content.xml
+                if 'mimetype' not in file_list:
+                    return False, "Invalid ODT file structure."
+                if 'content.xml' not in file_list:
+                    return False, "Invalid ODT file structure."
+                # Verify mimetype content
+                mimetype = zf.read('mimetype').decode('utf-8', errors='ignore').strip()
+                if 'opendocument' not in mimetype.lower():
+                    return False, "Invalid ODT mimetype."
+
+    except zipfile.BadZipFile:
+        return False, "Invalid file format. File is corrupted or not a valid document."
+    except Exception:
+        return False, "Could not validate file. Please ensure it is a valid DOCX or ODT file."
+
+    return True, ""
+
+
+def sanitize_filename(file_name: str) -> str:
+    """Sanitize filename to prevent path traversal and other issues."""
+    # Get basename only
+    safe_name = os.path.basename(file_name)
+    # Remove any characters that aren't alphanumeric, dash, underscore, or dot
+    safe_name = re.sub(r'[^\w\-.]', '_', safe_name)
+    # Prevent multiple dots (except for extension)
+    parts = safe_name.rsplit('.', 1)
+    if len(parts) == 2:
+        parts[0] = parts[0].replace('.', '_')
+        safe_name = '.'.join(parts)
+    return safe_name
 
 def __process_run(r, p):
     p_bold = p.style.font.bold
