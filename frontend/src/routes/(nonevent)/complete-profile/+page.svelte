@@ -9,6 +9,7 @@
     import { UserCircleSolid } from 'flowbite-svelte-icons';
     import { goto } from '$app/navigation';
     import * as m from '$lib/paraglide/messages.js';
+    import { onlyLatinChars } from '$lib/utils.js';
 
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
 
@@ -17,10 +18,10 @@
 
     const schema = yup.object({
         email: yup.string().email().required(),
-        // English name is always required for all users
-        first_name: yup.string().required(m.validation_firstNameRequired()),
-        last_name: yup.string().required(m.validation_lastNameRequired()),
-        middle_initial: yup.string().max(1),
+        // English name is always required for all users (Latin characters only)
+        first_name: yup.string().required(m.validation_firstNameRequired()).test('latin-only', m.eventRegister_validationNoKorean(), onlyLatinChars),
+        last_name: yup.string().required(m.validation_lastNameRequired()).test('latin-only', m.eventRegister_validationNoKorean(), onlyLatinChars),
+        middle_initial: yup.string().max(1).test('latin-only', m.eventRegister_validationNoKorean(), onlyLatinChars),
         // Korean name is required for Korean nationals, optional for others
         korean_name: yup.string().when('nationality', {
             is: '1',
