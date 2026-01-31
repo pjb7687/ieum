@@ -201,15 +201,15 @@
                             <p class="text-sm mt-1">{m.eventDetail_registeredThankYou()}</p>
                         </div>
                         {#if event.accepts_abstract}
-                            <Button href="/event/{event.id}/abstract" color="primary" class="w-full">
+                            <Button href="/event/{event.id}/abstract" color="primary" size="lg" class="w-full">
                                 {m.eventDetail_submitAbstract()}
                             </Button>
                         {/if}
-                        <Button href="/event/{event.id}/registration" color="alternative" class="w-full">
+                        <Button href="/event/{event.id}/registration" color="alternative" size="lg" class="w-full">
                             {m.eventDetail_viewRegistration()}
                         </Button>
                         {#if is_event_admin}
-                            <Button href="/event/{event.id}/admin" color="blue" class="w-full">
+                            <Button href="/event/{event.id}/admin" color="primary" size="lg" class="w-full">
                                 {m.eventDetail_manageEvent()}
                             </Button>
                         {/if}
