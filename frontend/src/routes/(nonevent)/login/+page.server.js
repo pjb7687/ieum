@@ -1,10 +1,11 @@
 import { post } from '$lib/fetch';
 import { fail, redirect } from '@sveltejs/kit';
+import { sanitizeRedirectUrl } from '$lib/utils.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ parent, request }) {
     const url = new URL(request.url);
-    const next = url.searchParams.get('next') || '/';
+    const next = sanitizeRedirectUrl(url.searchParams.get('next'));
 
     let rtn = await parent();
     if (rtn.user) {
@@ -21,7 +22,7 @@ export async function load({ parent, request }) {
 export const actions = {
 	login: async ({ cookies, request }) => {
         let formdata = await request.formData()
-        const next = formdata.get('next') || '/';
+        const next = sanitizeRedirectUrl(formdata.get('next'));
         const email = formdata.get('username');
 
         const response = await post('_allauth/browser/v1/auth/login', formdata, cookies);

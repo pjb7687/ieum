@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 import os
 import re
 import io
+import html
 
 # File upload validation constants
 ALLOWED_EXTENSIONS = {'.docx', '.odt'}
@@ -107,7 +108,8 @@ def __process_run(r, p):
         r_subscript = p_subscript
         r_superscript = p_superscript
         
-    r_text = r.text
+    # Escape HTML to prevent XSS attacks
+    r_text = html.escape(r.text) if r.text else ''
     if r_bold:
         r_text = f'<b>{r_text}</b>'
     if r_italic:
@@ -315,7 +317,7 @@ def odt_to_html(file_path):
             automatic_styles[style_name] = style_properties
         
         # Generate HTML
-        html = []        
+        html_output = []
         # Process paragraphs
         for paragraph in root.findall('.//text:p', namespaces):
             p_style_name = paragraph.get('{{{0}}}style-name'.format(namespaces['text']))
@@ -371,13 +373,14 @@ def odt_to_html(file_path):
                     p_is_subscript = True
             
             # Start paragraph with alignment
-            html.append(f'<p class="odt_paragraphs" style="text-align: {text_align};">')
+            html_output.append(f'<p class="odt_paragraphs" style="text-align: {text_align};">')
             
             # Process paragraph content
             # First, handle direct text content of the paragraph with paragraph's formatting
             if paragraph.text and paragraph.text.strip():
-                text = paragraph.text
-                
+                # Escape HTML to prevent XSS attacks
+                text = html.escape(paragraph.text)
+
                 # Apply paragraph formatting to direct text
                 if p_is_subscript:
                     text = f'<sub>{text}</sub>'
@@ -389,8 +392,8 @@ def odt_to_html(file_path):
                     text = f'<i>{text}</i>'
                 if p_is_bold:
                     text = f'<b>{text}</b>'
-                    
-                html.append(text)
+
+                html_output.append(text)
             
             # Process all children
             for child in paragraph:
@@ -404,9 +407,9 @@ def odt_to_html(file_path):
                     elif span_style_name in styles:
                         span_style = styles[span_style_name]
                     
-                    # Process text with formatting
-                    text = child.text or ''
-                    
+                    # Process text with formatting - escape HTML to prevent XSS
+                    text = html.escape(child.text) if child.text else ''
+
                     # Inherit formatting from paragraph style if not defined in span style
                     is_bold = p_is_bold
                     is_italic = p_is_italic
@@ -448,17 +451,18 @@ def odt_to_html(file_path):
                         text = f'<i>{text}</i>'
                     if is_bold:
                         text = f'<b>{text}</b>'
-                    
-                    html.append(text)
-                
+
+                    html_output.append(text)
+
                 # Handle line breaks
                 elif child.tag == '{{{0}}}line-break'.format(namespaces['text']):
-                    html.append('<br/>')
-                
+                    html_output.append('<br/>')
+
                 # Handle other elements (with paragraph formatting)
                 elif child.text and child.text.strip():
-                    text = child.text
-                    
+                    # Escape HTML to prevent XSS
+                    text = html.escape(child.text)
+
                     # Apply paragraph formatting
                     if p_is_subscript:
                         text = f'<sub>{text}</sub>'
@@ -470,13 +474,14 @@ def odt_to_html(file_path):
                         text = f'<i>{text}</i>'
                     if p_is_bold:
                         text = f'<b>{text}</b>'
-                        
-                    html.append(text)
-                
+
+                    html_output.append(text)
+
                 # Handle tail text (text between spans) with paragraph formatting
                 if child.tail and child.tail.strip():
-                    text = child.tail
-                    
+                    # Escape HTML to prevent XSS
+                    text = html.escape(child.tail)
+
                     # Apply paragraph formatting
                     if p_is_subscript:
                         text = f'<sub>{text}</sub>'
@@ -488,9 +493,9 @@ def odt_to_html(file_path):
                         text = f'<i>{text}</i>'
                     if p_is_bold:
                         text = f'<b>{text}</b>'
-                        
-                    html.append(text)
-            
-            html.append('</p>')
-    
-    return ''.join(html)
+
+                    html_output.append(text)
+
+            html_output.append('</p>')
+
+    return ''.join(html_output)

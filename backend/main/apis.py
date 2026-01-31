@@ -360,7 +360,6 @@ def get_event(request, event_id: int):
 @api.get("/admin/event/{event_id}", response=EventAdminSchema)
 @ensure_event_staff
 def get_admin_event(request, event_id: int):
-    print("Getting admin event for event_id:", event_id)
     try:
         event = Event.objects.get(id=event_id)
     except Event.DoesNotExist:
@@ -484,7 +483,8 @@ def update_event_questions(request, event_id: int):
                 question=q["question"]
             )
         else:
-            cq = CustomQuestion.objects.get(id=q["id"])
+            # Validate question belongs to this event to prevent cross-event modification
+            cq = CustomQuestion.objects.get(id=q["id"], event=event)
             cq.question = q["question"]
             cq.save()
             for ca in CustomAnswer.objects.filter(reference=cq):
@@ -571,7 +571,8 @@ def update_event_answers(request, event_id: int, attendee_id: int):
     custom_answer = CustomAnswer.objects.filter(attendee=attendee)
     custom_answer.delete()
     for a in answers:
-        reference_question = CustomQuestion.objects.get(id=a["reference_id"]) if not (a["reference_id"] == -1 or a["reference_id"] is None) else None
+        # Validate reference belongs to this event to prevent cross-event data leakage
+        reference_question = CustomQuestion.objects.get(id=a["reference_id"], event=event) if not (a["reference_id"] == -1 or a["reference_id"] is None) else None
         CustomAnswer.objects.create(
             reference=reference_question,
             attendee=attendee,
@@ -1031,7 +1032,8 @@ def vote_abstract(request, event_id: int):
     data = json.loads(request.body)
     vote = AbstractVote.objects.get(reviewer=reviewer)
     for abstract_id in data["voted_abstracts"]:
-        vote.voted_abstracts.add(Abstract.objects.get(id=abstract_id))
+        # Validate abstract belongs to this event to prevent cross-event voting
+        vote.voted_abstracts.add(Abstract.objects.get(id=abstract_id, event=event))
     return {"code": "success", "message": "Votes submitted."}
 
 @api.get("/admin/users", response=List[UserSchema])

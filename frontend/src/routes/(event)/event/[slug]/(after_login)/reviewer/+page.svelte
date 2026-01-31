@@ -1,8 +1,26 @@
 <script>
     import { invalidateAll } from '$app/navigation';
+    import { browser } from '$app/environment';
     import { Heading, Button, Input, Textarea, Alert, Card, Checkbox } from 'flowbite-svelte';
 
     let { data } = $props();
+
+    // DOMPurify for XSS protection
+    let DOMPurify = $state(null);
+    $effect(() => {
+        if (browser && !DOMPurify) {
+            import('dompurify').then(module => {
+                DOMPurify = module.default;
+            });
+        }
+    });
+    function sanitizeHtml(html) {
+        if (!html) return '';
+        if (browser && DOMPurify) {
+            return DOMPurify.sanitize(html);
+        }
+        return html;
+    }
 
     let max_votes = data.event.max_votes;
     let voted_abstracts = $state([]);
@@ -46,7 +64,7 @@
             <p class="text-sm text-gray-600 mb-6">Presented by {abstract.attendee.name}</p>
         </div>
         <hr class="mb-5 border-gray-200" />
-        {@html abstract.body}
+        {@html sanitizeHtml(abstract?.body)}
         <hr class="mb-5 border-gray-200" />
         <div class="flex justify-center gap-2">
             <Checkbox onclick={(e) => {

@@ -5,12 +5,30 @@
     import { UserRemoveSolid, DownloadSolid, EditSolid, TrashBinSolid } from 'flowbite-svelte-icons';
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
+    import { browser } from '$app/environment';
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
     import UserSelectionModal from '$lib/components/UserSelectionModal.svelte';
     import TablePagination from '$lib/components/TablePagination.svelte';
 
     let { data } = $props();
+
+    // DOMPurify for XSS protection
+    let DOMPurify = $state(null);
+    $effect(() => {
+        if (browser && !DOMPurify) {
+            import('dompurify').then(module => {
+                DOMPurify = module.default;
+            });
+        }
+    });
+    function sanitizeHtml(html) {
+        if (!html) return '';
+        if (browser && DOMPurify) {
+            return DOMPurify.sanitize(html);
+        }
+        return html;
+    }
 
     // Normalize attendees list for UserSelectionModal
     const attendeeUserList = $derived(data.attendees.map(a => ({ id: a.id, email: a.user?.email, ...a })));
@@ -344,7 +362,7 @@
         <div class="mb-6">
             <Label for="abstract" class="block mb-2">{m.abstracts_preview()}</Label>
             <Card size="xl">
-                {@html selected_abstract?selected_abstract.body:''}
+                {@html sanitizeHtml(selected_abstract?.body)}
             </Card>
         </div>
         {#if update_abstract_error}

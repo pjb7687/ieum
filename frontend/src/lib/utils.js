@@ -110,3 +110,21 @@ export function onlyLatinChars(value) {
     if (!value) return true;
     return latinOnlyRegex.test(value);
 }
+
+/**
+ * Sanitize redirect URL to prevent open redirect attacks.
+ * Only allows relative URLs starting with '/'.
+ * @param {string} url - URL to sanitize
+ * @returns {string} - Safe redirect URL or '/' if invalid
+ */
+export function sanitizeRedirectUrl(url) {
+    if (!url || typeof url !== 'string') {
+        return '/';
+    }
+    // Only allow relative URLs starting with /
+    // Reject URLs starting with // (protocol-relative) or containing ://
+    if (!url.startsWith('/') || url.startsWith('//') || url.includes('://')) {
+        return '/';
+    }
+    return url;
+}

@@ -2,6 +2,7 @@ import { get } from '$lib/fetch';
 import { redirect } from '@sveltejs/kit';
 import { error } from '@sveltejs/kit';
 import { post } from '$lib/fetch';
+import { sanitizeRedirectUrl } from '$lib/utils.js';
 
 function clean_orcid_cookies(cookies) {
     try {
@@ -25,7 +26,7 @@ function clean_orcid_cookies(cookies) {
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ parent, cookies, request }) {
     const url = new URL(request.url);
-    const next = url.searchParams.get('next') || '/';
+    const next = sanitizeRedirectUrl(url.searchParams.get('next'));
 
     let data = await parent();
 

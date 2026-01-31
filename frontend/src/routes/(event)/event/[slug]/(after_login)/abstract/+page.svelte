@@ -1,7 +1,8 @@
 <script>
     import { enhance } from '$app/forms';
     import { goto } from '$app/navigation';
-    
+    import { browser } from '$app/environment';
+
     import { A, List, Li, Card, Button, Heading, Indicator, Label, Input, Dropzone, Checkbox, Select, Alert, Navbar } from 'flowbite-svelte';
     import { onMount } from 'svelte';
 
@@ -16,6 +17,23 @@
 
     let event = data.event;
     let abstract = data.abstract;
+
+    // DOMPurify for XSS protection
+    let DOMPurify = $state(null);
+    $effect(() => {
+        if (browser && !DOMPurify) {
+            import('dompurify').then(module => {
+                DOMPurify = module.default;
+            });
+        }
+    });
+    function sanitizeHtml(html) {
+        if (!html) return '';
+        if (browser && DOMPurify) {
+            return DOMPurify.sanitize(html);
+        }
+        return html;
+    }
 
     const schema = yup.object({
         title: yup.string().required('Title is required.'),
@@ -126,7 +144,7 @@
         <p class="text-sm text-gray-600 mb-6">Presented by {me.first_name} {#if me.middle_initial}{me.middle_initial}{/if} {me.last_name}</p>
     </div>
     <hr class="mb-5 border-gray-200" />
-    {@html abstract.body}
+    {@html sanitizeHtml(abstract?.body)}
     <hr class="mb-5 border-gray-200" />
 </Card>
 <div class="flex flex-col md:flex-row justify-center gap-4">

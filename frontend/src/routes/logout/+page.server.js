@@ -1,10 +1,11 @@
 import { post } from '$lib/fetch';
 import { redirect } from '@sveltejs/kit';
+import { sanitizeRedirectUrl } from '$lib/utils.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ parent, request, cookies }) {
     const url = new URL(request.url);
-    const next = url.searchParams.get('next') || '/';
+    const next = sanitizeRedirectUrl(url.searchParams.get('next'));
 
     const data = await parent();
     if (!data.user) {
