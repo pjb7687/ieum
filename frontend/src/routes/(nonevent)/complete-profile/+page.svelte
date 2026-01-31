@@ -31,7 +31,12 @@
         nationality: yup.string().required(m.validation_nationalityRequired()),
         job_title: yup.string().required(m.validation_jobTitleRequired()),
         department: yup.string(),
-        institute: yup.number().transform((value, original) => original === '' ? undefined : Number(original)).required(m.validation_instituteRequired()),
+        institute: yup.mixed().transform((value, originalValue) => {
+            if (typeof originalValue === 'number') return originalValue;
+            if (originalValue === '' || originalValue === null || originalValue === undefined) return undefined;
+            const num = Number(originalValue);
+            return isNaN(num) ? undefined : num;
+        }).required(m.validation_instituteRequired()),
         orcid: yup.string(),
         google: yup.string(),
         disability: yup.string(),
