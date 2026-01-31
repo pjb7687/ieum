@@ -15,7 +15,7 @@
     import logging
     reverse_proxy /* frontend:3000
     reverse_proxy /{$DJANGO_ADMIN_PAGE_NAME:djangoadmin}/* backend:8080
-    reverse_proxy /accounts/orcid/* backend:8080
+    reverse_proxy /accounts/* backend:8080
     reverse_proxy /_allauth/browser/v1/auth/provider/redirect backend:8080
     reverse_proxy /_allauth/browser/v1/account/providers backend:8080
     handle_path /static/* {
