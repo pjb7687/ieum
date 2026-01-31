@@ -10,6 +10,9 @@
 
     let { data } = $props();
 
+    // Staff users get full user list, event admins get attendees only
+    const userList = $derived(data.users ? data.users.map(u => ({ id: u.id, ...u })) : data.attendees.map(a => ({ id: a.user_id, ...a })));
+
     let searchTermEventAdmin = $state('');
     let filteredEventAdmins = $state([]);
     $effect(() => {
@@ -100,11 +103,11 @@
         <div class="mb-6">
             <Label for="id" class="block mb-2">{m.eventAdmins_admin()}</Label>
             <Select id="id" name="id" items={
-                data.users.map(a => ({ value: a.id, name: `${getDisplayName(a)}, ${getDisplayInstitute(a)} (${a.email})` }))
+                userList.map(u => ({ value: u.id, name: `${getDisplayName(u)}, ${getDisplayInstitute(u)} (${u.email})` }))
             } onchange={
                 (e) => {
                     const id = parseInt(e.target.value);
-                    const user = data.users.find(a => a.id === id);
+                    const user = userList.find(u => u.id === id);
                     document.getElementById('name').value = getDisplayName(user);
                     document.getElementById('email').value = user.email;
                     document.getElementById('affiliation').value = getDisplayInstitute(user);

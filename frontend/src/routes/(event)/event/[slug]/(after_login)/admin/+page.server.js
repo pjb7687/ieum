@@ -19,6 +19,12 @@ export async function load({ parent, params, cookies, request }) {
     }
 
     rtn.event = await get_data_or_404(`admin/event/${params.slug}`);
+
+    // Superusers (staff) get access to full user list, event admins use attendees
+    if (rtn.user?.is_staff) {
+        rtn.users = await get_data_or_404('users');
+    }
+
     rtn.attendees = await get_data_or_404_event('attendees');
     rtn.questions = await get_data_or_404_event('questions');
     rtn.speakers = await get_data_or_404_event('speakers');
