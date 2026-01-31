@@ -70,6 +70,12 @@
 	"profile_department": "부서",
 	"profile_disability": "장애 정보",
 	"profile_dietary": "식이 정보",
+	"profile_resetPassword": "비밀번호 재설정",
+	"profile_resetPasswordConfirmTitle": "비밀번호 재설정",
+	"profile_resetPasswordConfirmMessage": "비밀번호를 재설정하시겠습니까? 비밀번호 재설정 링크가 이메일로 전송됩니다.",
+	"profile_resetPasswordSuccess": "비밀번호 재설정 이메일이 전송되었습니다. 받은편지함을 확인해주세요.",
+	"profile_resetPasswordCancel": "취소",
+	"profile_resetPasswordConfirm": "재설정 이메일 보내기",
 
 	"form_personalInfo": "개인 정보",
 	"form_additionalInfo": "추가 정보",

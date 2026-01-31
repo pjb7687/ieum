@@ -70,6 +70,12 @@
 	"profile_department": "Department",
 	"profile_disability": "Disability Information",
 	"profile_dietary": "Dietary Information",
+	"profile_resetPassword": "Reset Password",
+	"profile_resetPasswordConfirmTitle": "Reset Password",
+	"profile_resetPasswordConfirmMessage": "Are you sure you want to reset your password? A password reset link will be sent to your email address.",
+	"profile_resetPasswordSuccess": "Password reset email has been sent. Please check your inbox.",
+	"profile_resetPasswordCancel": "Cancel",
+	"profile_resetPasswordConfirm": "Send Reset Email",
 
 	"form_personalInfo": "Personal Information",
 	"form_additionalInfo": "Additional Information",

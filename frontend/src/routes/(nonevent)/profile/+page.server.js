@@ -59,5 +59,17 @@ export const actions = {
         } else {
             throw error(response.status, response.data);
         }
+    },
+    reset_password: async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const email = formdata.get('email');
+
+        const response = await post('_allauth/browser/v1/auth/password/request', { email }, cookies);
+
+        if (!response.ok || response.status !== 200) {
+            throw error(response.status, { message: 'Server error. If this persists, please contact the administrator.' });
+        }
+
+        return { success: true };
     }
 };

@@ -5,7 +5,7 @@
     import { createForm } from 'felte';
     import { validator } from '@felte/validator-yup';
     import * as yup from 'yup';
-    import { Alert, Input, Textarea, Select, Button, Label, InputAddon, ButtonGroup, Heading, Card } from 'flowbite-svelte';
+    import { Alert, Input, Textarea, Select, Button, Label, InputAddon, ButtonGroup, Heading, Card, Modal } from 'flowbite-svelte';
     import { UserCircleSolid } from 'flowbite-svelte-icons';
     import { goto } from '$app/navigation';
     import * as m from '$lib/paraglide/messages.js';
@@ -13,6 +13,35 @@
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
 
     let success = $state(false);
+    let showResetPasswordModal = $state(false);
+    let resetPasswordSuccess = $state(false);
+    let resetPasswordError = $state('');
+    let resetPasswordLoading = $state(false);
+
+    async function handleResetPassword() {
+        resetPasswordLoading = true;
+        resetPasswordError = '';
+        try {
+            const response = await fetch('?/reset_password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json',
+                },
+                body: new URLSearchParams({ email: me.email }),
+            });
+            if (!response.ok || response.status !== 200) {
+                const rtn = await response.json();
+                throw new Error(rtn.error?.message || 'Failed to send reset email');
+            }
+            resetPasswordSuccess = true;
+            showResetPasswordModal = false;
+        } catch (err) {
+            resetPasswordError = err.message || 'An error occurred';
+        } finally {
+            resetPasswordLoading = false;
+        }
+    }
 
     const schema = yup.object({
         email: yup.string().email().required(),
@@ -97,9 +126,26 @@
         {#if success}
         <Alert color="blue" class="mb-4" dismissable>{m.profile_updateSuccess()}</Alert>
         {/if}
+        {#if resetPasswordSuccess}
+        <Alert color="green" class="mb-4" dismissable>{m.profile_resetPasswordSuccess()}</Alert>
+        {/if}
         <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
             <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>{m.profile_updateInfo()}</Button>
+            <Button type="button" onclick={() => showResetPasswordModal = true} size="lg" color="light">{m.profile_resetPassword()}</Button>
             <Button onclick={() => goto(page_data.next)} size="lg" color="alternative">{m.common_goBack()}</Button>
         </div>
     </form>
 </div>
+
+<!-- Reset Password Confirmation Modal -->
+<Modal bind:open={showResetPasswordModal} size="sm" autoclose={false} class="w-full">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">{m.profile_resetPasswordConfirmTitle()}</h3>
+    <p class="text-gray-600 mb-6">{m.profile_resetPasswordConfirmMessage()}</p>
+    {#if resetPasswordError}
+    <Alert color="red" class="mb-4">{resetPasswordError}</Alert>
+    {/if}
+    <div class="flex justify-end gap-3">
+        <Button color="alternative" onclick={() => showResetPasswordModal = false}>{m.profile_resetPasswordCancel()}</Button>
+        <Button color="primary" onclick={handleResetPassword} disabled={resetPasswordLoading}>{m.profile_resetPasswordConfirm()}</Button>
+    </div>
+</Modal>
