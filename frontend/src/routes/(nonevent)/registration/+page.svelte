@@ -37,6 +37,9 @@
 
     let form_config = $derived({
         next: page_data.next,
+        show_english_name: true,
+        show_korean_name: true,
+        allow_korean_institute: true,
     });
 
     const { form: felteForm, data, errors, isSubmitting } = createForm({
