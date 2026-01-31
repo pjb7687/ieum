@@ -15,21 +15,33 @@
 
     // Load Korean font for PDF
     let fontLoaded = $state(false);
-    let fontBase64 = $state('');
+    let fontBase64Regular = $state('');
+    let fontBase64Bold = $state('');
 
     async function loadKoreanFont() {
         if (fontLoaded) return;
         try {
-            // Fetch the NanumGothic font file from static folder
-            const response = await fetch('/fonts/NanumGothic-Regular.ttf');
-            const blob = await response.blob();
-            const reader = new FileReader();
-
-            reader.onloadend = () => {
-                fontBase64 = reader.result.split(',')[1];
-                fontLoaded = true;
+            // Helper to load a font file as base64
+            const loadFont = async (url) => {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
             };
-            reader.readAsDataURL(blob);
+
+            // Load both regular and bold fonts
+            const [regular, bold] = await Promise.all([
+                loadFont('/fonts/NotoSansKR-Regular.ttf'),
+                loadFont('/fonts/NotoSansKR-Bold.ttf')
+            ]);
+
+            fontBase64Regular = regular;
+            fontBase64Bold = bold;
+            fontLoaded = true;
         } catch (error) {
             console.error('Failed to load Korean font:', error);
             // Fallback - font will use default helvetica
@@ -351,8 +363,6 @@
         // Wait for font to load
         if (!fontLoaded) {
             await loadKoreanFont();
-            // Wait a bit more to ensure font is ready
-            await new Promise(resolve => setTimeout(resolve, 100));
         }
 
         const doc = new jsPDF({
@@ -362,15 +372,16 @@
         });
 
         // Add Korean font to PDF
-        if (fontLoaded && fontBase64) {
-            doc.addFileToVFS("NanumGothic-Regular.ttf", fontBase64);
-            doc.addFont("NanumGothic-Regular.ttf", "NanumGothic", "normal");
-            doc.addFont("NanumGothic-Regular.ttf", "NanumGothic", "bold");
+        if (fontLoaded && fontBase64Regular && fontBase64Bold) {
+            doc.addFileToVFS("NotoSansKR-Regular.ttf", fontBase64Regular);
+            doc.addFileToVFS("NotoSansKR-Bold.ttf", fontBase64Bold);
+            doc.addFont("NotoSansKR-Regular.ttf", "NotoSansKR", "normal");
+            doc.addFont("NotoSansKR-Bold.ttf", "NotoSansKR", "bold");
         }
 
         let p = table_data_attendees.find(a => a.id === id);
 
-        doc.setFont(fontLoaded ? "NanumGothic" : "helvetica", "bold");
+        doc.setFont(fontLoaded ? "NotoSansKR" : "helvetica", "bold");
         doc.setFontSize(10);
         doc.text(`${p.id}`, 45, 10, 'center');
         doc.setFontSize(30);
@@ -403,8 +414,6 @@
         // Wait for font to load
         if (!fontLoaded) {
             await loadKoreanFont();
-            // Wait a bit more to ensure font is ready
-            await new Promise(resolve => setTimeout(resolve, 100));
         }
 
         const doc = new jsPDF({
@@ -414,16 +423,17 @@
         });
 
         // Add Korean font to PDF
-        if (fontLoaded && fontBase64) {
-            doc.addFileToVFS("NanumGothic-Regular.ttf", fontBase64);
-            doc.addFont("NanumGothic-Regular.ttf", "NanumGothic", "normal");
-            doc.addFont("NanumGothic-Regular.ttf", "NanumGothic", "bold");
+        if (fontLoaded && fontBase64Regular && fontBase64Bold) {
+            doc.addFileToVFS("NotoSansKR-Regular.ttf", fontBase64Regular);
+            doc.addFileToVFS("NotoSansKR-Bold.ttf", fontBase64Bold);
+            doc.addFont("NotoSansKR-Regular.ttf", "NotoSansKR", "normal");
+            doc.addFont("NotoSansKR-Bold.ttf", "NotoSansKR", "bold");
         }
 
         let p = table_data_attendees.find(a => a.id === id);
         let curr_y = 45;
         const add_line = (text, font_weight, font_size, y) => {
-            doc.setFont(fontLoaded ? "NanumGothic" : "helvetica", font_weight?font_weight:'normal');
+            doc.setFont(fontLoaded ? "NotoSansKR" : "helvetica", font_weight?font_weight:'normal');
             doc.setFontSize(font_size?font_size:15);
             let splitText = doc.splitTextToSize(text, 150);
             if (y) {
@@ -434,26 +444,30 @@
                 splitText.forEach((line, index) => {
                     doc.text(line, 105, curr_y + (index * 10), 'center');
                 });
-                curr_y += (splitText.length * 12);
+                curr_y += (splitText.length * 10);
             }
         };
         add_line(`${m.attendees_certIssueDate()}: ${new Date().toLocaleDateString()}`, 'normal', 10, 10);
         add_line(m.attendees_certTitle(), 'bold', 30);
         curr_y += 15;
-        add_line(m.attendees_certIntro());
-        add_line(p.name, 'bold');
-        add_line(p.institute, 'bold');
-        add_line(m.attendees_certHasAttended());
-        add_line(data.event.name, 'bold');
-        add_line(m.attendees_certOn());
-        add_line(data.event.start_date, 'bold');
+        add_line(m.attendees_certIntro(), 'bold');
+        add_line(p.name);
+        add_line(p.institute);
+        curr_y += 10;
+        add_line(m.attendees_certHasAttended(), 'bold');
+        add_line(data.event.name);
+        curr_y += 10;
+        add_line(m.attendees_certOn(), 'bold');
+        add_line(data.event.start_date);
         add_line(m.attendees_certTo());
-        add_line(data.event.end_date, 'bold');
-        add_line(m.attendees_certHeldAt());
-        add_line(data.event.venue, 'bold');
-        add_line(m.attendees_certAsParticipant());
+        add_line(data.event.end_date);
+        curr_y += 10;
+        add_line(m.attendees_certHeldAt(), 'bold');
+        add_line(data.event.venue);
+        curr_y += 10;
+        add_line(m.attendees_certAsParticipant(), 'bold');
         curr_y += 20;
-        add_line(data.event.organizers, 'bold');
+        add_line(languageTag() === 'ko' ? data.event.organizers_ko : data.event.organizers_en, 'bold');
         add_line(m.attendees_certFooter(), 'normal', 10, 287);
 
         selected_cert = doc.output('bloburi');
