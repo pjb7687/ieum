@@ -102,6 +102,43 @@ class UserSchema(Schema):
             return email_address.verified
         return False
 
+
+class PublicUserSchema(Schema):
+    """
+    A restricted user schema for public-facing endpoints.
+    Excludes sensitive fields like is_staff, disability, dietary, etc.
+    """
+    id: int
+    first_name: str
+    middle_initial: str
+    korean_name: str
+    last_name: str
+    name: str
+    job_title: str
+    institute_en: str
+    institute_ko: str
+
+    @staticmethod
+    def resolve_institute_en(user: User) -> str:
+        if user.institute:
+            return user.institute.name_en
+        return ""
+
+    @staticmethod
+    def resolve_institute_ko(user: User) -> str:
+        if user.institute:
+            return user.institute.name_ko
+        return ""
+
+    @staticmethod
+    def resolve_name(user: User) -> str:
+        name = user.first_name
+        if user.middle_initial:
+            name += " " + user.middle_initial
+        name += " " + user.last_name
+        return name
+
+
 class EventSchema(Schema):
     id: int
     name: str
@@ -115,7 +152,7 @@ class EventSchema(Schema):
     venue_address: str
     venue_latitude: Union[float, None]
     venue_longitude: Union[float, None]
-    organizers: List[UserSchema]
+    organizers: List[PublicUserSchema]
     organizers_en: str
     organizers_ko: str
     main_languages: List[str]
