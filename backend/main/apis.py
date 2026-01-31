@@ -18,7 +18,7 @@ from django.conf import settings
 
 from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution
 from main.schema import *
-from main.utils import validate_abstract_file, sanitize_filename
+from main.utils import validate_abstract_file, sanitize_filename, rate_limit
 
 from .tasks import send_mail, send_mail_with_attachment
 
@@ -127,6 +127,7 @@ def get_institution(request, institution_id: int):
         return api.create_response(request, {"error": "Institution not found"}, status=404)
 
 @api.post("/institutions", response=InstitutionSchema, auth=None)
+@rate_limit(max_requests=10, window_seconds=60)
 def create_institution(request, data: InstitutionCreateSchema):
 
     # Check if institution already exists
@@ -1306,6 +1307,7 @@ def get_email_templates(request, event_id: int):
     return rtn
 
 @api.post("/event/{event_id}/onsite", auth=None)
+@rate_limit(max_requests=20, window_seconds=60)
 def register_on_site(request, event_id: int):
     event = Event.objects.get(id=event_id)
     data = json.loads(request.body)

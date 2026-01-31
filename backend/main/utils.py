@@ -8,6 +8,60 @@ import os
 import re
 import io
 import html
+import time
+import json
+from functools import wraps
+
+from django.core.cache import cache
+from django.http import JsonResponse
+
+
+def rate_limit(max_requests: int = 10, window_seconds: int = 60):
+    """
+    Rate limiting decorator for API endpoints.
+    Limits requests per IP address within a time window.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            # Get client IP address
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0].strip()
+            else:
+                ip = request.META.get('REMOTE_ADDR', 'unknown')
+
+            # Create cache key based on IP and endpoint
+            cache_key = f"rate_limit:{func.__name__}:{ip}"
+
+            # Get current request count and timestamp
+            request_data = cache.get(cache_key)
+            current_time = time.time()
+
+            if request_data is None:
+                # First request
+                cache.set(cache_key, {'count': 1, 'start': current_time}, window_seconds)
+            else:
+                # Check if window has expired
+                if current_time - request_data['start'] > window_seconds:
+                    # Reset window
+                    cache.set(cache_key, {'count': 1, 'start': current_time}, window_seconds)
+                elif request_data['count'] >= max_requests:
+                    # Rate limit exceeded
+                    return JsonResponse(
+                        {"code": "rate_limited", "message": "Too many requests. Please try again later."},
+                        status=429,
+                    )
+                else:
+                    # Increment counter
+                    request_data['count'] += 1
+                    remaining_time = window_seconds - (current_time - request_data['start'])
+                    cache.set(cache_key, request_data, int(remaining_time) + 1)
+
+            return func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
 
 # File upload validation constants
 ALLOWED_EXTENSIONS = {'.docx', '.odt'}
