@@ -806,7 +806,8 @@ def send_certificate(request, event_id: int):
     data = json.loads(request.body)
     email = data.get("email")
     pdf_base64 = data.get("pdf_base64")
-    attendee_name = data.get("attendee_name", "Participant")
+    attendee_id = data.get("attendee_id")
+    attendee_type = data.get("attendee_type", "attendee")  # "attendee" or "onsite"
 
     if not email or not pdf_base64:
         return api.create_response(
@@ -817,15 +818,26 @@ def send_certificate(request, event_id: int):
 
     event = Event.objects.get(id=event_id)
 
+    # Look up the actual attendee
+    attendee = None
+    if attendee_id:
+        if attendee_type == "onsite":
+            try:
+                attendee = OnSiteAttendee.objects.get(id=attendee_id, event=event)
+            except OnSiteAttendee.DoesNotExist:
+                pass
+        else:
+            try:
+                attendee = Attendee.objects.get(id=attendee_id, event=event)
+            except Attendee.DoesNotExist:
+                pass
+
+    # Get attendee name for filename and fallback
+    attendee_name = attendee.name if attendee else "Participant"
+
     # Use certificate template if available, otherwise use default
-    if event.email_template_certificate:
-        # Create attendee-like object for template compatibility
-        class AttendeeContext:
-            def __init__(self, name):
-                self.first_name = name
-                self.name = name
-        attendee = AttendeeContext(attendee_name)
-        context = Context({"event": event, "attendee": attendee, "attendee_name": attendee_name}, autoescape=False)
+    if event.email_template_certificate and attendee:
+        context = Context({"event": event, "attendee": attendee}, autoescape=False)
         subject = Template(event.email_template_certificate.subject).render(context)
         body = Template(event.email_template_certificate.body).render(context)
     else:

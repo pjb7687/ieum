@@ -384,7 +384,8 @@
                 const formData = new FormData();
                 formData.append('email', p.email);
                 formData.append('pdf_base64', base64Pdf);
-                formData.append('attendee_name', p.name);
+                formData.append('attendee_id', id);
+                formData.append('attendee_type', 'attendee');
                 await fetch('?/send_certificate', {
                     method: 'POST',
                     body: formData
@@ -448,7 +449,8 @@
             const formData = new FormData();
             formData.append('email', cert_email);
             formData.append('pdf_base64', base64Pdf);
-            formData.append('attendee_name', p.name);
+            formData.append('attendee_id', selected_cert_attendee_id);
+            formData.append('attendee_type', 'attendee');
             const response = await fetch('?/send_certificate', {
                 method: 'POST',
                 body: formData

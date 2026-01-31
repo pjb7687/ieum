@@ -84,6 +84,18 @@ class OnSiteAttendee(models.Model):
     institute = models.CharField(max_length=1000)
     job_title = models.CharField(max_length=1000, blank=True)
 
+    @property
+    def korean_name(self):
+        return self.name
+
+    @property
+    def first_name(self):
+        return self.name
+
+    @property
+    def last_name(self):
+        return ''
+
     def __str__(self):
         return self.name
 

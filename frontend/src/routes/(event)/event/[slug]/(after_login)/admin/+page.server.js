@@ -344,7 +344,8 @@ export const actions = {
         const response = await post(`api/event/${params.slug}/send_certificate`, {
             email: formdata.get('email'),
             pdf_base64: formdata.get('pdf_base64'),
-            attendee_name: formdata.get('attendee_name'),
+            attendee_id: formdata.get('attendee_id') ? parseInt(formdata.get('attendee_id')) : null,
+            attendee_type: formdata.get('attendee_type') || 'attendee',
         }, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
