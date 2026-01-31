@@ -8,6 +8,7 @@
     import { validator } from '@felte/validator-yup';
     import * as yup from 'yup';
     import * as m from '$lib/paraglide/messages.js';
+    import { onlyLatinChars } from '$lib/utils.js';
 
     import OnSiteRegistrationForm from '$lib/components/OnSiteRegistrationForm.svelte';
 
@@ -15,14 +16,8 @@
 
     let event = data.event;
     
-    let form_config = { 
+    let form_config = {
         hide_login_info: true,
-    };
-
-    const koreanRegex = /[\u3131-\u3163\uac00-\ud7a3]/;
-    const rejectKorean = (value) => {
-        if (!value) return true;
-        return !koreanRegex.test(value);
     };
 
     const schema = yup.object({

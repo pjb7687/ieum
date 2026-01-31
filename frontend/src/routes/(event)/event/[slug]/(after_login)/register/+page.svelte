@@ -13,7 +13,7 @@
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
-    import { formatDateRange } from '$lib/utils.js';
+    import { formatDateRange, onlyLatinChars } from '$lib/utils.js';
     import 'academicons';
 
     let { data, form } = $props();
@@ -40,12 +40,6 @@
         allow_korean_institute: hasKorean,
     };
 
-    const koreanRegex = /[\u3131-\u3163\uac00-\ud7a3]/;
-    const rejectKorean = (value) => {
-        if (!value) return true;
-        return !koreanRegex.test(value);
-    };
-
     // Build dynamic validation schema based on event languages and nationality
     const schemaFields = {
         nationality: yup.string().required(),
@@ -70,24 +64,24 @@
     // 2. Nationality is Non-Korean or Prefer not to say
     if (hasEnglish) {
         // Event has English - fields are always required
-        schemaFields.first_name = yup.string().required(m.validation_firstNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
-        schemaFields.last_name = yup.string().required(m.validation_lastNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
-        schemaFields.middle_initial = yup.string().max(1).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
+        schemaFields.first_name = yup.string().required(m.validation_firstNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), onlyLatinChars);
+        schemaFields.last_name = yup.string().required(m.validation_lastNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), onlyLatinChars);
+        schemaFields.middle_initial = yup.string().max(1).test('no-korean', m.eventRegister_validationNoKorean(), onlyLatinChars);
     } else {
         // Event doesn't have English - fields required only for non-Korean nationals
         schemaFields.first_name = yup.string().when('nationality', {
             is: (val) => val === '2' || val === '3', // Non-Korean or Prefer not to say
-            then: (schema) => schema.required(m.validation_firstNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
+            then: (schema) => schema.required(m.validation_firstNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), onlyLatinChars),
             otherwise: (schema) => schema
         });
 
         schemaFields.last_name = yup.string().when('nationality', {
             is: (val) => val === '2' || val === '3',
-            then: (schema) => schema.required(m.validation_lastNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean),
+            then: (schema) => schema.required(m.validation_lastNameRequired()).test('no-korean', m.eventRegister_validationNoKorean(), onlyLatinChars),
             otherwise: (schema) => schema
         });
 
-        schemaFields.middle_initial = yup.string().max(1).test('no-korean', m.eventRegister_validationNoKorean(), rejectKorean);
+        schemaFields.middle_initial = yup.string().max(1).test('no-korean', m.eventRegister_validationNoKorean(), onlyLatinChars);
     }
 
     // Korean name field - required only if event is Korean-only AND nationality is Korean

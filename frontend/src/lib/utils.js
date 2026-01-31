@@ -98,3 +98,15 @@ export function formatDateRange(startDate, endDate) {
 
     return formatDate(startDate) + separator + formatDate(endDate);
 }
+
+/**
+ * Validate that name fields contain only Latin/European characters
+ * Includes: a-z, A-Z, accented letters (À-ÿ), and Latin Extended (Ā-ɏ)
+ * @param {string} value - String to validate
+ * @returns {boolean} - True if valid or empty, false otherwise
+ */
+const latinOnlyRegex = /^[a-zA-Z\u00C0-\u024F\s\-'.]+$/u;
+export function onlyLatinChars(value) {
+    if (!value) return true;
+    return latinOnlyRegex.test(value);
+}

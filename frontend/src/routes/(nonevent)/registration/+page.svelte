@@ -10,14 +10,15 @@
     import { Alert, Input, Textarea, Select, Button, Label, InputAddon, ButtonGroup, Heading, Card } from 'flowbite-svelte';
     import { UserCircleSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
+    import { onlyLatinChars } from '$lib/utils.js';
 
     const schema = yup.object({
         email: yup.string().email().required(m.validation_emailRequired()),
         password: yup.string().required(m.validation_passwordRequired()).min(8, m.validation_passwordMinLength()),
         confirm_password: yup.string().required(m.validation_confirmPasswordRequired()).oneOf([yup.ref('password'), null], m.validation_passwordsMismatch()),
-        first_name: yup.string().required(m.validation_firstNameRequired()),
-        last_name: yup.string().required(m.validation_lastNameRequired()),
-        middle_initial: yup.string().max(1),
+        first_name: yup.string().required(m.validation_firstNameRequired()).test('latin-only', m.eventRegister_validationNoKorean(), onlyLatinChars),
+        last_name: yup.string().required(m.validation_lastNameRequired()).test('latin-only', m.eventRegister_validationNoKorean(), onlyLatinChars),
+        middle_initial: yup.string().max(1).test('latin-only', m.eventRegister_validationNoKorean(), onlyLatinChars),
         korean_name: yup.string(),
         nationality: yup.string().required(m.validation_nationalityRequired()),
         job_title: yup.string().required(m.validation_jobTitleRequired()),
