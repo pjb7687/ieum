@@ -139,6 +139,13 @@
 	"validation_instituteRequired": "Institute is required.",
 	"validation_jobTitleRequired": "Position is required.",
 	"validation_invitationCodeRequired": "Invitation code is required for this event.",
+	"validation_nameRequired": "Please provide either your Korean name or both first and last name.",
+
+	"completeProfile_title": "Complete Your Profile",
+	"completeProfile_description": "Please fill in the required information to continue.",
+	"completeProfile_infoTitle": "Almost there!",
+	"completeProfile_infoMessage": "We need a few more details to complete your account setup. Please fill in the required fields below.",
+	"completeProfile_submit": "Complete Profile",
 
 	"login_title": "Sign in to your account",
 	"login_description": "Please log in to access your account.",

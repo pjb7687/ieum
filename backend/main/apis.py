@@ -72,6 +72,12 @@ def update_user(request):
             status=400,
         )
     user = request.user
+
+    # Fix username to match email if mismatched (can happen with social signups)
+    # Only allow setting username to the user's own verified email for security
+    if user.username != user.email:
+        user.username = user.email
+
     user.first_name = data["first_name"]
     user.last_name = data["last_name"]
     user.middle_initial = data.get("middle_initial", "")

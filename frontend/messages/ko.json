@@ -139,6 +139,13 @@
 	"validation_instituteRequired": "소속 기관을 입력해주세요.",
 	"validation_jobTitleRequired": "직위를 입력해주세요.",
 	"validation_invitationCodeRequired": "이 행사에는 초청 코드가 필요합니다.",
+	"validation_nameRequired": "한글 이름 또는 영문 이름과 성을 모두 입력해주세요.",
+
+	"completeProfile_title": "프로필 완성하기",
+	"completeProfile_description": "계속하려면 필수 정보를 입력해주세요.",
+	"completeProfile_infoTitle": "거의 완료되었습니다!",
+	"completeProfile_infoMessage": "계정 설정을 완료하기 위해 몇 가지 추가 정보가 필요합니다. 아래 필수 항목을 입력해주세요.",
+	"completeProfile_submit": "프로필 완성",
 
 	"login_title": "계정 로그인",
 	"login_description": "계정에 로그인해주세요.",

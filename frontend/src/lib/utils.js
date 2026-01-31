@@ -128,3 +128,47 @@ export function sanitizeRedirectUrl(url) {
     }
     return url;
 }
+
+/**
+ * Check if a user profile is complete with all required fields.
+ * Required fields depend on nationality:
+ * - For all: nationality, job_title, institute, username must match email
+ * - For Korean (1): korean_name OR (first_name AND last_name)
+ * - For non-Korean (2, 3): first_name AND last_name
+ * @param {Object} user - User object from API
+ * @returns {boolean} - True if profile is complete
+ */
+export function isProfileComplete(user) {
+    if (!user) return false;
+
+    // Check that username matches email (social signups may have wrong username)
+    if (user.username !== user.email) {
+        return false;
+    }
+
+    // Check common required fields
+    if (!user.nationality || !user.job_title || !user.institute) {
+        return false;
+    }
+
+    // Check name fields based on nationality
+    const nationality = user.nationality;
+
+    if (nationality === 1) {
+        // Korean: need korean_name OR (first_name AND last_name)
+        const hasKoreanName = user.korean_name && user.korean_name.trim() !== '';
+        const hasEnglishName = user.first_name && user.first_name.trim() !== '' &&
+                              user.last_name && user.last_name.trim() !== '';
+        if (!hasKoreanName && !hasEnglishName) {
+            return false;
+        }
+    } else {
+        // Non-Korean: need first_name AND last_name
+        if (!user.first_name || user.first_name.trim() === '' ||
+            !user.last_name || user.last_name.trim() === '') {
+            return false;
+        }
+    }
+
+    return true;
+}

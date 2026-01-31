@@ -1,10 +1,21 @@
 import { get } from '$lib/fetch';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
+import { isProfileComplete } from '$lib/utils.js';
 
 const ADMIN_PAGE_NAME = process.env.ADMIN_PAGE_NAME || 'admin';
 
+// Pages that don't require a complete profile
+const PROFILE_EXEMPT_PATHS = [
+    '/complete-profile',
+    '/login',
+    '/registration',
+    '/verify-email',
+    '/forgot-password',
+    '/reset-password',
+];
+
 /** @type {import('./$types').LayoutServerLoad} */
-export async function load({ cookies }) {
+export async function load({ cookies, url }) {
     let rtn = {};
 
     const response_csrftoken = await get('api/csrftoken');
@@ -27,6 +38,14 @@ export async function load({ cookies }) {
             // Only expose admin page name to staff users
             if (user.is_staff) {
                 rtn.admin_page_name = ADMIN_PAGE_NAME;
+            }
+
+            // Check if profile is complete (skip for exempt paths)
+            const currentPath = url.pathname;
+            const isExempt = PROFILE_EXEMPT_PATHS.some(path => currentPath.startsWith(path));
+            if (!isExempt && !isProfileComplete(user)) {
+                const next = currentPath + url.search;
+                throw redirect(303, `/complete-profile?next=${encodeURIComponent(next)}`);
             }
         } else {
             cookies.delete('sessionid', {
