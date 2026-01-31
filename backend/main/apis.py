@@ -832,23 +832,22 @@ def send_certificate(request, event_id: int):
             except Attendee.DoesNotExist:
                 pass
 
-    # Get attendee name for filename and fallback
-    attendee_name = attendee.name if attendee else "Participant"
+    if attendee is None:
+        return api.create_response(
+            request,
+            {"code": "attendee_not_found", "message": "Attendee not found."},
+            status=404,
+        )
 
-    # Use certificate template if available, otherwise use default
-    if event.email_template_certificate and attendee:
-        context = Context({"event": event, "attendee": attendee}, autoescape=False)
-        subject = Template(event.email_template_certificate.subject).render(context)
-        body = Template(event.email_template_certificate.body).render(context)
-    else:
-        subject = f"Certificate of Attendance - {event.name}"
-        body = f"Dear {attendee_name},\n\nPlease find attached your certificate of attendance for {event.name}.\n\nBest regards,\n{event.name} Organizing Committee"
+    context = Context({"event": event, "attendee": attendee}, autoescape=False)
+    subject = Template(event.email_template_certificate.subject).render(context)
+    body = Template(event.email_template_certificate.body).render(context)
 
     send_mail_with_attachment.delay(
         subject,
         body,
         email,
-        f"Certificate_{attendee_name.replace(' ', '_')}.pdf",
+        f"Certificate_{attendee.first_name.replace(' ', '_')}.pdf",
         pdf_base64
     )
     return {"code": "success", "message": "Certificate sent."}
