@@ -213,14 +213,7 @@ def get_admin_events(request):
 def get_events(request, offset: int = 0, limit: int = 20, year: str = None, search: str = None, showOnlyOpen: bool = False):
     from django.db.models import Q
 
-    # Start with optimized queryset - only select needed fields
-    events = Event.objects.only(
-        'id', 'name', 'description', 'category', 'link_info',
-        'start_date', 'end_date', 'venue', 'venue_ko', 'venue_address',
-        'venue_latitude', 'venue_longitude', 'organizers_en', 'organizers_ko',
-        'main_languages', 'registration_deadline', 'registration_fee',
-        'accepts_abstract', 'abstract_deadline', 'published'
-    )
+    events = Event.objects.all()
 
     # Apply visibility filters
     if request.user.is_authenticated:
@@ -249,7 +242,7 @@ def get_events(request, offset: int = 0, limit: int = 20, year: str = None, sear
     events = events.order_by('-start_date').distinct()
     total = events.count()
 
-    # Apply pagination and prefetch related data
+    # Apply pagination and prefetch organizers to prevent N+1 queries
     events = events[offset:offset + limit].prefetch_related('organizers')
 
     return {
