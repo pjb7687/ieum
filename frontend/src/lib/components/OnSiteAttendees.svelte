@@ -140,8 +140,8 @@
         nametag_modal = true;
     };
 
-    const applyRole = async () => {
-        await generateNametag(selected_nametag_id, selected_role);
+    const onRoleChange = async (e) => {
+        await generateNametag(selected_nametag_id, e.target.value);
     };
 
     let cert_modal = $state(false);
@@ -445,14 +445,13 @@
 <Modal id="nametag_modal" size="lg" title={m.onsiteAttendees_nametag()} bind:open={nametag_modal} outsideclose>
     <div class="mb-4 flex gap-2 items-center">
         <Label for="role" class="whitespace-nowrap">Role:</Label>
-        <Select id="role" bind:value={selected_role} items={[
+        <Select id="role" bind:value={selected_role} onchange={onRoleChange} items={[
             { value: 'Participant', name: 'Participant' },
             { value: 'Speaker', name: 'Speaker' },
             { value: 'Organizer', name: 'Organizer' },
             { value: 'Staff', name: 'Staff' },
             { value: 'Volunteer', name: 'Volunteer' }
         ]} class="flex-1" />
-        <Button color="primary" onclick={applyRole}>{m.common_apply()}</Button>
     </div>
     <iframe id="nametag" class="w-full h-[500px]" src={selected_nametag} title="Nametag">
         Your browser does not support iframes.
