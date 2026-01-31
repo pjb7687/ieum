@@ -402,6 +402,7 @@ def update_event(request, event_id: int):
     event.registration_fee = int(data["registration_fee"]) if data.get("registration_fee") not in [None, ""] else None
     event.accepts_abstract = data["accepts_abstract"] == "true"
     event.published = data.get("published", "false") == "true"
+    event.invitation_code = data.get("invitation_code", "").strip()
     event.save()
     if event.accepts_abstract:
         event.abstract_deadline = data["abstract_deadline"] if data["abstract_deadline"] else None
@@ -606,8 +607,18 @@ def register_event(request, event_id: int):
             {"code": "already_registered", "message": "You are already registered."},
             status=400,
         )
-    
+
     data = json.loads(request.body)
+
+    # Validate invitation code if event is invitation-only
+    if event.invitation_code:
+        submitted_code = data.get("invitation_code", "").strip()
+        if submitted_code != event.invitation_code:
+            return api.create_response(
+                request,
+                {"code": "invalid_invitation_code", "message": "Invalid invitation code. Please check and try again."},
+                status=400,
+            )
     for q in event.custom_questions.all():
         if q.question["type"] == "select":
             for oidx, option in enumerate(q.question["options"]):

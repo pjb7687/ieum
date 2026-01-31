@@ -54,7 +54,7 @@
 <form use:felteForm method="post" class="space-y-5">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div class="mb-6">
-          <Label for="password" class="block mb-2">Password*</Label>
+          <Label for="password" class="block mb-2">Password <span class="text-red-500">*</span></Label>
           <Input id="password" name="password" type="password" bind:value={$formData.password} />
           {#if $errors.password}
             <Alert type="error" color="red" class="mb-6 mt-3">
@@ -63,7 +63,7 @@
           {/if}
         </div>
         <div class="mb-6">
-          <Label for="confirm_password" class="block mb-2">Confirm Password*</Label>
+          <Label for="confirm_password" class="block mb-2">Confirm Password <span class="text-red-500">*</span></Label>
           <Input id="confirm_password" name="confirm_password" type="password" bind:value={$formData.confirm_password} />
           {#if $errors.confirm_password}
             <Alert type="error" color="red" class="mb-6 mt-3">

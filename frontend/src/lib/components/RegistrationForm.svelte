@@ -79,7 +79,7 @@
 <!-- Login Information -->
 <Heading tag="h2" class="text-lg font-bold mb-6">{m.form_personalInfo()}</Heading>
 <div class="mb-6">
-  <Label for="email" class="block mb-2 text-dark">{m.form_email()}*</Label>
+  <Label for="email" class="block mb-2 text-dark">{m.form_email()} <span class="text-red-500">*</span></Label>
   <Input type="email" id="email" name="email" bind:value={data.email} disabled={config.hide_password} />
   {#if errors.email}
     <Alert type="error" color="red" class="mb-6 mt-3">
@@ -112,7 +112,7 @@
 {#if !config.hide_password}
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
   <div class="mb-6">
-    <Label for="password" class="block mb-2">{m.form_password()}*</Label>
+    <Label for="password" class="block mb-2">{m.form_password()} <span class="text-red-500">*</span></Label>
     <Input id="password" name="password" type="password" bind:value={data.password} />
     {#if errors.password}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -121,7 +121,7 @@
     {/if}
   </div>
   <div class="mb-6">
-    <Label for="confirm_password" class="block mb-2">{m.form_confirmPassword()}*</Label>
+    <Label for="confirm_password" class="block mb-2">{m.form_confirmPassword()} <span class="text-red-500">*</span></Label>
     <Input id="confirm_password" name="confirm_password" type="password" bind:value={data.confirm_password} />
     {#if errors.confirm_password}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -134,7 +134,7 @@
 {/if}
 
 <div class="mb-6">
-  <Label for="nationality" class="block mb-2">{m.form_nationality()}*</Label>
+  <Label for="nationality" class="block mb-2">{m.form_nationality()} <span class="text-red-500">*</span></Label>
   <Select id="nationality" name="nationality" bind:value={data.nationality} items={
     [
       { value: "1", name: m.form_nationalityKorean() },
@@ -152,7 +152,7 @@
 {#if config.show_english_name || data.nationality === '2' || data.nationality === '3'}
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
   <div class="mb-6">
-    <Label for="first_name" class="block mb-2">{m.form_firstName()}{#if config.show_english_name || data.nationality === '2' || data.nationality === '3'}*{/if}</Label>
+    <Label for="first_name" class="block mb-2">{m.form_firstName()}{#if config.show_english_name || data.nationality === '2' || data.nationality === '3'} <span class="text-red-500">*</span>{/if}</Label>
     <Input id="first_name" name="first_name" bind:value={data.first_name} />
     {#if errors.first_name}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -165,7 +165,7 @@
     <Input id="middle_initial" name="middle_initial" maxlength="1" bind:value={data.middle_initial} />
   </div>
   <div class="mb-6">
-    <Label for="last_name" class="block mb-2">{m.form_lastName()}{#if data.nationality === '2' || data.nationality === '3'}*{:else if config.show_english_name}*{/if}</Label>
+    <Label for="last_name" class="block mb-2">{m.form_lastName()}{#if data.nationality === '2' || data.nationality === '3'} <span class="text-red-500">*</span>{:else if config.show_english_name} <span class="text-red-500">*</span>{/if}</Label>
     <Input id="last_name" name="last_name" bind:value={data.last_name} />
     {#if errors.last_name}
       <Alert type="error" color="red" class="mb-6 mt-3">
@@ -178,7 +178,7 @@
 
 {#if config.show_korean_name || data.nationality === '1' || data.nationality === '2' || data.nationality === '3'}
 <div class="mb-6">
-  <Label for="korean_name" class="block mb-2">{m.form_koreanName()}{#if data.nationality === '1' && !config.show_english_name}*{/if}</Label>
+  <Label for="korean_name" class="block mb-2">{m.form_koreanName()} {#if data.nationality === '1' && !config.show_english_name}<span class="text-red-500">*</span>{/if}</Label>
   <Input id="korean_name" name="korean_name" bind:value={data.korean_name} />
   {#if errors.korean_name}
     <Alert type="error" color="red" class="mb-6 mt-3">
@@ -201,7 +201,7 @@
 </div>
 
 <div class="mb-6">
-  <Label for="job_title" class="block mb-2">{m.form_jobTitle()}*</Label>
+  <Label for="job_title" class="block mb-2">{m.form_jobTitle()} <span class="text-red-500">*</span></Label>
   <Input id="job_title" name="job_title" bind:value={data.job_title} />
   {#if errors.job_title}
     <Alert type="error" color="red" class="mb-6 mt-3">

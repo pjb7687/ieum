@@ -230,7 +230,7 @@
                     <div class="space-y-8">
                         {#each allEvents as event}
                             <div class="pb-8 border-b border-gray-200 last:border-b-0 last:pb-0">
-                                <!-- Event Category and Draft Badge -->
+                                <!-- Event Category, Invitation Only, and Draft Badge -->
                                 {#if event.category}
                                     <div class="mb-2 flex items-center gap-2">
                                         <span class="inline-block text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">
@@ -246,6 +246,14 @@
                                                 {m.eventCategory_conference()}
                                             {/if}
                                         </span>
+                                        {#if event.is_invitation_only}
+                                            <span id="invitation-badge-{event.id}" class="inline-block text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-1 rounded">
+                                                {m.eventStatus_invitationOnly()}
+                                            </span>
+                                            <Tooltip triggeredBy="#invitation-badge-{event.id}" placement="right">
+                                                {m.eventStatus_invitationOnlyTooltip()}
+                                            </Tooltip>
+                                        {/if}
                                         {#if !event.published}
                                             <span id="draft-badge-{event.id}" class="inline-block text-xs font-semibold text-gray-700 bg-gray-200 px-2 py-1 rounded">
                                                 {m.eventStatus_draft()}

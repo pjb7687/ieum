@@ -93,6 +93,12 @@
         otherwise: (schema) => schema // Optional for non-Korean
     });
 
+    // Add invitation code validation if event is invitation-only
+    const isInvitationOnly = event.is_invitation_only;
+    if (isInvitationOnly) {
+        schemaFields.invitation_code = yup.string().required(m.validation_invitationCodeRequired());
+    }
+
     const schema = yup.object(schemaFields);
 
     let me = data.user;
@@ -114,6 +120,7 @@
             job_title: me?me.job_title:'',
             disability: me?me.disability:'',
             dietary: me?me.dietary:'',
+            invitation_code: '',
         },
         extend: validator({ schema }),
         transform: (values) => ({
@@ -298,6 +305,26 @@
                             {m.eventRegister_warning()}
                         </Alert>
                     </div>
+
+                    {#if isInvitationOnly}
+                        <div class="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                            <Label for="invitation_code" class="block mb-2 font-medium text-blue-800">
+                                {m.eventRegister_invitationCode()} <span class="text-red-500">*</span>
+                            </Label>
+                            <Input
+                                type="text"
+                                id="invitation_code"
+                                name="invitation_code"
+                                bind:value={$formData.invitation_code}
+                                placeholder={m.eventRegister_invitationCodePlaceholder()}
+                                class="bg-white"
+                            />
+                            {#if $errors.invitation_code}
+                                <p class="text-sm text-red-600 mt-1">{$errors.invitation_code}</p>
+                            {/if}
+                            <p class="text-sm text-blue-700 mt-2">{m.eventRegister_invitationCodeHelp()}</p>
+                        </div>
+                    {/if}
 
                     <RegistrationForm data={$formData} errors={$errors} config={form_config} institution_resolved={data.user?.institution_resolved} bind:instituteDisplayName={instituteDisplayName} />
 

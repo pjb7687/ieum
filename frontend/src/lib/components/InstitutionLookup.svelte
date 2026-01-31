@@ -181,7 +181,7 @@
 </script>
 
 <Label for="institute" class="block mb-2">
-  {m.form_institute()}{required ? '*' : ''}
+  {m.form_institute()} {#if required}<span class="text-red-500">*</span>{/if}
 </Label>
 <input type="hidden" name="institute" bind:this={hiddenInput} value={value} />
 <ButtonGroup class="w-full">
@@ -274,7 +274,7 @@
               />
             </div>
             <div>
-              <Label for="new_name_en" class="block mb-2">{m.admin_institutionNameEn()}*</Label>
+              <Label for="new_name_en" class="block mb-2">{m.admin_institutionNameEn()} <span class="text-red-500">*</span></Label>
               <Input
                 id="new_name_en"
                 name="name_en"
@@ -287,7 +287,7 @@
           {:else}
             <!-- English name first when UI is English -->
             <div>
-              <Label for="new_name_en" class="block mb-2">{m.admin_institutionNameEn()}*</Label>
+              <Label for="new_name_en" class="block mb-2">{m.admin_institutionNameEn()} <span class="text-red-500">*</span></Label>
               <Input
                 id="new_name_en"
                 name="name_en"

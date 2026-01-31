@@ -20,6 +20,7 @@
         deadline: '',
         capacity: 0,
         registration_fee: null,
+        invitation_code: '',
         accepts_abstract: false,
         abstract_deadline: '',
         capacity_abstract: 0,
@@ -59,7 +60,7 @@
 </script>
 
 <div class="mb-6">
-    <Label for="name" class="block mb-2">{m.eventForm_eventName()}*</Label>
+    <Label for="name" class="block mb-2">{m.eventForm_eventName()} <span class="text-red-500">*</span></Label>
     <Input type="text" id="name" name="name" value={data.name} />
 </div>
 <div class="mb-6">
@@ -78,7 +79,7 @@
     />
 </div>
 <div class="mb-6">
-    <Label for="category" class="block mb-2">{m.eventForm_category()}*</Label>
+    <Label for="category" class="block mb-2">{m.eventForm_category()} <span class="text-red-500">*</span></Label>
     <Select id="category" name="category" value={data.category} items={[
         { value: 'workshop', name: m.eventCategory_workshop() },
         { value: 'hackathon', name: m.eventCategory_hackathon() },
@@ -88,7 +89,7 @@
     ]} />
 </div>
 <div class="mb-6">
-    <Label class="block mb-2">{m.eventForm_mainLanguages()}*</Label>
+    <Label class="block mb-2">{m.eventForm_mainLanguages()} <span class="text-red-500">*</span></Label>
     <div class="flex gap-4">
         <Checkbox
             checked={main_languages.includes('ko')}
@@ -119,7 +120,7 @@
     />
 </div>
 <div class="mb-6">
-    <Label for="start_date" class="block mb-2">{m.eventForm_dates()}*</Label>
+    <Label for="start_date" class="block mb-2">{m.eventForm_dates()} <span class="text-red-500">*</span></Label>
     <div class="flex flex-col md:flex-row justify-stretch gap-4">
         <div class="w-full">
             <Input type="date" id="start_date" name="start_date" value={data.start_date} />
@@ -146,6 +147,11 @@
     <Label for="registration_fee" class="block mb-2">{m.eventForm_registrationFee()}</Label>
     <Input type="number" id="registration_fee" name="registration_fee" value={data.registration_fee} step="1" min="0" placeholder="0" />
     <span class="text-sm">* {m.eventForm_registrationFeeHelp()}</span>
+</div>
+<div class="mb-6">
+    <Label for="invitation_code" class="block mb-2">{m.eventForm_invitationCode()}</Label>
+    <Input type="text" id="invitation_code" name="invitation_code" value={data.invitation_code} placeholder="" />
+    <span class="text-sm">* {m.eventForm_invitationCodeHelp()}</span>
 </div>
 <div class="mb-6">
     <Label for="accepts_abstract" class="block mb-2">{m.eventForm_enableAbstract()}</Label>

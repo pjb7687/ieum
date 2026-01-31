@@ -237,7 +237,7 @@
     </div>
     <div>
       <Label for="venue_name" class="block mb-2">
-        {m.form_venueName()}{required ? '*' : ''}
+        {m.form_venueName()}{#if required} <span class="text-red-500">*</span>{/if}
       </Label>
       <Input
         id="venue_name"
@@ -252,7 +252,7 @@
     <!-- English venue name first when UI is English -->
     <div>
       <Label for="venue_name" class="block mb-2">
-        {m.form_venueName()}{required ? '*' : ''}
+        {m.form_venueName()}{#if required} <span class="text-red-500">*</span>{/if}
       </Label>
       <Input
         id="venue_name"

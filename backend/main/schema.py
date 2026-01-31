@@ -161,6 +161,11 @@ class EventSchema(Schema):
     accepts_abstract: bool
     abstract_deadline: Union[date, None]
     published: bool
+    is_invitation_only: bool
+
+    @staticmethod
+    def resolve_is_invitation_only(obj):
+        return bool(obj.invitation_code)
 
 class PaginatedEventsSchema(Schema):
     events: List[EventSchema]
@@ -203,6 +208,7 @@ class EventAdminSchema(Schema):
     email_template_registration: Union[EmailTemplateSchema, None]
     email_template_abstract_submission: Union[EmailTemplateSchema, None]
     email_template_certificate: Union[EmailTemplateSchema, None]
+    invitation_code: str
     published: bool
 
 class RegistrationStatusSchema(Schema):

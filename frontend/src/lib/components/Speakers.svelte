@@ -263,15 +263,15 @@
             <hr class="mb-6 border-gray-200" />
         {/if}
         <div class="mb-6">
-            <Label for="name" class="block mb-2">{m.speakers_name()}*</Label>
+            <Label for="name" class="block mb-2">{m.speakers_name()} <span class="text-red-500">*</span></Label>
             <Input id="name" name="name" type="text" bind:value={speakerName} required />
         </div>
         <div class="mb-6">
-            <Label for="email" class="block mb-2">{m.speakers_email()}*</Label>
+            <Label for="email" class="block mb-2">{m.speakers_email()} <span class="text-red-500">*</span></Label>
             <Input id="email" name="email" type="email" bind:value={speakerEmail} required />
         </div>
         <div class="mb-6">
-            <Label for="affiliation" class="block mb-2">{m.speakers_affiliation()}*</Label>
+            <Label for="affiliation" class="block mb-2">{m.speakers_affiliation()} <span class="text-red-500">*</span></Label>
             <Input id="affiliation" name="affiliation" type="text" bind:value={speakerAffiliation} required />
         </div>
         <div class="mb-6">

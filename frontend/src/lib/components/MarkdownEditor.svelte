@@ -39,7 +39,7 @@
 </script>
 
 {#if label}
-    <Label for={id} class="block mb-2">{label}{#if required}*{/if}</Label>
+    <Label for={id} class="block mb-2">{label}{#if required} <span class="text-red-500">*</span>{/if}</Label>
 {/if}
 
 <Tabs style="underline" bind:activeTabValue={activeTab}>

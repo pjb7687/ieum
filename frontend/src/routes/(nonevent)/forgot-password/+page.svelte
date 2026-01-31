@@ -62,7 +62,7 @@
 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
     <form use:felteForm method="post">
         <div class="mb-6">
-            <Label for="email" class="block mb-2">{m.form_email()}*</Label>
+            <Label for="email" class="block mb-2">{m.form_email()} <span class="text-red-500">*</span></Label>
             <Input id="email" name="email" type="email" bind:value={$formData.email} />
             {#if $errors.email}
                 <Alert type="error" color="red" class="mb-6 mt-3">

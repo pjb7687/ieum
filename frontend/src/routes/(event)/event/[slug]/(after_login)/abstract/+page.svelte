@@ -155,7 +155,7 @@
 <p class="mb-5 font-light">Please fill the following form to submit an abstract.</p>
 <form use:felteForm method="post" class="space-y-5">
     <div class="mb-6">
-        <Label for="title" class="block mb-2">Abstract Title*</Label>
+        <Label for="title" class="block mb-2">Abstract Title <span class="text-red-500">*</span></Label>
         <Input id="title" name="title" type="text" bind:value={$formData.title} />
         {#if $errors.title}
             <Alert type="error" color="red" class="mb-6 mt-3">
@@ -164,7 +164,7 @@
         {/if}
     </div>
     <div class="mb-6">
-        <Label for="abstract" class="block mb-3">Abstract File*</Label>
+        <Label for="abstract" class="block mb-3">Abstract File <span class="text-red-500">*</span></Label>
         <p class="mb-2 text-sm">Please use one of the following templates:</p>
         <List list="disc" class="mb-5">
             <Li class="mb-2 font-bold text-sm"><A href="/abstract/abstract_template.docx">Download an abstract template in docx format</A></Li>
