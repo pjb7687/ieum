@@ -25,6 +25,7 @@
         department: yup.string(),
         institute: yup.number().required('Institute is required.'),
         orcid: yup.string(),
+        google: yup.string(),
         disability: yup.string(),
         dietary: yup.string(),
     });
@@ -52,6 +53,7 @@
             disability: me.disability,
             dietary: me.dietary,
             orcid: me.orcid,
+            google: me.google || '',
         },
         onSubmit: async (data) => {
             success = false;

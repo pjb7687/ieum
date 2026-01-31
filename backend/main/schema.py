@@ -87,6 +87,10 @@ class UserSchema(Schema):
     def resolve_google(user: User) -> str:
         linked_accounts = user.socialaccount_set.filter(provider='google')
         if linked_accounts.count() > 0:
+            # Return the Gmail address from extra_data if available
+            extra_data = linked_accounts[0].extra_data
+            if extra_data and 'email' in extra_data:
+                return extra_data['email']
             return linked_accounts[0].uid
         return ""
 
