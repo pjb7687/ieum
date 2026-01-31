@@ -467,20 +467,20 @@
 </Modal>
 
 <Modal id="cert_modal" size="lg" title={m.onsiteAttendees_certificate()} bind:open={cert_modal} outsideclose>
-    <iframe id="cert" class="w-full h-[500px]" src={selected_cert} title="Certificate">
-        Your browser does not support iframes.
-    </iframe>
-    <div class="mt-4 flex gap-2 items-center">
+    <div class="mb-4 flex gap-2 items-center">
         <Input type="email" bind:value={cert_email} placeholder={m.attendees_emailPlaceholder()} class="flex-1" />
-        <Button color="green" onclick={sendCertificate} disabled={cert_sending || !cert_email}>
+        <Button color="primary" onclick={sendCertificate} disabled={cert_sending || !cert_email}>
             {cert_sending ? '...' : m.attendees_sendCertificate()}
         </Button>
     </div>
     {#if cert_message.type === 'success'}
-        <Alert type="success" color="green" class="mt-2">{cert_message.message}</Alert>
+        <Alert type="success" color="green" class="mb-4">{cert_message.message}</Alert>
     {:else if cert_message.type === 'error'}
-        <Alert type="error" color="red" class="mt-2">{cert_message.message}</Alert>
+        <Alert type="error" color="red" class="mb-4">{cert_message.message}</Alert>
     {/if}
+    <iframe id="cert" class="w-full h-[500px]" src={selected_cert} title="Certificate">
+        Your browser does not support iframes.
+    </iframe>
     <div class="flex justify-center mt-6 gap-2">
         <Button color="primary" onclick={() => {
             const iframe = document.getElementById('cert');
