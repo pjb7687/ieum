@@ -129,6 +129,29 @@ def validate_abstract_file(file_name: str, file_content: bytes) -> tuple[bool, s
     return True, ""
 
 
+def sanitize_email_header(value: str) -> str:
+    """
+    Sanitize email header values to prevent header injection attacks.
+    Removes newlines and carriage returns that could be used to inject additional headers.
+    """
+    if not value:
+        return ""
+    # Remove any newlines, carriage returns, and null bytes that could be used for header injection
+    return value.replace('\r', '').replace('\n', '').replace('\x00', '')
+
+
+def validate_email_format(email: str) -> bool:
+    """
+    Basic email format validation.
+    Returns True if the email appears to be valid format.
+    """
+    if not email or not isinstance(email, str):
+        return False
+    # Basic email regex - must have @ and at least one dot after @
+    email_pattern = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+    return bool(email_pattern.match(email.strip()))
+
+
 def sanitize_filename(file_name: str) -> str:
     """Sanitize filename to prevent path traversal and other issues."""
     # Get basename only

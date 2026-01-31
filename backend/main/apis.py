@@ -18,7 +18,7 @@ from django.conf import settings
 
 from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution
 from main.schema import *
-from main.utils import validate_abstract_file, sanitize_filename, rate_limit
+from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format
 
 from .tasks import send_mail, send_mail_with_attachment
 
@@ -812,14 +812,37 @@ def delete_speaker(request, event_id: int, speaker_id: int):
 @ensure_event_staff
 def send_emails(request, event_id: int):
     data = json.loads(request.body)
-    receipents = data["to"].split("; ")
-    for receipent in receipents:
-        send_mail.delay(
-            data['subject'],
-            data['body'],
-            receipent
+
+    # Sanitize subject to prevent email header injection
+    subject = sanitize_email_header(data.get('subject', ''))
+    body = data.get('body', '')
+
+    if not subject:
+        return api.create_response(
+            request,
+            {"code": "invalid_subject", "message": "Subject is required."},
+            status=400,
         )
-    return {"code": "success", "message": "Emails sent."}
+
+    recipients = data["to"].split("; ")
+    valid_recipients = []
+
+    for recipient in recipients:
+        recipient = recipient.strip()
+        if validate_email_format(recipient):
+            valid_recipients.append(recipient)
+
+    if not valid_recipients:
+        return api.create_response(
+            request,
+            {"code": "invalid_recipients", "message": "No valid email addresses provided."},
+            status=400,
+        )
+
+    for recipient in valid_recipients:
+        send_mail.delay(subject, body, recipient)
+
+    return {"code": "success", "message": f"Emails sent to {len(valid_recipients)} recipients."}
 
 @api.post("/event/{event_id}/send_certificate", response=MessageSchema)
 @ensure_event_staff
