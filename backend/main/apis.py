@@ -213,14 +213,23 @@ def get_admin_events(request):
 def get_events(request, offset: int = 0, limit: int = 20, year: str = None, search: str = None, showOnlyOpen: bool = False):
     from django.db.models import Q
 
-    events = Event.objects.all()
+    # Start with optimized queryset - only select needed fields
+    events = Event.objects.only(
+        'id', 'name', 'description', 'category', 'link_info',
+        'start_date', 'end_date', 'venue', 'venue_ko', 'venue_address',
+        'venue_latitude', 'venue_longitude', 'organizers_en', 'organizers_ko',
+        'main_languages', 'registration_deadline', 'registration_fee',
+        'accepts_abstract', 'abstract_deadline', 'published'
+    )
+
+    # Apply visibility filters
     if request.user.is_authenticated:
         if not request.user.is_superuser:
             events = events.filter(Q(published=True) | Q(admins=request.user))
     else:
         events = events.filter(published=True)
 
-    # Apply filters
+    # Apply search and filter criteria
     if year and year != 'all':
         events = events.filter(start_date__year=int(year))
 
@@ -236,14 +245,12 @@ def get_events(request, offset: int = 0, limit: int = 20, year: str = None, sear
         today = datetime.now().date()
         events = events.filter(Q(registration_deadline__isnull=True) | Q(registration_deadline__gte=today))
 
-    # Sort by start_date descending
-    events = events.order_by('-start_date')
-
-    # Get total count before pagination
+    # Sort, deduplicate, and get total count
+    events = events.order_by('-start_date').distinct()
     total = events.count()
 
-    # Apply pagination
-    events = events[offset:offset + limit]
+    # Apply pagination and prefetch related data
+    events = events[offset:offset + limit].prefetch_related('organizers')
 
     return {
         "events": list(events),
