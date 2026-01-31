@@ -374,7 +374,7 @@
 	"attendees_certOn": "개최 기간",
 	"attendees_certHeldAt": "개최 장소",
 	"attendees_certAsParticipant": "위 행사에 참석하였음을 증명합니다.",
-	"attendees_certFooter": "본 증명서는 기계로 발급되었으며 서명 없이도 유효합니다.",
+	"attendees_certFooter": "본 증명서는 자동으로 발급되었으며 서명 없이도 유효합니다.",
 	"attendees_iframeNotSupported": "브라우저가 iframe을 지원하지 않습니다.",
 	"attendees_print": "인쇄",
 	"attendees_close": "닫기",
