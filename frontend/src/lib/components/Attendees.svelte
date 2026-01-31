@@ -10,6 +10,7 @@
 
     import RegistrationForm from './RegistrationForm.svelte';
     import TablePagination from '$lib/components/TablePagination.svelte';
+    import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 
     let { data } = $props();
 
@@ -355,8 +356,15 @@
     // Bulk certificate sending
     let bulk_cert_sending = $state(false);
     let bulk_cert_message = $state({});
+    let bulk_cert_confirm_modal = $state(false);
+
+    const showSendCertificatesConfirm = () => {
+        if (selectedAttendees.length === 0) return;
+        bulk_cert_confirm_modal = true;
+    };
 
     const sendCertificatesToSelected = async () => {
+        bulk_cert_confirm_modal = false;
         if (selectedAttendees.length === 0 || bulk_cert_sending) return;
         bulk_cert_sending = true;
         bulk_cert_message = {};
@@ -485,7 +493,7 @@
 <div class="flex justify-end sm:flex-row flex-col">
     <div class="flex items-center gap-2 flex-wrap">
         <Button color="primary" size="sm" onclick={showSendEmailModal} disabled={selectedAttendees.length === 0}>{m.attendees_sendEmailToSelected()}</Button>
-        <Button color="primary" size="sm" onclick={sendCertificatesToSelected} disabled={selectedAttendees.length === 0 || bulk_cert_sending}>
+        <Button color="primary" size="sm" onclick={showSendCertificatesConfirm} disabled={selectedAttendees.length === 0 || bulk_cert_sending}>
             {bulk_cert_sending ? m.attendees_sendingCertificates() : m.attendees_sendCertificatesToSelected()}
         </Button>
         <Button color="primary" size="sm" onclick={() => expand_attendees = !expand_attendees}>{expand_attendees ? m.attendees_collapseHeaders() : m.attendees_expandHeaders()}</Button>
@@ -742,3 +750,12 @@
         <Button color="dark" onclick={() => cert_modal = false}>{m.attendees_close()}</Button>
     </div>
 </Modal>
+
+<ConfirmModal
+    bind:open={bulk_cert_confirm_modal}
+    title={m.attendees_sendCertificatesConfirmTitle()}
+    message={m.attendees_sendCertificatesConfirmMessage()}
+    confirmLabel={m.attendees_sendCertificatesConfirmButton()}
+    onConfirm={sendCertificatesToSelected}
+    loading={bulk_cert_sending}
+/>

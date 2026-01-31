@@ -9,6 +9,7 @@
 
     import OnSiteRegistrationForm from './OnSiteRegistrationForm.svelte';
     import TablePagination from '$lib/components/TablePagination.svelte';
+    import ConfirmModal from '$lib/components/ConfirmModal.svelte';
     import QRCode from 'qrcode';
 
     let { data } = $props();
@@ -154,8 +155,15 @@
     // Bulk certificate sending
     let bulk_cert_sending = $state(false);
     let bulk_cert_message = $state({});
+    let bulk_cert_confirm_modal = $state(false);
+
+    const showSendCertificatesConfirm = () => {
+        if (selectedAttendees.length === 0) return;
+        bulk_cert_confirm_modal = true;
+    };
 
     const sendCertificatesToSelected = async () => {
+        bulk_cert_confirm_modal = false;
         if (selectedAttendees.length === 0 || bulk_cert_sending) return;
         bulk_cert_sending = true;
         bulk_cert_message = {};
@@ -333,7 +341,7 @@
 <p class="font-light mb-6">{m.onsiteAttendees_description()}</p>
 
 <div class="flex justify-end items-center gap-2 flex-wrap mb-4">
-    <Button color="primary" size="sm" onclick={sendCertificatesToSelected} disabled={selectedAttendees.length === 0 || bulk_cert_sending}>
+    <Button color="primary" size="sm" onclick={showSendCertificatesConfirm} disabled={selectedAttendees.length === 0 || bulk_cert_sending}>
         {bulk_cert_sending ? m.attendees_sendingCertificates() : m.attendees_sendCertificatesToSelected()}
     </Button>
     <Button color="primary" size="sm" onclick={showQRCodeModal}>
@@ -505,3 +513,12 @@
         <Button color="dark" onclick={() => qr_modal = false}>{m.onsiteAttendees_close()}</Button>
     </div>
 </Modal>
+
+<ConfirmModal
+    bind:open={bulk_cert_confirm_modal}
+    title={m.attendees_sendCertificatesConfirmTitle()}
+    message={m.attendees_sendCertificatesConfirmMessage()}
+    confirmLabel={m.attendees_sendCertificatesConfirmButton()}
+    onConfirm={sendCertificatesToSelected}
+    loading={bulk_cert_sending}
+/>
