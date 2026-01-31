@@ -11,7 +11,7 @@
     let { data } = $props();
 
     // Staff users get full user list, event admins get attendees only
-    const userList = $derived(data.users ? data.users.map(u => ({ id: u.id, ...u })) : data.attendees.map(a => ({ id: a.user_id, ...a })));
+    const userList = $derived(data.users ? data.users.map(u => ({ id: u.id, ...u })) : data.attendees.map(a => ({ ...a, id: a.user.id })));
 
     let searchTermOrganizer = $state('');
     let currentPage = $state(1);
