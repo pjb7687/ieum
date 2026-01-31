@@ -32,7 +32,6 @@
     let form_config = {
         next: page_data.next,
         action: 'profile',
-        orcid_client_id: page_data.orcid_client_id,
         hide_password: true,
         csrf_token: page_data.csrf_token,
     }

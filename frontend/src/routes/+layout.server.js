@@ -1,7 +1,6 @@
 import { get } from '$lib/fetch';
 import { error } from '@sveltejs/kit';
 
-const ORCID_CLIENT_ID = process.env.ORCID_CLIENT_ID;
 const ADMIN_PAGE_NAME = process.env.ADMIN_PAGE_NAME || 'admin';
 
 /** @type {import('./$types').LayoutServerLoad} */
@@ -39,7 +38,6 @@ export async function load({ cookies }) {
         }
     }
 
-    rtn.orcid_client_id = ORCID_CLIENT_ID;
     rtn.csrf_token = response_csrftoken.data.csrftoken;
 
     return rtn;

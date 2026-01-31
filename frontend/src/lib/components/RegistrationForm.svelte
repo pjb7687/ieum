@@ -19,15 +19,16 @@
     password: '',
     confirm_password: '',
     orcid: '',
+    google: '',
   };
   export let errors = {};
   export let config = {};
   export let institution_resolved = null;
   export let instituteDisplayName = '';
 
-  function link_orcid() {
-    let data = {
-      provider: 'orcid',
+  function linkProvider(provider) {
+    let formData = {
+      provider: provider,
       process: 'connect',
       callback_url: config.action?`/${config.action}?next=${config.next}`:config.next,
       csrfmiddlewaretoken: config.csrf_token,
@@ -40,18 +41,18 @@
     // append the form to the body
     document.body.appendChild(form);
     // add the data to the form
-    for (let key in data) {
+    for (let key in formData) {
       let input = document.createElement('input');
       input.setAttribute('type', 'hidden');
       input.setAttribute('name', key);
-      input.setAttribute('value', data[key]);
+      input.setAttribute('value', formData[key]);
       form.appendChild(input);
     }
     // submit the form
     form.submit();
   }
 
-  function unlink_orcid() {
+  function unlinkProvider(provider, account) {
     fetch('/_allauth/browser/v1/account/providers', {
       method: 'DELETE',
       headers: {
@@ -59,15 +60,19 @@
         'X-CSRFToken': config.csrf_token,
       },
       body: JSON.stringify({
-        provider: 'orcid',
-        account: data.orcid,
+        provider: provider,
+        account: account,
       }),
     })
     .then(response => {
       if (!response.ok) {
-        throw new Error('Failed to unlink ORCID');
+        throw new Error(`Failed to unlink ${provider}`);
       }
-      data.orcid = '';
+      if (provider === 'orcid') {
+        data.orcid = '';
+      } else if (provider === 'google') {
+        data.google = '';
+      }
     })
     .catch(error => {
       console.error(error);
@@ -93,11 +98,11 @@
   <ButtonGroup class="w-full">
     <Input id="orcid" name="orcid" bind:value={data.orcid} disabled />
       {#if data.orcid}
-      <Button onclick={unlink_orcid} class="w-40" style="background-color: #A6CE39; color: white;">
+      <Button onclick={() => unlinkProvider('orcid', data.orcid)} class="w-40" style="background-color: #A6CE39; color: white;">
         {m.form_unlinkOrcid()}
       </Button>
       {:else}
-      <Button onclick={link_orcid} class="w-40" style="background-color: #A6CE39; color: white;">
+      <Button onclick={() => linkProvider('orcid')} class="w-40" style="background-color: #A6CE39; color: white;">
         {m.form_linkOrcid()}
       </Button>
       {/if}
@@ -105,6 +110,26 @@
   {#if errors.orcid}
     <Alert type="error" color="red" class="mb-6 mt-3">
       <p class="text-sm">{errors.orcid}</p>
+    </Alert>
+  {/if}
+</div>
+<div class="mb-6">
+  <Label for="google" class="block mb-2 text-dark">{m.form_google()}</Label>
+  <ButtonGroup class="w-full">
+    <Input id="google" name="google" bind:value={data.google} disabled />
+      {#if data.google}
+      <Button onclick={() => unlinkProvider('google', data.google)} color="light" class="w-40">
+        {m.form_unlinkGoogle()}
+      </Button>
+      {:else}
+      <Button onclick={() => linkProvider('google')} color="light" class="w-40">
+        {m.form_linkGoogle()}
+      </Button>
+      {/if}
+  </ButtonGroup>
+  {#if errors.google}
+    <Alert type="error" color="red" class="mb-6 mt-3">
+      <p class="text-sm">{errors.google}</p>
     </Alert>
   {/if}
 </div>

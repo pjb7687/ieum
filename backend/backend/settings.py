@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'allauth.headless',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.orcid',
+    'allauth.socialaccount.providers.google',
     'main',
 ]
 
@@ -163,7 +164,8 @@ SOCIALACCOUNT_PROVIDERS = {
     'orcid': {
         'BASE_DOMAIN': os.environ.get('ORCID_BASE_DOMAIN', 'https://sandbox.orcid.org'),
         'MEMBER_API': False,
-    }
+    },
+    'google': {},
 }
 
 ACCOUNT_SIGNUP_FORM_CLASS = 'main.forms.CustomSignupForm'

@@ -44,6 +44,7 @@ class UserSchema(Schema):
     last_name: str
     name: str
     orcid: str
+    google: str
     nationality: int
     job_title: str
     department: str
@@ -78,6 +79,13 @@ class UserSchema(Schema):
     @staticmethod
     def resolve_orcid(user: User) -> str:
         linked_accounts = user.socialaccount_set.filter(provider='orcid')
+        if linked_accounts.count() > 0:
+            return linked_accounts[0].uid
+        return ""
+
+    @staticmethod
+    def resolve_google(user: User) -> str:
+        linked_accounts = user.socialaccount_set.filter(provider='google')
         if linked_accounts.count() > 0:
             return linked_accounts[0].uid
         return ""

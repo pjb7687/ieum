@@ -9,6 +9,8 @@ django-ratelimit==4.1.0
 celery==5.4.0
 pillow==11.1.0
 django-allauth==65.3.1
+PyJWT==2.11.0
+cryptography==46.0.4
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
 python-docx==1.1.2

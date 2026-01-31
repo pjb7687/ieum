@@ -108,8 +108,6 @@
   - API communication
   - Form handling and validation
 - **Configuration**:
-  - `ORCID_CLIENT_ID`: OAuth client ID
-  - `ORCID_CLIENT_SECRET`: OAuth secret
   - `ADMIN_PAGE_NAME`: Frontend admin page route
   - `NODE_ENV`: Production/development mode
   - `DEBUG`: Debug flag
@@ -469,8 +467,6 @@ All endpoints use base URL `/api/` with CSRF protection enabled.
 - `EMAIL_PORT` - SMTP port (465 for SSL, 587 for TLS)
 
 ### OAuth Configuration
-- `ORCID_CLIENT_ID` - ORCID OAuth client ID
-- `ORCID_CLIENT_SECRET` - ORCID OAuth client secret
 - `ORCID_BASE_DOMAIN` - ORCID domain (production or sandbox)
 
 ### RabbitMQ Configuration
