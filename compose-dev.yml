@@ -71,6 +71,7 @@ services:
       - ADMIN_PAGE_NAME=${ADMIN_PAGE_NAME}
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       - DEBUG=True
+      - BODY_SIZE_LIMIT=2097152
     volumes:
       - ./frontend:/app
     restart: always
