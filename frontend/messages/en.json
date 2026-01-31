@@ -285,6 +285,7 @@
 	"speakers_name": "Name",
 	"speakers_email": "Email",
 	"speakers_affiliation": "Affiliation",
+	"speakers_domestic": "Domestic",
 	"speakers_isDomestic": "Domestic speaker",
 	"speakers_type": "Type",
 	"speakers_actions": "Actions",

@@ -285,6 +285,7 @@
 	"speakers_name": "이름",
 	"speakers_email": "이메일",
 	"speakers_affiliation": "소속",
+	"speakers_domestic": "국내",
 	"speakers_isDomestic": "국내 연사",
 	"speakers_type": "유형",
 	"speakers_actions": "작업",

@@ -2,7 +2,7 @@
     import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Checkbox, Card } from 'flowbite-svelte';
     import { Button, Modal, Label, Input, Select, Textarea, Alert } from 'flowbite-svelte';
     import { Tabs, TabItem } from 'flowbite-svelte';
-    import { UserEditSolid, UserRemoveSolid, SearchOutline } from 'flowbite-svelte-icons';
+    import { UserEditSolid, UserRemoveSolid, SearchOutline, CheckOutline } from 'flowbite-svelte-icons';
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
@@ -182,6 +182,7 @@
         <TableHeadCell>{m.speakers_name()}</TableHeadCell>
         <TableHeadCell>{m.speakers_email()}</TableHeadCell>
         <TableHeadCell>{m.speakers_affiliation()}</TableHeadCell>
+        <TableHeadCell>{m.speakers_domestic()}</TableHeadCell>
         <TableHeadCell>{m.speakers_type()}</TableHeadCell>
         <TableHeadCell class="w-1">{m.speakers_actions()}</TableHeadCell>
     </TableHead>
@@ -198,6 +199,7 @@
                 <TableBodyCell>{row.name}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
                 <TableBodyCell>{row.affiliation}</TableBodyCell>
+                <TableBodyCell>{#if row.is_domestic}<CheckOutline class="w-4 h-4 text-green-500 inline mr-2" />{/if}</TableBodyCell>
                 <TableBodyCell>{format_type(row.type)}</TableBodyCell>
                 <TableBodyCell>
                     <div class="flex justify-center gap-2">
@@ -213,7 +215,7 @@
         {/each}
         {#if filteredSpeakers.length === 0}
             <TableBodyRow>
-                <TableBodyCell colspan="6" class="text-center">{m.speakers_noRecords()}</TableBodyCell>
+                <TableBodyCell colspan="7" class="text-center">{m.speakers_noRecords()}</TableBodyCell>
             </TableBodyRow>
         {/if}
     </TableBody>
