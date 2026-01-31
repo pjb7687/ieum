@@ -123,24 +123,14 @@
 					<DropdownItem href="/logout" data-sveltekit-reload onclick={() => profileDropdownOpen = false}>{m.nav_signOut()}</DropdownItem>
 				</Dropdown>
 			{:else}
-				<!-- Login and Register Buttons -->
-				<div class="flex items-center gap-3">
-					<Button
-						href="/login?next={encodeURIComponent(nextPath)}"
-						color="light"
-						size="sm"
-						class="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-medium px-4 py-1.5"
-					>
-						{m.nav_login()}
-					</Button>
-					<Button
-						href="/registration?next={encodeURIComponent(nextPath)}"
-						size="sm"
-						class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-1.5"
-					>
-						{m.nav_register()}
-					</Button>
-				</div>
+				<!-- Login Button -->
+				<Button
+					href="/login?next={encodeURIComponent(nextPath)}"
+					color="primary"
+					size="sm"
+				>
+					{m.nav_login()}
+				</Button>
 			{/if}
 		</div>
 	</div>
