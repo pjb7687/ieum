@@ -1,25 +1,57 @@
 <script>
-    import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Checkbox, Card} from 'flowbite-svelte';
+    import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Checkbox, Card } from 'flowbite-svelte';
     import { Button, Modal, Label, Input, Select, Textarea, Alert } from 'flowbite-svelte';
     import { Tabs, TabItem } from 'flowbite-svelte';
-    import { UserEditSolid, UserRemoveSolid, DownloadSolid, EditSolid, TrashBinSolid } from 'flowbite-svelte-icons';
+    import { UserRemoveSolid, DownloadSolid, EditSolid, TrashBinSolid } from 'flowbite-svelte-icons';
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
+    import UserSelectionModal from '$lib/components/UserSelectionModal.svelte';
+    import TablePagination from '$lib/components/TablePagination.svelte';
 
     let { data } = $props();
 
+    // Normalize attendees list for UserSelectionModal
+    const attendeeUserList = $derived(data.attendees.map(a => ({ id: a.id, email: a.user?.email, ...a })));
+
     let searchTermReviewer = $state('');
-    let filteredReviewers = $state([]);
     let selectedReviewers = $state([]);
-    $effect(() => {
-        filteredReviewers = data.reviewers.filter((item) => {
+    let reviewerCurrentPage = $state(1);
+    let abstractCurrentPage = $state(1);
+    const itemsPerPage = 10;
+
+    let filteredReviewers = $derived(
+        data.reviewers.filter((item) => {
             const searchLower = searchTermReviewer.toLowerCase();
             return item.name.toLowerCase().includes(searchLower) ||
                    (item.korean_name && item.korean_name.toLowerCase().includes(searchLower));
-        });
+        })
+    );
+
+    // Reset to page 1 when search changes
+    $effect(() => {
+        searchTermReviewer;
+        reviewerCurrentPage = 1;
     });
+
+    let reviewerTotalPages = $derived(Math.ceil(filteredReviewers.length / itemsPerPage));
+    let paginatedReviewers = $derived(
+        filteredReviewers.slice((reviewerCurrentPage - 1) * itemsPerPage, reviewerCurrentPage * itemsPerPage)
+    );
+
+    let abstractTotalPages = $derived(Math.ceil(data.abstracts.length / itemsPerPage));
+    let paginatedAbstracts = $derived(
+        data.abstracts.slice((abstractCurrentPage - 1) * itemsPerPage, abstractCurrentPage * itemsPerPage)
+    );
+
+    function handleReviewerPageChange(page) {
+        reviewerCurrentPage = page;
+    }
+
+    function handleAbstractPageChange(page) {
+        abstractCurrentPage = page;
+    }
 
     let reviewer_modal = $state(false);
     let delete_reviewer_modal = $state(false);
@@ -42,7 +74,7 @@
                 reviewer_modal = false;
                 add_reviwer_error = '';
             } else {
-                add_reviwer_error = result.error.message;
+                add_reviwer_error = m.userSelection_error();
             }
         }
     };
@@ -55,7 +87,7 @@
                 delete_reviewer_modal = false;
                 delete_reviewer_error = '';
             } else {
-                delete_reviewer_error = result.error.message;
+                delete_reviewer_error = m.userSelection_error();
             }
         }
     };
@@ -157,7 +189,7 @@
         <TableHeadCell class="w-1">{m.abstracts_actions()}</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass="divide-y">
-        {#each filteredReviewers as row}
+        {#each paginatedReviewers as row}
             <TableBodyRow>
                 <TableBodyCell><Checkbox checked={selectedReviewers.includes(row.id)} onclick={(e) => {
                     if (e.target.checked) {
@@ -186,6 +218,8 @@
     </TableBody>
 </TableSearch>
 
+<TablePagination currentPage={reviewerCurrentPage} totalPages={reviewerTotalPages} onPageChange={handleReviewerPageChange} />
+
 <Heading tag="h3" class="text-lg font-bold mt-12 mb-3">{m.abstracts_abstractsTitle()}</Heading>
 <TableSearch placeholder={m.abstracts_searchAbstractPlaceholder()} hoverable={true}>
     <TableHead>
@@ -197,7 +231,7 @@
         <TableHeadCell class="w-1">{m.abstracts_actions()}</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass="divide-y">
-        {#each data.abstracts as row}
+        {#each paginatedAbstracts as row}
             <TableBodyRow>
                 <TableBodyCell>{(row.title.length > 10)?row.title.slice(0, 10)+'...':row.title}</TableBodyCell>
                 <TableBodyCell>{getDisplayName(row.attendee)}</TableBodyCell>
@@ -227,30 +261,17 @@
     </TableBody>
 </TableSearch>
 
-<Modal bind:open={reviewer_modal} title={m.abstracts_addReviewer()} size="lg">
-    <form method="POST" action="?/add_reviewer" use:enhance={afterAddReviewer}>
-        <div class="mb-6">
-            <Label for="id" class="block mb-2">{m.abstracts_reviewer()}</Label>
-            <Select id="id" name="id" items={
-                data.attendees.map(a => ({ value: a.id, name: getDisplayName(a) + ", " + getDisplayInstitute(a) }))
-            } onchange={
-                (e) => {
-                    const id = parseInt(e.target.value);
-                    const attendee = data.attendees.find(a => a.id === id);
-                    document.getElementById('name').value = getDisplayName(attendee);
-                    document.getElementById('email').value = attendee.user.email;
-                    document.getElementById('affiliation').value = getDisplayInstitute(attendee);
-                }
-            } />
-        </div>
-        {#if add_reviwer_error}
-            <Alert color="red" class="mb-6">{add_reviwer_error}</Alert>
-        {/if}
-        <div class="flex justify-center">
-            <Button color="primary" type="submit">{m.abstracts_add()}</Button>
-        </div>
-    </form>
-</Modal>
+<TablePagination currentPage={abstractCurrentPage} totalPages={abstractTotalPages} onPageChange={handleAbstractPageChange} />
+
+<UserSelectionModal
+    bind:open={reviewer_modal}
+    title={m.abstracts_addReviewer()}
+    userList={attendeeUserList}
+    action="?/add_reviewer"
+    submitLabel={m.abstracts_add()}
+    bind:error={add_reviwer_error}
+    onSubmit={afterAddReviewer}
+/>
 
 <Modal bind:open={delete_reviewer_modal} title={m.abstracts_removeReviewer()} size="sm">
     <form method="POST" action="?/delete_reviewer" use:enhance={afterDeleteReviewer}>

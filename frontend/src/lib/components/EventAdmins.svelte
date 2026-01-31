@@ -1,12 +1,14 @@
 <script>
-    import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Checkbox, Card} from 'flowbite-svelte';
+    import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Checkbox, Card } from 'flowbite-svelte';
     import { Button, Modal, Label, Input, Select, Textarea, Alert } from 'flowbite-svelte';
     import { Tabs, TabItem } from 'flowbite-svelte';
-    import { UserEditSolid, UserRemoveSolid } from 'flowbite-svelte-icons';
+    import { UserRemoveSolid } from 'flowbite-svelte-icons';
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
+    import UserSelectionModal from '$lib/components/UserSelectionModal.svelte';
+    import TablePagination from '$lib/components/TablePagination.svelte';
 
     let { data } = $props();
 
@@ -14,14 +16,31 @@
     const userList = $derived(data.users ? data.users.map(u => ({ id: u.id, ...u })) : data.attendees.map(a => ({ id: a.user_id, ...a })));
 
     let searchTermEventAdmin = $state('');
-    let filteredEventAdmins = $state([]);
-    $effect(() => {
-        filteredEventAdmins = data.eventadmins.filter((item) => {
+    let currentPage = $state(1);
+    const itemsPerPage = 10;
+
+    let filteredEventAdmins = $derived(
+        data.eventadmins.filter((item) => {
             const searchLower = searchTermEventAdmin.toLowerCase();
             return item.name.toLowerCase().includes(searchLower) ||
                    (item.korean_name && item.korean_name.toLowerCase().includes(searchLower));
-        });
+        })
+    );
+
+    // Reset to page 1 when search changes
+    $effect(() => {
+        searchTermEventAdmin;
+        currentPage = 1;
     });
+
+    let totalPages = $derived(Math.ceil(filteredEventAdmins.length / itemsPerPage));
+    let paginatedEventAdmins = $derived(
+        filteredEventAdmins.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    );
+
+    function handlePageChange(page) {
+        currentPage = page;
+    }
 
     let eventadmin_modal = $state(false);
     let delete_eventadmin_modal = $state(false);
@@ -44,7 +63,7 @@
                 eventadmin_modal = false;
                 add_eventadmin_error = '';
             } else {
-                add_eventadmin_error = result.error.message;
+                add_eventadmin_error = m.userSelection_error();
             }
         }
     };
@@ -57,7 +76,7 @@
                 delete_eventadmin_modal = false;
                 delete_eventadmin_error = '';
             } else {
-                delete_eventadmin_error = result.error.message;
+                delete_eventadmin_error = m.userSelection_error();
             }
         }
     };
@@ -76,7 +95,7 @@
         <TableHeadCell class="w-1">{m.eventAdmins_actions()}</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass="divide-y">
-        {#each filteredEventAdmins as row}
+        {#each paginatedEventAdmins as row}
             <TableBodyRow>
                 <TableBodyCell>{getDisplayName(row)}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
@@ -98,30 +117,17 @@
     </TableBody>
 </TableSearch>
 
-<Modal bind:open={eventadmin_modal} title={m.eventAdmins_addAdminTitle()} size="lg">
-    <form method="POST" action="?/add_eventadmin" use:enhance={afterAddEventAdmin}>
-        <div class="mb-6">
-            <Label for="id" class="block mb-2">{m.eventAdmins_admin()}</Label>
-            <Select id="id" name="id" items={
-                userList.map(u => ({ value: u.id, name: `${getDisplayName(u)}, ${getDisplayInstitute(u)} (${u.email})` }))
-            } onchange={
-                (e) => {
-                    const id = parseInt(e.target.value);
-                    const user = userList.find(u => u.id === id);
-                    document.getElementById('name').value = getDisplayName(user);
-                    document.getElementById('email').value = user.email;
-                    document.getElementById('affiliation').value = getDisplayInstitute(user);
-                }
-            } />
-        </div>
-        {#if add_eventadmin_error}
-            <Alert color="red" class="mb-6">{add_eventadmin_error}</Alert>
-        {/if}
-        <div class="flex justify-center">
-            <Button color="primary" type="submit">{m.eventAdmins_add()}</Button>
-        </div>
-    </form>
-</Modal>
+<TablePagination {currentPage} {totalPages} onPageChange={handlePageChange} />
+
+<UserSelectionModal
+    bind:open={eventadmin_modal}
+    title={m.eventAdmins_addAdminTitle()}
+    userList={userList}
+    action="?/add_eventadmin"
+    submitLabel={m.eventAdmins_add()}
+    bind:error={add_eventadmin_error}
+    onSubmit={afterAddEventAdmin}
+/>
 
 <Modal bind:open={delete_eventadmin_modal} title={m.eventAdmins_deleteAdmin()} size="sm">
     <form method="POST" action="?/delete_eventadmin" use:enhance={afterDeleteEventAdmin}>

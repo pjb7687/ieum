@@ -11,6 +11,11 @@
     let failure = $state("");
     let eventFormData = $state(data.event);
 
+    // Update form data when server data changes
+    $effect(() => {
+        eventFormData = data.event;
+    });
+
     const afterSubmit = () => {
         return async ({ result, action, update }) => {
             console.log(result);
@@ -45,7 +50,7 @@
 
 <Heading tag="h2" class="text-xl font-bold mb-3">{m.eventInfo_title()}</Heading>
 <p class="font-light mb-6">{m.eventInfo_description()}</p>
-<form method="POST" action="?/update_event" use:enhance={afterSubmit} on:submit={handleSubmit}>
+<form method="POST" action="?/update_event" use:enhance={afterSubmit} onsubmit={handleSubmit}>
     <EventAdminForm bind:data={eventFormData} />
     <div class="mb-6">
         {#if success}

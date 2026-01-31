@@ -3,12 +3,13 @@
     import { Modal, Heading, Textarea, Select, Label, Card, Input } from 'flowbite-svelte';
     import { Alert } from 'flowbite-svelte';
     import { enhance } from '$app/forms';
-    import { UserAddSolid, UserEditSolid, UserRemoveSolid, TextSizeOutline, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
+    import { UserEditSolid, UserRemoveSolid, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
     import { jsPDF } from "jspdf";
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
 
     import RegistrationForm from './RegistrationForm.svelte';
+    import TablePagination from '$lib/components/TablePagination.svelte';
 
     let { data } = $props();
 
@@ -182,11 +183,28 @@
     };
 
     let searchTermAttendee = $state('');
-    let filteredAttendees = $state([]);
     let selectedAttendees = $state([]);
+    let currentPage = $state(1);
+    const itemsPerPage = 10;
+
+    let filteredAttendees = $derived(
+        table_data_attendees.filter((item) => item.name.toLowerCase().includes(searchTermAttendee.toLowerCase()))
+    );
+
+    // Reset to page 1 when search changes
     $effect(() => {
-        filteredAttendees = table_data_attendees.filter((item) => item.name.toLowerCase().includes(searchTermAttendee.toLowerCase()))
+        searchTermAttendee;
+        currentPage = 1;
     });
+
+    let totalPages = $derived(Math.ceil(filteredAttendees.length / itemsPerPage));
+    let paginatedAttendees = $derived(
+        filteredAttendees.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    );
+
+    function handlePageChange(page) {
+        currentPage = page;
+    }
 
     let attendee_modal = $state(false);
     let remove_attendee_modal = $state(false);
@@ -500,7 +518,7 @@
         <TableHeadCell class="w-1">{m.attendees_actions()}</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass="divide-y">
-        {#each filteredAttendees as row}
+        {#each paginatedAttendees as row}
             <TableBodyRow>
                 <TableBodyCell><Checkbox checked={selectedAttendees.includes(row.id)} onclick={(e) => {
                     if (e.target.checked) {
@@ -552,6 +570,7 @@
     </TableBody>
 </TableSearch>
 
+<TablePagination {currentPage} {totalPages} onPageChange={handlePageChange} />
 
 <Modal id="attendee_modal" size="xl" title={m.attendees_detailsTitle()} bind:open={attendee_modal} outsideclose>
     <form method="post" action="?/update_attendee" use:enhance={afterSuccessfulSubmitDefaultAnswerChanges}>

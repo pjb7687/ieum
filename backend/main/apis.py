@@ -727,7 +727,7 @@ def add_speaker(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
 
-    if not data.get("name") or not data.get("email") or not data.get("affiliation") or not data.get("is_domestic") or not data.get("type"):
+    if not data.get("name") or not data.get("email") or not data.get("affiliation") or data.get("is_domestic") is None or not data.get("type"):
         return api.create_response(
             request,
             {"code": "missing_fields", "message": "Please fill all fields."},

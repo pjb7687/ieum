@@ -52,6 +52,10 @@
 	"common_confirm": "Confirm",
 	"common_apply": "Apply",
 
+	"userSelection_searchPlaceholder": "Search by name, email, or institution...",
+	"userSelection_noResults": "No users found",
+	"userSelection_error": "An error occurred. Please try again.",
+
 	"profile_title": "My Info",
 	"profile_description": "You can update your information here.",
 	"profile_updateSuccess": "Update successful.",
@@ -281,6 +285,7 @@
 	"speakers_name": "Name",
 	"speakers_email": "Email",
 	"speakers_affiliation": "Affiliation",
+	"speakers_isDomestic": "Domestic speaker",
 	"speakers_type": "Type",
 	"speakers_actions": "Actions",
 	"speakers_noRecords": "No records",

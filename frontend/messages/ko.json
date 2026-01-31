@@ -52,6 +52,10 @@
 	"common_confirm": "확인",
 	"common_apply": "적용",
 
+	"userSelection_searchPlaceholder": "이름, 이메일 또는 기관으로 검색...",
+	"userSelection_noResults": "사용자를 찾을 수 없습니다",
+	"userSelection_error": "오류가 발생했습니다. 다시 시도해 주세요.",
+
 	"profile_title": "내 정보",
 	"profile_description": "여기에서 정보를 업데이트할 수 있습니다.",
 	"profile_updateSuccess": "업데이트가 완료되었습니다.",
@@ -281,6 +285,7 @@
 	"speakers_name": "이름",
 	"speakers_email": "이메일",
 	"speakers_affiliation": "소속",
+	"speakers_isDomestic": "국내 연사",
 	"speakers_type": "유형",
 	"speakers_actions": "작업",
 	"speakers_noRecords": "기록 없음",

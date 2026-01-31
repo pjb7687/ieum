@@ -84,15 +84,20 @@
         };
     });
 
-    let published = $state(data.event.published);
+    let published = $state(false);
     let saving_published = $state(false);
+
+    // Initialize and update published state from server data
+    $effect(() => {
+        published = data.event.published;
+    });
 
     $effect.pre(() => {
         setAdminPage();
     });
 </script>
 
-<svelte:window on:hashchange={setAdminPage}/>
+<svelte:window onhashchange={setAdminPage}/>
 
 {#snippet process_spaces(text)}
     {@html text.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}

@@ -5,6 +5,8 @@
     import { enhance } from '$app/forms';
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
+    import UserSelectionModal from '$lib/components/UserSelectionModal.svelte';
+    import TablePagination from '$lib/components/TablePagination.svelte';
 
     let { data } = $props();
 
@@ -12,14 +14,31 @@
     const userList = $derived(data.users ? data.users.map(u => ({ id: u.id, ...u })) : data.attendees.map(a => ({ id: a.user_id, ...a })));
 
     let searchTermOrganizer = $state('');
-    let filteredOrganizers = $state([]);
-    $effect(() => {
-        filteredOrganizers = data.organizers.filter((item) => {
+    let currentPage = $state(1);
+    const itemsPerPage = 10;
+
+    let filteredOrganizers = $derived(
+        data.organizers.filter((item) => {
             const searchLower = searchTermOrganizer.toLowerCase();
             return item.name.toLowerCase().includes(searchLower) ||
                    (item.korean_name && item.korean_name.toLowerCase().includes(searchLower));
-        });
+        })
+    );
+
+    // Reset to page 1 when search changes
+    $effect(() => {
+        searchTermOrganizer;
+        currentPage = 1;
     });
+
+    let totalPages = $derived(Math.ceil(filteredOrganizers.length / itemsPerPage));
+    let paginatedOrganizers = $derived(
+        filteredOrganizers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    );
+
+    function handlePageChange(page) {
+        currentPage = page;
+    }
 
     let organizer_modal = $state(false);
     let delete_organizer_modal = $state(false);
@@ -42,7 +61,7 @@
                 organizer_modal = false;
                 add_organizer_error = '';
             } else {
-                add_organizer_error = result.error.message;
+                add_organizer_error = m.userSelection_error();
             }
         }
     };
@@ -55,7 +74,7 @@
                 delete_organizer_modal = false;
                 delete_organizer_error = '';
             } else {
-                delete_organizer_error = result.error.message;
+                delete_organizer_error = m.userSelection_error();
             }
         }
     };
@@ -74,7 +93,7 @@
         <TableHeadCell class="w-1">{m.organizers_actions()}</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass="divide-y">
-        {#each filteredOrganizers as row}
+        {#each paginatedOrganizers as row}
             <TableBodyRow>
                 <TableBodyCell>{getDisplayName(row)}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
@@ -96,22 +115,17 @@
     </TableBody>
 </TableSearch>
 
-<Modal bind:open={organizer_modal} title={m.organizers_addOrganizerTitle()} size="lg">
-    <form method="POST" action="?/add_organizer" use:enhance={afterAddOrganizer}>
-        <div class="mb-6">
-            <Label for="id" class="block mb-2">{m.organizers_organizer()}</Label>
-            <Select id="id" name="id" items={
-                userList.map(u => ({ value: u.id, name: `${getDisplayName(u)}, ${getDisplayInstitute(u)} (${u.email})` }))
-            } />
-        </div>
-        {#if add_organizer_error}
-            <Alert color="red" class="mb-6">{add_organizer_error}</Alert>
-        {/if}
-        <div class="flex justify-center">
-            <Button color="primary" type="submit">{m.organizers_add()}</Button>
-        </div>
-    </form>
-</Modal>
+<TablePagination {currentPage} {totalPages} onPageChange={handlePageChange} />
+
+<UserSelectionModal
+    bind:open={organizer_modal}
+    title={m.organizers_addOrganizerTitle()}
+    userList={userList}
+    action="?/add_organizer"
+    submitLabel={m.organizers_add()}
+    bind:error={add_organizer_error}
+    onSubmit={afterAddOrganizer}
+/>
 
 <Modal bind:open={delete_organizer_modal} title={m.organizers_deleteOrganizer()} size="sm">
     <form method="POST" action="?/delete_organizer" use:enhance={afterDeleteOrganizer}>
