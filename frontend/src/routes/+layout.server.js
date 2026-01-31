@@ -11,7 +11,6 @@ const PROFILE_EXEMPT_PATHS = [
     '/registration',
     '/verify-email',
     '/forgot-password',
-    '/reset-password',
 ];
 
 /** @type {import('./$types').LayoutServerLoad} */

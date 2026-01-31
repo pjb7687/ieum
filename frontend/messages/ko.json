@@ -2,7 +2,7 @@
 	"nav_login": "로그인",
 	"nav_register": "회원가입",
 	"nav_signOut": "로그아웃",
-	"nav_myProfile": "내 프로필",
+	"nav_myProfile": "내 정보",
 	"nav_adminPage": "관리자 페이지",
 
 	"events_browse": "행사 목록",
@@ -76,6 +76,15 @@
 	"profile_resetPasswordSuccess": "비밀번호 재설정 이메일이 전송되었습니다. 받은편지함을 확인해주세요.",
 	"profile_resetPasswordCancel": "취소",
 	"profile_resetPasswordConfirm": "재설정 이메일 보내기",
+	"profile_deleteAccount": "계정 삭제",
+	"profile_deleteAccountConfirmTitle": "계정 삭제",
+	"profile_deleteAccountConfirmMessage": "정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다. 행사 등록은 유지되지만, 더 이상 로그인할 수 없게 됩니다.",
+	"profile_deleteAccountPasswordLabel": "확인을 위해 비밀번호를 입력하세요:",
+	"profile_deleteAccountCancel": "취소",
+	"profile_deleteAccountConfirm": "계정 삭제하기",
+	"profile_deleteAccountSuccess": "계정이 삭제되었습니다.",
+	"profile_deleteAccountIncorrectPassword": "비밀번호가 올바르지 않습니다. 다시 시도해주세요.",
+	"profile_accountManagement": "계정 관리",
 
 	"form_personalInfo": "개인 정보",
 	"form_additionalInfo": "추가 정보",
@@ -171,6 +180,12 @@
 	"forgotPassword_description": "비밀번호를 재설정하려면 이메일 주소를 입력해주세요.",
 	"forgotPassword_submit": "비밀번호 재설정",
 	"forgotPassword_successMessage": "이메일이 전송되었습니다. 이메일을 확인하여 비밀번호를 재설정해주세요.",
+
+	"resetPassword_title": "비밀번호 재설정",
+	"resetPassword_description": "새 비밀번호를 입력해주세요.",
+	"resetPassword_submit": "비밀번호 재설정",
+	"resetPassword_successMessage": "비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해주세요.",
+	"resetPassword_loginButton": "로그인으로 이동",
 
 	"verifyEmail_title": "이메일 인증",
 	"verifyEmail_description": "아래 버튼을 클릭하여 이메일 주소를 인증하고 계정을 활성화하세요.",

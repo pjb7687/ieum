@@ -18,6 +18,46 @@
     let resetPasswordError = $state('');
     let resetPasswordLoading = $state(false);
 
+    let showDeleteAccountModal = $state(false);
+    let deleteAccountPassword = $state('');
+    let deleteAccountError = $state('');
+    let deleteAccountLoading = $state(false);
+
+    async function handleDeleteAccount() {
+        if (!deleteAccountPassword) {
+            deleteAccountError = m.profile_deleteAccountIncorrectPassword();
+            return;
+        }
+
+        deleteAccountLoading = true;
+        deleteAccountError = '';
+        try {
+            const response = await fetch('?/delete_account', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json',
+                },
+                body: new URLSearchParams({ password: deleteAccountPassword }),
+            });
+            const result = await response.json();
+
+            // Parse the SvelteKit action response format
+            const data = result.data ? JSON.parse(result.data) : result;
+
+            if (data.success) {
+                // Redirect to home page after account deletion
+                window.location.href = '/';
+            } else {
+                deleteAccountError = data.error || m.profile_deleteAccountIncorrectPassword();
+            }
+        } catch (err) {
+            deleteAccountError = err.message || m.profile_deleteAccountIncorrectPassword();
+        } finally {
+            deleteAccountLoading = false;
+        }
+    }
+
     async function handleResetPassword() {
         resetPasswordLoading = true;
         resetPasswordError = '';
@@ -120,21 +160,29 @@
 </div>
 
 <!-- Form Card -->
-<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8 mb-8">
     <form use:felteForm method="post">
         <RegistrationForm data={$data} errors={$errors} config={form_config} institution_resolved={page_data.user?.institution_resolved} />
         {#if success}
         <Alert color="blue" class="mb-4" dismissable>{m.profile_updateSuccess()}</Alert>
         {/if}
-        {#if resetPasswordSuccess}
-        <Alert color="green" class="mb-4" dismissable>{m.profile_resetPasswordSuccess()}</Alert>
-        {/if}
         <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
             <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>{m.profile_updateInfo()}</Button>
-            <Button type="button" onclick={() => showResetPasswordModal = true} size="lg" color="light">{m.profile_resetPassword()}</Button>
             <Button onclick={() => goto(page_data.next)} size="lg" color="alternative">{m.common_goBack()}</Button>
         </div>
     </form>
+</div>
+
+<!-- Account Management Card -->
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+    <Heading tag="h2" class="text-lg font-bold mb-6">{m.profile_accountManagement()}</Heading>
+    {#if resetPasswordSuccess}
+    <Alert color="green" class="mb-4" dismissable>{m.profile_resetPasswordSuccess()}</Alert>
+    {/if}
+    <div class="flex flex-col sm:flex-row justify-center gap-4">
+        <Button type="button" onclick={() => showResetPasswordModal = true} color="light">{m.profile_resetPassword()}</Button>
+        <Button type="button" onclick={() => { showDeleteAccountModal = true; deleteAccountPassword = ''; deleteAccountError = ''; }} color="red" outline>{m.profile_deleteAccount()}</Button>
+    </div>
 </div>
 
 <!-- Reset Password Confirmation Modal -->
@@ -147,5 +195,22 @@
     <div class="flex justify-end gap-3">
         <Button color="alternative" onclick={() => showResetPasswordModal = false}>{m.profile_resetPasswordCancel()}</Button>
         <Button color="primary" onclick={handleResetPassword} disabled={resetPasswordLoading}>{m.profile_resetPasswordConfirm()}</Button>
+    </div>
+</Modal>
+
+<!-- Delete Account Confirmation Modal -->
+<Modal bind:open={showDeleteAccountModal} size="sm" autoclose={false} class="w-full">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">{m.profile_deleteAccountConfirmTitle()}</h3>
+    <p class="text-gray-600 mb-4">{m.profile_deleteAccountConfirmMessage()}</p>
+    <div class="mb-4">
+        <Label for="delete_password" class="block mb-2">{m.profile_deleteAccountPasswordLabel()}</Label>
+        <Input id="delete_password" type="password" bind:value={deleteAccountPassword} />
+    </div>
+    {#if deleteAccountError}
+    <Alert color="red" class="mb-4">{deleteAccountError}</Alert>
+    {/if}
+    <div class="flex justify-end gap-3">
+        <Button color="alternative" onclick={() => showDeleteAccountModal = false}>{m.profile_deleteAccountCancel()}</Button>
+        <Button color="red" onclick={handleDeleteAccount} disabled={deleteAccountLoading}>{m.profile_deleteAccountConfirm()}</Button>
     </div>
 </Modal>

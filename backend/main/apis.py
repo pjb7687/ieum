@@ -116,6 +116,30 @@ def update_user(request):
     user.save()
     return user
 
+@api.post("/me/delete")
+def delete_user(request):
+    data = json.loads(request.body)
+    password = data.get("password", "")
+
+    user = request.user
+
+    # Verify password
+    if not user.check_password(password):
+        return api.create_response(
+            request,
+            {"error": {"message": "Incorrect password", "code": "invalid_password"}},
+            status=400,
+        )
+
+    # Delete the user account
+    user.delete()
+
+    return api.create_response(
+        request,
+        {"success": True, "message": "Account deleted successfully"},
+        status=200,
+    )
+
 @api.get("/csrftoken", auth=None)
 def get_csrf_token(request):
     token = get_token(request)

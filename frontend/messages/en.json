@@ -76,6 +76,15 @@
 	"profile_resetPasswordSuccess": "Password reset email has been sent. Please check your inbox.",
 	"profile_resetPasswordCancel": "Cancel",
 	"profile_resetPasswordConfirm": "Send Reset Email",
+	"profile_deleteAccount": "Delete Account",
+	"profile_deleteAccountConfirmTitle": "Delete Account",
+	"profile_deleteAccountConfirmMessage": "Are you sure you want to delete your account? This action cannot be undone. Your event registrations will be preserved, but you will no longer be able to log in.",
+	"profile_deleteAccountPasswordLabel": "Enter your password to confirm:",
+	"profile_deleteAccountCancel": "Cancel",
+	"profile_deleteAccountConfirm": "Delete My Account",
+	"profile_deleteAccountSuccess": "Your account has been deleted.",
+	"profile_deleteAccountIncorrectPassword": "Incorrect password. Please try again.",
+	"profile_accountManagement": "Account Management",
 
 	"form_personalInfo": "Personal Information",
 	"form_additionalInfo": "Additional Information",
@@ -171,6 +180,12 @@
 	"forgotPassword_description": "Please enter your email address to reset your password.",
 	"forgotPassword_submit": "Reset Password",
 	"forgotPassword_successMessage": "An email has been sent. Please check your email to reset your password.",
+
+	"resetPassword_title": "Reset Password",
+	"resetPassword_description": "Please enter your new password.",
+	"resetPassword_submit": "Reset Password",
+	"resetPassword_successMessage": "Password has been reset. Please login with your new password.",
+	"resetPassword_loginButton": "Go to Login",
 
 	"verifyEmail_title": "Verify Your Email",
 	"verifyEmail_description": "Click the button below to verify your email address and activate your account.",

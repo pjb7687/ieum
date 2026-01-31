@@ -71,5 +71,27 @@ export const actions = {
         }
 
         return { success: true };
+    },
+    delete_account: async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const password = formdata.get('password');
+
+        const response = await post('api/me/delete', { password }, cookies);
+
+        if (!response.ok || response.status !== 200) {
+            // Return the error message from the API
+            const errorMessage = response.data?.error?.message || 'Server error. If this persists, please contact the administrator.';
+            return { success: false, error: errorMessage };
+        }
+
+        // Clear session cookie after account deletion
+        cookies.delete('sessionid', {
+            path: '/',
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production'
+        });
+
+        return { success: true };
     }
 };
