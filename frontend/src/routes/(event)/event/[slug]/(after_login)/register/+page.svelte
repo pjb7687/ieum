@@ -11,11 +11,11 @@
     import * as yup from 'yup';
 
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
-    import { requestCardPayment, generateOrderId } from '$lib/tossPayments.js';
+    import { requestCardPayment } from '$lib/tossPayments.js';
     import { renderPayPalButtons } from '$lib/paypalPayments.js';
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
-    import { formatDateRange, onlyLatinChars } from '$lib/utils.js';
+    import { formatDateRange, onlyLatinChars, generateOrderId } from '$lib/utils.js';
     import 'academicons';
 
     let { data, form } = $props();

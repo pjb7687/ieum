@@ -478,7 +478,17 @@
     let custom_headers_attendees = $state([]);
     let table_data_attendees = $state([]);
     $effect.pre(() => {
-        let df = transformToTableFormat(data.attendees);
+        // Filter attendees to only show those with completed payments if there's a registration fee
+        let filteredAttendees = data.attendees;
+        if (data.event.registration_fee && data.event.registration_fee > 0 && data.payments) {
+            const paidAttendeeIds = new Set(
+                data.payments
+                    .filter(p => p.status === 'completed')
+                    .map(p => p.attendee_id)
+            );
+            filteredAttendees = data.attendees.filter(a => paidAttendeeIds.has(a.id));
+        }
+        let df = transformToTableFormat(filteredAttendees);
         custom_headers_attendees = df.custom_headers;
         table_data_attendees = df.table_data;
     });

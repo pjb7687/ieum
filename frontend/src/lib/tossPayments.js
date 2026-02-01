@@ -31,21 +31,6 @@ export async function initTossPayments() {
 }
 
 /**
- * Generate a unique order ID
- * Format: {HHMMSS}{random} - 6 digit timestamp + random alphanumeric
- * @returns {string} Unique order ID
- */
-export function generateOrderId() {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const timestamp = `${hours}${minutes}${seconds}`;
-    const random = Math.random().toString(36).substring(2, 10);
-    return `${timestamp}${random}`;
-}
-
-/**
  * Request a card payment
  * @param {Object} options - Payment options
  * @param {string} options.customerKey - Unique customer identifier (user ID or anonymous)

@@ -199,3 +199,18 @@ export function openCardReceiptWindow(paymentNumber) {
 export function isCardPayment(payment) {
     return payment && payment.payment_type === '카드';
 }
+
+/**
+ * Generate a unique order ID for payments
+ * Format: {HHMMSS}{random} - 6 digit timestamp + random alphanumeric
+ * @returns {string} Unique order ID
+ */
+export function generateOrderId() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timestamp = `${hours}${minutes}${seconds}`;
+    const random = Math.random().toString(36).substring(2, 10);
+    return `${timestamp}${random}`;
+}

@@ -21,7 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate
+from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate, ManualTransaction
 from main.schema import *
 from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format
 
@@ -690,12 +690,13 @@ def get_event_stats(request, event_id: int):
 
 @api.get("/event/{event_id}/attendees", response=List[AttendeeSchema])
 @ensure_event_staff
-def get_event_attendees(request, event_id: int):
+def get_event_attendees(request, event_id: int, all: bool = False):
     event = Event.objects.get(id=event_id)
     attendees = event.attendees.all()
 
     # If event has a registration fee, filter to only those with completed payments
-    if event.registration_fee and event.registration_fee > 0:
+    # Unless all=True is passed (for admin use like manual payment creation)
+    if not all and event.registration_fee and event.registration_fee > 0:
         attendees = attendees.filter(payments__status='completed').distinct()
 
     return attendees
@@ -1754,7 +1755,7 @@ def update_business_settings(request, data: BusinessSettingsUpdateSchema):
 def get_event_payments(request, event_id: int):
     """Get all payments for an event (event admin only)."""
     event = Event.objects.get(id=event_id)
-    payments = PaymentHistory.objects.filter(event=event).select_related('attendee', 'attendee__user')
+    payments = PaymentHistory.objects.filter(event=event).select_related('attendee', 'attendee__user', 'manual_transaction')
 
     payment_list = []
     for payment in payments:
@@ -1766,6 +1767,30 @@ def get_event_payments(request, event_id: int):
         name_parts.append(attendee.last_name or '')
         attendee_name = ' '.join(filter(None, name_parts))
 
+        # Get manual transaction details if exists
+        manual_payment_type = ''
+        supply_amount = 0
+        vat = 0
+        card_type = ''
+        card_number = ''
+        approval_number = ''
+        installment = ''
+        transaction_datetime = ''
+        transaction_description = ''
+
+        if hasattr(payment, 'manual_transaction') and payment.manual_transaction:
+            mt = payment.manual_transaction
+            manual_payment_type = mt.payment_type
+            supply_amount = mt.supply_amount
+            vat = mt.vat
+            card_type = mt.card_type
+            card_number = mt.card_number
+            approval_number = mt.approval_number
+            installment = mt.installment
+            if mt.transaction_datetime:
+                transaction_datetime = mt.transaction_datetime.strftime('%Y-%m-%d %H:%M:%S')
+            transaction_description = mt.transaction_description
+
         payment_list.append({
             'id': payment.id,
             'number': payment.toss_order_id or str(payment.id),
@@ -1773,6 +1798,7 @@ def get_event_payments(request, event_id: int):
             'amount': payment.amount,
             'status': payment.status,
             'payment_type': payment.payment_type,
+            'manual_payment_type': manual_payment_type,
             'note': payment.note,
             'attendee_id': attendee.id,
             'attendee_name': attendee_name,
@@ -1780,6 +1806,14 @@ def get_event_payments(request, event_id: int):
             'attendee_email': attendee.user.email,
             'attendee_institute': attendee.institute or '',
             'attendee_institute_ko': attendee.institute_ko or '',
+            'supply_amount': supply_amount,
+            'vat': vat,
+            'card_type': card_type,
+            'card_number': card_number,
+            'approval_number': approval_number,
+            'installment': installment,
+            'transaction_datetime': transaction_datetime,
+            'transaction_description': transaction_description,
         })
 
     return payment_list
@@ -1801,11 +1835,11 @@ def create_event_payment(request, event_id: int, data: PaymentCreateSchema):
             status=404,
         )
 
-    # Check if attendee already has a payment
-    if PaymentHistory.objects.filter(attendee=attendee).exists():
+    # Check if attendee already has a completed payment
+    if PaymentHistory.objects.filter(attendee=attendee, status='completed').exists():
         return api.create_response(
             request,
-            {"code": "payment_exists", "message": "This attendee already has a payment record."},
+            {"code": "payment_exists", "message": "This attendee already has a completed payment."},
             status=400,
         )
 
@@ -1817,18 +1851,37 @@ def create_event_payment(request, event_id: int, data: PaymentCreateSchema):
             status=400,
         )
 
-    # Create payment with copied attendee/event info for receipts
+    # Create payment with "직접입력" as the main payment type
     payment = PaymentHistory(
         attendee=attendee,
         event=event,
         amount=data.amount,
         status='completed',
-        payment_type=data.payment_type,
+        payment_type='직접입력',
         note=data.note,
+        toss_order_id=data.order_id,
     )
     payment.copy_attendee_info(attendee)
     payment.copy_event_info(event)
     payment.save()
+
+    # Create ManualTransaction with actual payment details
+    manual_tx = ManualTransaction(
+        payment=payment,
+        payment_type=data.payment_type,
+        supply_amount=data.supply_amount,
+        vat=data.vat,
+    )
+    if data.payment_type == 'card':
+        manual_tx.card_type = data.card_type
+        manual_tx.card_number = data.card_number
+        manual_tx.approval_number = data.approval_number
+        manual_tx.installment = data.installment
+    elif data.payment_type == 'transfer':
+        if data.transaction_datetime:
+            manual_tx.transaction_datetime = datetime.fromisoformat(data.transaction_datetime.replace('Z', '+00:00'))
+        manual_tx.transaction_description = data.transaction_description
+    manual_tx.save()
 
     return {"code": "success", "message": "Payment created successfully."}
 

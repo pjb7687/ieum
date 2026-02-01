@@ -60,6 +60,8 @@
 	"common_viewDetails": "View Details",
 	"common_change": "Change",
 	"common_print": "Print",
+	"common_exportCSV": "Export CSV",
+	"common_email": "Email",
 
 	"changeRequest_title": "Request Change/Cancellation",
 	"changeRequest_description": "Please describe the changes you would like to make to your registration. Our organizers will review your request and get back to you.",
@@ -746,8 +748,11 @@
 	"transactions_selectAttendeePlaceholder": "Select an attendee...",
 	"transactions_searchAttendeePlaceholder": "Search by name, email, or institution...",
 	"transactions_noAttendeesFound": "No attendees found.",
-	"transactions_cardInfo": "Card Information",
+	"transactions_cardInfo": "Card Information (Optional)",
 	"transactions_cardTypePlaceholder": "e.g., Samsung Card, Shinhan Card",
+	"transactions_transferInfo": "Transfer Information (Optional)",
+	"transactions_transactionDatetime": "Transaction Date/Time",
+	"transactions_transactionDescription": "Transaction Description",
 	"transactions_notePlaceholder": "Add a note (optional)",
 	"transactions_create": "Create",
 	"transactions_createError": "Failed to create payment.",
@@ -782,6 +787,7 @@
 	"cardReceipt_cardType": "Card Type",
 	"cardReceipt_cardNumber": "Card Number",
 	"cardReceipt_approvalNumber": "Approval Number",
+	"cardReceipt_supplyAmount": "Supply Amount",
 	"cardReceipt_vat": "VAT",
 	"cardReceipt_installment": "Installment"
 }

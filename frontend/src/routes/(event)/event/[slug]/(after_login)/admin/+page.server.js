@@ -1,5 +1,6 @@
 import { get, post } from '$lib/fetch';
 import { error } from '@sveltejs/kit';
+import { generateOrderId } from '$lib/utils';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ parent, params, cookies, request }) {
@@ -25,7 +26,7 @@ export async function load({ parent, params, cookies, request }) {
         rtn.users = await get_data_or_404('users');
     }
 
-    rtn.attendees = await get_data_or_404_event('attendees');
+    rtn.attendees = await get_data_or_404_event('attendees?all=true');
     rtn.questions = await get_data_or_404_event('questions');
     rtn.speakers = await get_data_or_404_event('speakers');
     rtn.reviewers = await get_data_or_404_event('reviewers');
@@ -357,19 +358,31 @@ export const actions = {
     },
     create_payment: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
+        const attendee_id = parseInt(formdata.get('attendee_id'));
+        if (isNaN(attendee_id)) {
+            error(400, { message: 'Attendee is required' });
+        }
         const data = {
-            attendee_id: parseInt(formdata.get('attendee_id')),
+            attendee_id,
             amount: parseInt(formdata.get('amount')) || 0,
+            order_id: generateOrderId(),
             payment_type: formdata.get('payment_type'),
             note: formdata.get('note') || '',
+            // Common fields for all payment types
+            supply_amount: parseInt(formdata.get('supply_amount')) || 0,
+            vat: parseInt(formdata.get('vat')) || 0,
         };
         // Add card transaction fields if payment type is card
         if (data.payment_type === 'card') {
             data.card_type = formdata.get('card_type') || '';
             data.card_number = formdata.get('card_number') || '';
-            data.vat = parseInt(formdata.get('vat')) || 0;
             data.approval_number = formdata.get('approval_number') || '';
             data.installment = formdata.get('installment') || 'single';
+        }
+        // Add transfer-specific fields
+        if (data.payment_type === 'transfer') {
+            data.transaction_datetime = formdata.get('transaction_datetime') || '';
+            data.transaction_description = formdata.get('transaction_description') || '';
         }
         const response = await post(`api/event/${params.slug}/payment/add`, data, cookies);
         if (response.ok && response.status === 200) {

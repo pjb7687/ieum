@@ -10,10 +10,27 @@ import io
 import html
 import time
 import json
+import random
+import string
+from datetime import datetime
 from functools import wraps
 
 from django.core.cache import cache
 from django.http import JsonResponse
+
+
+def generate_order_id():
+    """
+    Generate a unique order ID for payments.
+    Format: {HHMMSS}{random} - 6 digit timestamp + random alphanumeric
+    Matches the frontend generateOrderId() function.
+    """
+    now = datetime.now()
+    timestamp = now.strftime('%H%M%S')
+    # Generate 8 random alphanumeric characters (lowercase + digits, like JS toString(36))
+    chars = string.ascii_lowercase + string.digits
+    random_part = ''.join(random.choice(chars) for _ in range(8))
+    return f"{timestamp}{random_part}"
 
 
 def rate_limit(max_requests: int = 10, window_seconds: int = 60):

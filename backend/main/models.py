@@ -390,6 +390,35 @@ class BusinessSettings(models.Model):
         return f"Business Settings - {self.business_name}"
 
 
+class ManualTransaction(models.Model):
+    """
+    Manual transaction details for admin-entered payments (직접입력)
+    Linked to PaymentHistory via OneToOne relationship
+    """
+    PAYMENT_TYPE_CHOICES = [
+        ('card', '카드'),
+        ('transfer', '계좌이체'),
+        ('cash', '현금'),
+    ]
+
+    payment = models.OneToOneField(PaymentHistory, on_delete=models.CASCADE, related_name='manual_transaction')
+    payment_type = models.CharField(max_length=50, choices=PAYMENT_TYPE_CHOICES)
+    # Common fields
+    supply_amount = models.IntegerField(default=0)  # Supply amount (공급가액)
+    vat = models.IntegerField(default=0)  # VAT amount
+    # Card-specific fields
+    card_type = models.CharField(max_length=100, blank=True)  # Card issuer (e.g., 신한카드)
+    card_number = models.CharField(max_length=50, blank=True)  # Masked card number
+    approval_number = models.CharField(max_length=50, blank=True)  # Approval number
+    installment = models.CharField(max_length=20, blank=True, default='single')  # Installment plan
+    # Transfer-specific fields
+    transaction_datetime = models.DateTimeField(null=True, blank=True)  # 거래일시
+    transaction_description = models.CharField(max_length=200, blank=True)  # 거래내용
+
+    def __str__(self):
+        return f"Manual: {self.get_payment_type_display()} - Payment #{self.payment_id}"
+
+
 class ExchangeRate(models.Model):
     """
     Cached exchange rate for currency conversion (e.g., KRW to USD)

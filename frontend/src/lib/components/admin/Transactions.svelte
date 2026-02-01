@@ -9,7 +9,7 @@
     import TablePagination from '$lib/components/TablePagination.svelte';
     import ConfirmModal from '$lib/components/ConfirmModal.svelte';
     import SearchableUserList from '$lib/components/SearchableUserList.svelte';
-    import { calculateVat } from '$lib/cardPayment.js';
+    import { calculateVat, calculateSuppliedAmount } from '$lib/cardPayment.js';
 
     let { data } = $props();
 
@@ -54,7 +54,7 @@
         }
     }
 
-    function getPaymentTypeText(paymentType) {
+    function getManualPaymentTypeText(paymentType) {
         switch (paymentType) {
             case 'card':
                 return m.receipt_paymentTypeCard();
@@ -65,6 +65,32 @@
             default:
                 return paymentType;
         }
+    }
+
+    function getPaymentTypeText(payment) {
+        if (payment.payment_type === '직접입력' && payment.manual_payment_type) {
+            return `직접입력 - ${getManualPaymentTypeText(payment.manual_payment_type)}`;
+        }
+        if (payment.payment_type === 'paypal') {
+            return '페이팔';
+        }
+        // Toss payments - prepend "토스 - "
+        if (payment.payment_type) {
+            return `토스 - ${payment.payment_type}`;
+        }
+        return payment.payment_type;
+    }
+
+    function getPaymentTypeBadgeColor(payment) {
+        // Check payment source first
+        if (payment.payment_type === '직접입력') {
+            return 'yellow';  // orange
+        }
+        if (payment.payment_type === 'paypal') {
+            return 'green';
+        }
+        // Toss payments
+        return 'blue';
     }
 
     function getDisplayName(payment) {
@@ -154,19 +180,26 @@
     let create_modal = $state(false);
     let create_error = $state('');
     let selected_attendee_id = $state(null);
-    let payment_amount = $state(data.event.registration_fee || 0);
+    let registration_fee = $derived(data.event.registration_fee || 0);
+    let payment_amount = $state(0);
     let payment_type = $state('card');
     let payment_note = $state('');
+    // Common fields
+    let card_supply_amount = $state(0);
+    let card_vat = $state(0);
     // Card fields
     let card_type = $state('');
     let card_number = $state('');
-    let card_vat = $state(0);
     let card_approval_number = $state('');
     let card_installment = $state('single');
+    // Transfer fields
+    let transfer_datetime = $state('');
+    let transfer_description = $state('');
 
-    // Recalculate VAT when amount changes (only when modal is open and card payment)
+    // Recalculate supply amount and VAT when amount changes (only when modal is open)
     $effect(() => {
-        if (create_modal && payment_type === 'card' && payment_amount > 0) {
+        if (create_modal && payment_amount > 0) {
+            card_supply_amount = calculateSuppliedAmount(payment_amount);
             card_vat = calculateVat(payment_amount);
         }
     });
@@ -178,15 +211,20 @@
 
     const showCreateModal = () => {
         selected_attendee_id = null;
-        payment_amount = data.event.registration_fee || 0;
+        payment_amount = registration_fee;
         payment_type = 'card';
         payment_note = '';
+        // Reset common fields
+        card_supply_amount = calculateSuppliedAmount(registration_fee);
+        card_vat = calculateVat(registration_fee);
         // Reset card fields
         card_type = '';
         card_number = '';
-        card_vat = calculateVat(payment_amount);
         card_approval_number = '';
         card_installment = 'single';
+        // Reset transfer fields
+        transfer_datetime = '';
+        transfer_description = '';
         create_error = '';
         create_modal = true;
     };
@@ -292,6 +330,68 @@
     let totalCancelled = $derived(payments.filter(p => p.status === 'cancelled').reduce((sum, p) => sum + p.amount, 0));
     let countCompleted = $derived(payments.filter(p => p.status === 'completed').length);
     let countCancelled = $derived(payments.filter(p => p.status === 'cancelled').length);
+
+    // CSV Export function
+    function exportToCSV() {
+        // CSV headers
+        const headers = [
+            m.transactions_id(),
+            m.transactions_date(),
+            m.transactions_attendee(),
+            m.common_email(),
+            m.transactions_type(),
+            m.transactions_amount(),
+            m.transactions_status(),
+            m.transactions_note()
+        ];
+
+        // CSV rows
+        const rows = payments.map(payment => {
+            const paymentType = payment.payment_type === '직접입력' && payment.manual_payment_type
+                ? `직접입력 - ${getManualPaymentTypeText(payment.manual_payment_type)}`
+                : payment.payment_type;
+
+            return [
+                payment.number.toString().padStart(6, '0'),
+                payment.checkout_date || '',
+                getDisplayName(payment),
+                payment.attendee_email || '',
+                paymentType,
+                payment.amount,
+                payment.status,
+                payment.note || ''
+            ];
+        });
+
+        // Escape CSV values
+        const escapeCSV = (value) => {
+            if (value === null || value === undefined) return '';
+            const str = String(value);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        };
+
+        // Build CSV content with BOM for Excel compatibility
+        const BOM = '\uFEFF';
+        const csvContent = BOM + [
+            headers.map(escapeCSV).join(','),
+            ...rows.map(row => row.map(escapeCSV).join(','))
+        ].join('\n');
+
+        // Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `transactions_${data.event.id}_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
 </script>
 
 <Heading tag="h2" class="text-xl font-bold mb-3">{m.transactions_title()}</Heading>
@@ -315,7 +415,10 @@
     </div>
 </div>
 
-<div class="flex justify-end mb-4">
+<div class="flex justify-end gap-2 mb-4">
+    <Button color="light" size="sm" onclick={exportToCSV}>
+        {m.common_exportCSV()}
+    </Button>
     <Button color="primary" size="sm" onclick={showCreateModal}>
         <PlusOutline class="w-4 h-4 me-2" />
         {m.transactions_createPayment()}
@@ -347,8 +450,8 @@
                     <div class="text-sm text-gray-500">{payment.attendee_email}</div>
                 </TableBodyCell>
                 <TableBodyCell>
-                    <Badge color={payment.payment_type === 'card' ? 'blue' : payment.payment_type === 'transfer' ? 'purple' : 'gray'}>
-                        {getPaymentTypeText(payment.payment_type)}
+                    <Badge color={getPaymentTypeBadgeColor(payment)}>
+                        {getPaymentTypeText(payment)}
                     </Badge>
                 </TableBodyCell>
                 <TableBodyCell class="font-medium">{formatAmount(payment.amount)}</TableBodyCell>
@@ -394,7 +497,7 @@
         <div class="mb-4">
             <Label class="block mb-2">{m.transactions_selectAttendee()}*</Label>
             <SearchableUserList
-                items={data.attendees.filter(a => !data.payments.some(p => p.attendee_id === a.id))}
+                items={data.attendees.filter(a => !data.payments.some(p => p.attendee_id === a.id && p.status === 'completed'))}
                 bind:selectedId={selected_attendee_id}
                 placeholder={m.transactions_searchAttendeePlaceholder()}
                 noResultsMessage={m.transactions_noAttendeesFound()}
@@ -411,6 +514,17 @@
             <div>
                 <Label for="payment_type" class="block mb-2">{m.transactions_type()}*</Label>
                 <Select id="payment_type" name="payment_type" bind:value={payment_type} items={paymentTypeOptions} required />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <Label for="supply_amount" class="block mb-2">{m.cardReceipt_supplyAmount()}</Label>
+                <Input id="supply_amount" name="supply_amount" type="number" bind:value={card_supply_amount} />
+            </div>
+            <div>
+                <Label for="vat" class="block mb-2">{m.cardReceipt_vat()}</Label>
+                <Input id="vat" name="vat" type="number" bind:value={card_vat} />
             </div>
         </div>
 
@@ -431,12 +545,24 @@
                         <Input id="approval_number" name="approval_number" type="text" bind:value={card_approval_number} />
                     </div>
                     <div>
-                        <Label for="vat" class="block mb-2">{m.cardReceipt_vat()}</Label>
-                        <Input id="vat" name="vat" type="number" bind:value={card_vat} />
-                    </div>
-                    <div>
                         <Label for="installment" class="block mb-2">{m.cardReceipt_installment()}</Label>
                         <Select id="installment" name="installment" bind:value={card_installment} items={installmentOptions} />
+                    </div>
+                </div>
+            </div>
+        {/if}
+
+        {#if payment_type === 'transfer'}
+            <div class="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
+                <Heading tag="h3" class="text-lg font-semibold mb-4">{m.transactions_transferInfo()}</Heading>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label for="transaction_datetime" class="block mb-2">{m.transactions_transactionDatetime()}</Label>
+                        <Input id="transaction_datetime" name="transaction_datetime" type="datetime-local" step="1" bind:value={transfer_datetime} />
+                    </div>
+                    <div>
+                        <Label for="transaction_description" class="block mb-2">{m.transactions_transactionDescription()}</Label>
+                        <Input id="transaction_description" name="transaction_description" type="text" bind:value={transfer_description} />
                     </div>
                 </div>
             </div>
@@ -557,8 +683,8 @@
                     <div>
                         <p class="text-sm font-medium text-gray-500">{m.transactions_type()}</p>
                         <p class="text-base text-gray-900">
-                            <Badge color={detail_payment.payment_type === 'card' ? 'blue' : detail_payment.payment_type === 'transfer' ? 'purple' : 'gray'}>
-                                {getPaymentTypeText(detail_payment.payment_type)}
+                            <Badge color={getPaymentTypeBadgeColor(detail_payment)}>
+                                {getPaymentTypeText(detail_payment)}
                             </Badge>
                         </p>
                     </div>
@@ -570,8 +696,74 @@
                             </Badge>
                         </p>
                     </div>
+                    {#if detail_payment.supply_amount || detail_payment.vat}
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">{m.cardReceipt_supplyAmount()}</p>
+                            <p class="text-base text-gray-900">{formatAmount(detail_payment.supply_amount)}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">{m.cardReceipt_vat()}</p>
+                            <p class="text-base text-gray-900">{formatAmount(detail_payment.vat)}</p>
+                        </div>
+                    {/if}
                 </div>
             </div>
+
+            <!-- Manual Transaction Card Details -->
+            {#if detail_payment.payment_type === '직접입력' && detail_payment.manual_payment_type === 'card'}
+                <div class="border-t border-gray-200 pt-4">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-2">{m.transactions_cardInfo().replace(' (선택)', '').replace(' (Optional)', '')}</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        {#if detail_payment.card_type}
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">{m.cardReceipt_cardType()}</p>
+                                <p class="text-base text-gray-900">{detail_payment.card_type}</p>
+                            </div>
+                        {/if}
+                        {#if detail_payment.card_number}
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">{m.cardReceipt_cardNumber()}</p>
+                                <p class="text-base text-gray-900">{detail_payment.card_number}</p>
+                            </div>
+                        {/if}
+                        {#if detail_payment.approval_number}
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">{m.cardReceipt_approvalNumber()}</p>
+                                <p class="text-base text-gray-900">{detail_payment.approval_number}</p>
+                            </div>
+                        {/if}
+                        {#if detail_payment.installment}
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">{m.cardReceipt_installment()}</p>
+                                <p class="text-base text-gray-900">
+                                    {detail_payment.installment === 'single' ? m.transactions_installmentSingle() : m.transactions_installmentMonths({ months: parseInt(detail_payment.installment) })}
+                                </p>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/if}
+
+            <!-- Manual Transaction Transfer Details -->
+            {#if detail_payment.payment_type === '직접입력' && detail_payment.manual_payment_type === 'transfer'}
+                <div class="border-t border-gray-200 pt-4">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-2">{m.transactions_transferInfo().replace(' (선택)', '').replace(' (Optional)', '')}</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        {#if detail_payment.transaction_datetime}
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">{m.transactions_transactionDatetime()}</p>
+                                <p class="text-base text-gray-900">{detail_payment.transaction_datetime}</p>
+                            </div>
+                        {/if}
+                        {#if detail_payment.transaction_description}
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">{m.transactions_transactionDescription()}</p>
+                                <p class="text-base text-gray-900">{detail_payment.transaction_description}</p>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/if}
 
             <!-- Note -->
             <div class="border-t border-gray-200 pt-4">

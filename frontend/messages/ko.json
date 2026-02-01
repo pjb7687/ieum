@@ -60,6 +60,8 @@
 	"common_viewDetails": "상세 보기",
 	"common_change": "변경",
 	"common_print": "인쇄",
+	"common_exportCSV": "CSV 내보내기",
+	"common_email": "이메일",
 
 	"changeRequest_title": "변경/취소 요청",
 	"changeRequest_description": "등록 정보 변경 또는 취소를 원하시면 아래에 요청 내용을 작성해 주세요. 주최자가 검토 후 연락드리겠습니다.",
@@ -703,7 +705,7 @@
 	"receipt_attendeeInfo": "참가자 정보",
 	"receipt_paymentInfo": "결제 정보",
 	"receipt_paymentType": "결제수단",
-	"receipt_paymentTypeCard": "신용카드",
+	"receipt_paymentTypeCard": "카드",
 	"receipt_paymentTypeTransfer": "계좌이체",
 	"receipt_paymentTypeCash": "현금",
 	"receipt_paymentDate": "결제일",
@@ -746,8 +748,11 @@
 	"transactions_selectAttendeePlaceholder": "참가자를 선택하세요...",
 	"transactions_searchAttendeePlaceholder": "이름, 이메일 또는 소속으로 검색...",
 	"transactions_noAttendeesFound": "참가자를 찾을 수 없습니다.",
-	"transactions_cardInfo": "카드 정보",
+	"transactions_cardInfo": "카드 정보 (선택)",
 	"transactions_cardTypePlaceholder": "예: 삼성카드, 신한카드",
+	"transactions_transferInfo": "계좌이체 정보 (선택)",
+	"transactions_transactionDatetime": "거래일시",
+	"transactions_transactionDescription": "거래내용",
 	"transactions_notePlaceholder": "메모 입력 (선택사항)",
 	"transactions_create": "추가",
 	"transactions_createError": "결제 추가에 실패했습니다.",
@@ -782,6 +787,7 @@
 	"cardReceipt_cardType": "카드종류",
 	"cardReceipt_cardNumber": "카드번호",
 	"cardReceipt_approvalNumber": "승인번호",
+	"cardReceipt_supplyAmount": "공급가액",
 	"cardReceipt_vat": "부가세",
 	"cardReceipt_installment": "할부"
 }
