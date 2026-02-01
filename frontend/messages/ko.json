@@ -3,7 +3,8 @@
 	"nav_register": "회원가입",
 	"nav_signOut": "로그아웃",
 	"nav_myProfile": "내 정보",
-	"nav_paymentHistory": "등록 및 결제 내역",
+	"nav_registrationHistory": "등록 내역",
+	"nav_paymentHistory": "결제 내역",
 	"nav_adminPage": "관리자 페이지",
 
 	"events_browse": "행사 목록",
@@ -645,6 +646,16 @@
 	"myRegistration_paymentStatus": "결제 상태",
 	"myRegistration_noPayment": "이 등록에 대한 결제 정보가 없습니다.",
 	"myRegistration_noAbstractsAccepted": "이 행사는 초록을 접수하지 않습니다.",
+
+	"registrationHistory_title": "등록 내역",
+	"registrationHistory_description": "행사 등록 내역을 확인하세요.",
+	"registrationHistory_searchPlaceholder": "등록 내역 검색...",
+	"registrationHistory_eventName": "행사명",
+	"registrationHistory_dates": "일정",
+	"registrationHistory_venue": "장소",
+	"registrationHistory_organizers": "주최",
+	"registrationHistory_actions": "작업",
+	"registrationHistory_noRecords": "등록 내역이 없습니다.",
 
 	"paymentHistory_title": "결제 내역",
 	"paymentHistory_description": "행사 결제 내역을 확인하세요.",

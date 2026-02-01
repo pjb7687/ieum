@@ -349,3 +349,17 @@ class PaymentHistorySchema(Schema):
     status: str
     attendee_name: str
     attendee_institute: str
+
+class RegistrationHistorySchema(Schema):
+    id: int
+    registration_date: str
+    event_id: int
+    event_name: str
+    start_date: str
+    end_date: str
+    venue: str
+    venue_ko: str
+    organizers_en: str
+    organizers_ko: str
+    attendee_name: str
+    attendee_institute: str

@@ -186,6 +186,48 @@ def get_payment_history(request):
 
     return payment_history
 
+@api.get("/me/registration-history", response=List[RegistrationHistorySchema])
+def get_registration_history(request):
+    """
+    Get the registration history for the current user.
+    """
+    user = request.user
+    attendees = Attendee.objects.filter(user=user).select_related('event')
+
+    registration_history = []
+    for attendee in attendees:
+        event = attendee.event
+
+        # Construct attendee name
+        name_parts = [attendee.first_name or '']
+        if attendee.middle_initial:
+            name_parts.append(attendee.middle_initial)
+        name_parts.append(attendee.last_name or '')
+        attendee_name = ' '.join(filter(None, name_parts))
+        if attendee.korean_name:
+            attendee_name = f"{attendee_name} ({attendee.korean_name})" if attendee_name else attendee.korean_name
+        attendee_institute = attendee.institute or ''
+
+        registration_history.append({
+            'id': attendee.id,
+            'registration_date': event.start_date.strftime('%Y-%m-%d'),  # Use event start date as fallback
+            'event_id': event.id,
+            'event_name': event.name,
+            'start_date': event.start_date.strftime('%Y-%m-%d'),
+            'end_date': event.end_date.strftime('%Y-%m-%d'),
+            'venue': event.venue,
+            'venue_ko': event.venue_ko,
+            'organizers_en': event.organizers_en,
+            'organizers_ko': event.organizers_ko,
+            'attendee_name': attendee_name,
+            'attendee_institute': attendee_institute
+        })
+
+    # Sort by event start date descending
+    registration_history.sort(key=lambda x: x['start_date'], reverse=True)
+
+    return registration_history
+
 @api.get("/csrftoken", auth=None)
 def get_csrf_token(request):
     token = get_token(request)

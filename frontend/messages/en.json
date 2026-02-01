@@ -3,7 +3,8 @@
 	"nav_register": "Register",
 	"nav_signOut": "Sign Out",
 	"nav_myProfile": "My Profile",
-	"nav_paymentHistory": "Registration & Payment History",
+	"nav_registrationHistory": "Registration History",
+	"nav_paymentHistory": "Payment History",
 	"nav_adminPage": "Admin Page",
 
 	"events_browse": "Browse Events",
@@ -645,6 +646,16 @@
 	"myRegistration_paymentStatus": "Payment Status",
 	"myRegistration_noPayment": "No payment information available for this registration.",
 	"myRegistration_noAbstractsAccepted": "This event does not accept abstracts.",
+
+	"registrationHistory_title": "Registration History",
+	"registrationHistory_description": "View your event registration history.",
+	"registrationHistory_searchPlaceholder": "Search registrations...",
+	"registrationHistory_eventName": "Event Name",
+	"registrationHistory_dates": "Dates",
+	"registrationHistory_venue": "Venue",
+	"registrationHistory_organizers": "Organizers",
+	"registrationHistory_actions": "Actions",
+	"registrationHistory_noRecords": "No registration records found.",
 
 	"paymentHistory_title": "Payment History",
 	"paymentHistory_description": "View your payment history for events.",
