@@ -32,7 +32,16 @@
     let event = data.event;
     let user = data.user;
     let registered = data.registered;
+    let payment_status = data.payment_status;
     let is_event_admin = data.is_event_admin;
+
+    // Check if user needs to pay (registered for paid event but hasn't paid)
+    let needsPayment = $derived(
+        registered &&
+        event.registration_fee &&
+        event.registration_fee > 0 &&
+        payment_status === 'pending'
+    );
 
     // Import DOMPurify only in browser
     $effect(() => {
@@ -196,14 +205,28 @@
             <div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-6">
                 {#if user && registered}
                     <div class="space-y-4">
-                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                            <p class="font-semibold">{m.eventDetail_registered()}</p>
-                            <p class="text-sm mt-1">{m.eventDetail_registeredThankYou()}</p>
-                        </div>
-                        {#if event.accepts_abstract}
-                            <Button href="/event/{event.id}/abstract" color="primary" size="lg" class="w-full">
-                                {m.eventDetail_submitAbstract()}
+                        {#if needsPayment}
+                            <div class="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded">
+                                <p class="font-semibold">{m.eventDetail_paymentPending()}</p>
+                                <p class="text-sm mt-1">{m.eventDetail_paymentPendingDescription()}</p>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-base font-medium text-gray-700">{m.eventDetail_registrationFee()}</span>
+                                <span class="{languageTag() === 'ko' ? 'text-xl' : 'text-lg'} font-bold text-gray-900">{formattedRegistrationFee}</span>
+                            </div>
+                            <Button href="/event/{event.id}/register" color="primary" size="lg" class="w-full">
+                                {m.eventRegister_payNow()}
                             </Button>
+                        {:else}
+                            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                                <p class="font-semibold">{m.eventDetail_registered()}</p>
+                                <p class="text-sm mt-1">{m.eventDetail_registeredThankYou()}</p>
+                            </div>
+                            {#if event.accepts_abstract}
+                                <Button href="/event/{event.id}/abstract" color="primary" size="lg" class="w-full">
+                                    {m.eventDetail_submitAbstract()}
+                                </Button>
+                            {/if}
                         {/if}
                         <Button href="/event/{event.id}/registration" color="alternative" size="lg" class="w-full">
                             {m.eventDetail_viewRegistration()}

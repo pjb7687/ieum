@@ -2,13 +2,13 @@
     import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Checkbox, Card } from 'flowbite-svelte';
     import { Button, Modal, Label, Input, Select, Textarea, Alert } from 'flowbite-svelte';
     import { Tabs, TabItem } from 'flowbite-svelte';
-    import { UserEditSolid, UserRemoveSolid, SearchOutline, CheckOutline } from 'flowbite-svelte-icons';
+    import { UserEditSolid, UserRemoveSolid, CheckOutline } from 'flowbite-svelte-icons';
     import { enhance } from '$app/forms';
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
-    import UserSelectionModal from '$lib/components/UserSelectionModal.svelte';
     import TablePagination from '$lib/components/TablePagination.svelte';
+    import SearchableUserList from '$lib/components/SearchableUserList.svelte';
 
     let { data } = $props();
 
@@ -48,32 +48,19 @@
     let speakerIsDomestic = $state(false);
     let speakerType = $state('invited'); // Default to 'invited' speaker type
 
-    // Attendee search for speaker selection
-    let attendeeSearchKeyword = $state('');
-    let filteredAttendeesForSpeaker = $derived(
-        data.attendees.filter(attendee => {
-            if (!attendeeSearchKeyword.trim()) return true;
-            const searchLower = attendeeSearchKeyword.toLowerCase();
-            const name = getDisplayName(attendee).toLowerCase();
-            const institute = getDisplayInstitute(attendee).toLowerCase();
-            const email = (attendee.user?.email || '').toLowerCase();
-            return name.includes(searchLower) ||
-                   institute.includes(searchLower) ||
-                   email.includes(searchLower);
-        })
-    );
+    // Custom getters for SearchableUserList
+    function getAttendeeEmail(attendee) {
+        return attendee.user?.email || '';
+    }
 
     function selectAttendeeForSpeaker(attendee) {
         speakerName = getDisplayName(attendee);
         speakerEmail = attendee.user?.email || '';
         speakerAffiliation = getDisplayInstitute(attendee);
-        // Don't reset search keyword here - keeps the filtered view stable
-        // Search will be reset when modal opens via addSpeakerModal()
     }
 
     const addSpeakerModal = () => {
         selected_speaker = null;
-        attendeeSearchKeyword = '';
         speakerName = '';
         speakerEmail = '';
         speakerAffiliation = '';
@@ -229,36 +216,16 @@
             <input type="hidden" name="id" value={selected_speaker.id} />
         {:else}
             <div class="mb-6">
-                <Label for="attendee-search" class="block mb-2">{m.speakers_selectAttendee()}</Label>
-                <div class="relative mb-4">
-                    <Input
-                        id="attendee-search"
-                        type="text"
-                        bind:value={attendeeSearchKeyword}
-                        placeholder={m.userSelection_searchPlaceholder()}
-                        class="pl-10"
-                    />
-                    <SearchOutline class="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                </div>
-                <div class="border border-gray-200 rounded-lg max-h-60 overflow-y-auto mb-4">
-                    {#if filteredAttendeesForSpeaker.length === 0}
-                        <div class="p-4 text-center text-gray-500">
-                            {m.userSelection_noResults()}
-                        </div>
-                    {:else}
-                        {#each filteredAttendeesForSpeaker as attendee}
-                            <button
-                                type="button"
-                                onclick={() => selectAttendeeForSpeaker(attendee)}
-                                class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
-                            >
-                                <div class="font-medium text-gray-900">{getDisplayName(attendee)}</div>
-                                <div class="text-sm text-gray-600">{getDisplayInstitute(attendee)}</div>
-                                <div class="text-xs text-gray-500">{attendee.user?.email || ''}</div>
-                            </button>
-                        {/each}
-                    {/if}
-                </div>
+                <Label class="block mb-2">{m.speakers_selectAttendee()}</Label>
+                <SearchableUserList
+                    items={data.attendees}
+                    maxHeight="max-h-60"
+                    showChangeButton={false}
+                    getItemName={getDisplayName}
+                    getItemInstitute={getDisplayInstitute}
+                    getItemEmail={getAttendeeEmail}
+                    onSelect={selectAttendeeForSpeaker}
+                />
             </div>
             <hr class="mb-6 border-gray-200" />
         {/if}

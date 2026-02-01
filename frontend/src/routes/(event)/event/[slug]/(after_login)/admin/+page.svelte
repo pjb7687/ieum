@@ -3,7 +3,7 @@
     import { Modal, Heading, Button, Table, TableSearch, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Input, Label, Toggle } from 'flowbite-svelte';
     import { Card, List, Li, Checkbox, Datepicker, Select } from 'flowbite-svelte';
     import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper, Alert, SidebarButton, uiHelpers } from 'flowbite-svelte';
-    import { NewspaperSolid, EnvelopeSolid, ClipboardListSolid, MicrophoneSolid, UsersGroupSolid, EditSolid, ProfileCardSolid, EyeSolid, EyeSlashSolid } from 'flowbite-svelte-icons';
+    import { NewspaperSolid, EnvelopeSolid, ClipboardListSolid, MicrophoneSolid, UsersGroupSolid, EditSolid, ProfileCardSolid, EyeSolid, EyeSlashSolid, CreditCardSolid } from 'flowbite-svelte-icons';
     import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
     import { fly } from 'svelte/transition';
@@ -21,6 +21,7 @@
     import Abstracts from '$lib/components/admin/Abstracts.svelte';
     import EventAdmins from '$lib/components/admin/EventAdmins.svelte';
     import Organizers from '$lib/components/admin/Organizers.svelte';
+    import Transactions from '$lib/components/admin/Transactions.svelte';
 
     let { data } = $props();
 
@@ -38,7 +39,8 @@
             location.hash !== '#abstracts' &&
             location.hash !== '#organizers' &&
             location.hash !== '#event_admins' &&
-            location.hash !== '#onsite'
+            location.hash !== '#onsite' &&
+            location.hash !== '#transactions'
         ) {
             location.hash = '#event_information';
             return;
@@ -200,6 +202,11 @@
                                     <ProfileCardSolid class="w-6 h-6" />
                                 {/snippet}
                             </SidebarItem>
+                            <SidebarItem label={m.eventAdmin_transactions()} active={sidebar_selected === 'transactions'} href="#transactions">
+                                {#snippet icon()}
+                                    <CreditCardSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
                         </SidebarGroup>
                         </div>
                     </Sidebar>
@@ -248,6 +255,10 @@
 
                 {#if sidebar_selected === 'event_admins'}
                 <EventAdmins data={data} />
+                {/if}
+
+                {#if sidebar_selected === 'transactions'}
+                <Transactions data={data} />
                 {/if}
             </div>
         </div>

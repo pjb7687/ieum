@@ -5,7 +5,17 @@ import { error, redirect } from '@sveltejs/kit';
 export async function load({ parent, params, cookies }) {
     let rtn = await parent();
     if (rtn.user) {
+        // Check if already registered
         if (rtn.registered) {
+            // If registered but payment is pending, allow access for payment
+            const hasPendingPayment = rtn.event.registration_fee > 0 && rtn.payment_status === 'pending';
+            if (hasPendingPayment) {
+                // Set flag to start at payment step
+                rtn.startAtPaymentStep = true;
+                rtn.questions = [];
+                return rtn;
+            }
+            // If fully registered, redirect to event page
             return redirect(303, `/event/${params.slug}`);
         }
         const response_questions = await get(`api/event/${params.slug}/questions`, cookies); // list of custom questions

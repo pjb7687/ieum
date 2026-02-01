@@ -34,6 +34,7 @@ export async function load({ parent, params, cookies, request }) {
     rtn.eventadmins = await get_data_or_404_event('eventadmins');
     rtn.email_templates = await get_data_or_404_event('email_templates');
     rtn.onsite_attendees = await get_data_or_404_event('onsite');
+    rtn.payments = await get_data_or_404_event('payments');
 
     return rtn;
 }
@@ -346,6 +347,54 @@ export const actions = {
             pdf_base64: formdata.get('pdf_base64'),
             attendee_id: formdata.get('attendee_id') ? parseInt(formdata.get('attendee_id')) : null,
             attendee_type: formdata.get('attendee_type') || 'attendee',
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
+    create_payment: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const data = {
+            attendee_id: parseInt(formdata.get('attendee_id')),
+            amount: parseInt(formdata.get('amount')) || 0,
+            payment_type: formdata.get('payment_type'),
+            note: formdata.get('note') || '',
+        };
+        // Add card transaction fields if payment type is card
+        if (data.payment_type === 'card') {
+            data.card_type = formdata.get('card_type') || '';
+            data.card_number = formdata.get('card_number') || '';
+            data.vat = parseInt(formdata.get('vat')) || 0;
+            data.approval_number = formdata.get('approval_number') || '';
+            data.installment = formdata.get('installment') || 'single';
+        }
+        const response = await post(`api/event/${params.slug}/payment/add`, data, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
+    cancel_payment: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/payment/${formdata.get('id')}/cancel`, {
+            cancel_reason: formdata.get('cancel_reason') || '관리자 취소',
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
+    update_payment_note: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/payment/${formdata.get('id')}/note`, {
+            note: formdata.get('note') || '',
         }, cookies);
         if (response.ok && response.status === 200) {
             return response.data;

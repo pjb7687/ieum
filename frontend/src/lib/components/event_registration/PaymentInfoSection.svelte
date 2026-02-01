@@ -1,9 +1,9 @@
 <script>
-    import { Button } from 'flowbite-svelte';
     import { CreditCardSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
     import { formatDate } from '$lib/utils.js';
+    import ReceiptButtons from '$lib/components/ReceiptButtons.svelte';
 
     let { payment } = $props();
 
@@ -53,7 +53,7 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-500">{m.myRegistration_receiptNumber()}</p>
-                <p class="text-base text-gray-900">#{payment.number.toString().padStart(10, '0')}</p>
+                <p class="text-base text-gray-900">{payment.number}</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-500">{m.myRegistration_paymentAmount()}</p>
@@ -67,8 +67,7 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-wrap gap-4 mt-8 pt-6 border-t border-gray-200">
-            <Button color="light" onclick={() => window.print()}>{m.paymentHistory_printReceipt()}</Button>
-            <Button color="light" onclick={() => window.print()}>{m.paymentHistory_printCreditCardSlip()}</Button>
+            <ReceiptButtons {payment} size="md" />
         </div>
     </div>
 {:else}

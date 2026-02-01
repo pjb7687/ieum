@@ -283,16 +283,108 @@ class PaymentHistory(models.Model):
         ('pending', 'Pending'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payment_history')
-    attendee = models.OneToOneField(Attendee, on_delete=models.CASCADE, related_name='payment')
-    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='payments')
+    attendee = models.ForeignKey(Attendee, on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
+    event = models.ForeignKey('Event', on_delete=models.SET_NULL, null=True, related_name='payments')
     amount = models.IntegerField(default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='completed')
+    payment_type = models.CharField(max_length=50, blank=True)  # Payment method from Toss (e.g., 카드, 계좌이체)
+    note = models.TextField(blank=True)  # Admin notes for the transaction
+    # Toss Payments fields
+    toss_payment_key = models.CharField(max_length=200, blank=True, null=True)
+    toss_order_id = models.CharField(max_length=64, blank=True, null=True)  # Our generated order ID
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Copied attendee information for receipts (preserved even if attendee is deleted)
+    attendee_first_name = models.CharField(max_length=1000, blank=True)
+    attendee_middle_initial = models.CharField(max_length=1, blank=True)
+    attendee_last_name = models.CharField(max_length=1000, blank=True)
+    attendee_korean_name = models.CharField(max_length=1000, blank=True)
+    attendee_nationality = models.IntegerField(null=True, blank=True)
+    attendee_institute = models.CharField(max_length=1000, blank=True)
+    attendee_institute_ko = models.CharField(max_length=1000, blank=True)
+    attendee_department = models.CharField(max_length=1000, blank=True)
+    attendee_job_title = models.CharField(max_length=1000, blank=True)
+    attendee_email = models.EmailField(blank=True)
+
+    # Copied event information for receipts (preserved even if event is deleted)
+    event_name = models.CharField(max_length=1000, blank=True)
+    event_start_date = models.DateField(null=True, blank=True)
+    event_end_date = models.DateField(null=True, blank=True)
+    event_venue = models.CharField(max_length=1000, blank=True)
+    event_venue_ko = models.CharField(max_length=1000, blank=True)
+    event_organizers_en = models.CharField(max_length=1000, blank=True)
+    event_organizers_ko = models.CharField(max_length=1000, blank=True)
+
+    @property
+    def attendee_name(self):
+        """Get the attendee's full name from copied fields"""
+        if self.attendee_first_name or self.attendee_last_name:
+            middle = f" {self.attendee_middle_initial}" if self.attendee_middle_initial else ""
+            return f'{self.attendee_first_name}{middle} {self.attendee_last_name}'.strip()
+        return self.attendee_korean_name or ''
+
+    def copy_attendee_info(self, attendee):
+        """Copy attendee information for receipt preservation"""
+        self.attendee_first_name = attendee.first_name
+        self.attendee_middle_initial = attendee.middle_initial
+        self.attendee_last_name = attendee.last_name
+        self.attendee_korean_name = attendee.korean_name
+        self.attendee_nationality = attendee.nationality
+        self.attendee_institute = attendee.institute
+        self.attendee_institute_ko = attendee.institute_ko
+        self.attendee_department = attendee.department
+        self.attendee_job_title = attendee.job_title
+        self.attendee_email = attendee.user.email if attendee.user else ''
+
+    def copy_event_info(self, event):
+        """Copy event information for receipt preservation"""
+        self.event_name = event.name
+        self.event_start_date = event.start_date
+        self.event_end_date = event.end_date
+        self.event_venue = event.venue or ''
+        self.event_venue_ko = event.venue_ko or ''
+        self.event_organizers_en = event.organizers_en or ''
+        self.event_organizers_ko = event.organizers_ko or ''
 
     class Meta:
         ordering = ['-created_at']
         verbose_name_plural = 'Payment histories'
 
     def __str__(self):
-        return f"Payment #{self.id} - {self.user.email} - {self.event.name}"
+        email = self.attendee_email or 'Unknown'
+        event_name = self.event_name or (self.event.name if self.event else 'Unknown')
+        return f"Payment #{self.id} - {email} - {event_name}"
+
+
+class BusinessSettings(models.Model):
+    """
+    Singleton model for business settings used in receipts (영수증용 사업자 정보)
+    """
+    business_name = models.CharField(max_length=200, blank=True)  # 상호명
+    business_registration_number = models.CharField(max_length=20, blank=True)  # 사업자등록번호
+    address = models.CharField(max_length=500, blank=True)  # 주소
+    representative = models.CharField(max_length=100, blank=True)  # 대표자
+    phone = models.CharField(max_length=20, blank=True)  # 연락처
+    email = models.EmailField(blank=True)  # 이메일
+
+    class Meta:
+        verbose_name = 'Business Settings'
+        verbose_name_plural = 'Business Settings'
+
+    def save(self, *args, **kwargs):
+        # Ensure only one instance exists (singleton pattern)
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # Prevent deletion of the singleton instance
+        pass
+
+    @classmethod
+    def get_instance(cls):
+        """Get or create the singleton instance"""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return f"Business Settings - {self.business_name}"

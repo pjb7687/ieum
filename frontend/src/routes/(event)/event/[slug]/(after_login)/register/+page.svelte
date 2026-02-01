@@ -3,7 +3,7 @@
     import { goto, invalidateAll } from '$app/navigation';
 
     import { A, Card, Button, Heading, Indicator, Label, Input, Checkbox, Select, Alert, Navbar, Textarea, ProgressStepper, Modal, Spinner } from 'flowbite-svelte';
-    import { ClipboardListSolid, CheckCircleSolid, CheckCircleOutline } from 'flowbite-svelte-icons';
+    import { ClipboardListSolid, CheckCircleSolid, CheckCircleOutline, CreditCardSolid } from 'flowbite-svelte-icons';
     import { onMount } from 'svelte';
 
     import { createForm } from 'felte';
@@ -11,6 +11,7 @@
     import * as yup from 'yup';
 
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
+    import { requestCardPayment, generateOrderId } from '$lib/tossPayments.js';
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
     import { formatDateRange, onlyLatinChars } from '$lib/utils.js';
@@ -18,14 +19,25 @@
 
     let { data, form } = $props();
 
-    // Stepper state and configuration
-    let currentStep = $state(1);
-    const steps = $derived([
-        { id: 1, label: m.eventRegister_stepRegistration(), icon: ClipboardListSolid },
-        { id: 2, label: isFreeEvent ? m.eventRegister_stepConfirm() : m.eventRegister_stepCheckout(), icon: CheckCircleSolid }
-    ]);
-
     let event = data.event;
+    const isFreeEvent = event.registration_fee === null || event.registration_fee === 0;
+    const startAtPaymentStep = data.startAtPaymentStep || false;
+
+    // Stepper state and configuration
+    // Start at step 3 if user is already registered but needs to pay
+    let currentStep = $state(startAtPaymentStep ? 3 : 1);
+    const steps = $derived(
+        isFreeEvent
+            ? [
+                { id: 1, label: m.eventRegister_stepRegistration(), icon: ClipboardListSolid },
+                { id: 2, label: m.eventRegister_stepConfirm(), icon: CheckCircleSolid }
+            ]
+            : [
+                { id: 1, label: m.eventRegister_stepRegistration(), icon: ClipboardListSolid },
+                { id: 2, label: m.eventRegister_stepConfirmRegister(), icon: CheckCircleSolid },
+                { id: 3, label: m.eventRegister_stepPayment(), icon: CreditCardSolid }
+            ]
+    );
     let deadline = event.registration_deadline ? new Date(event.registration_deadline) : new Date(event.start_date);
     let now = new Date();
 
@@ -144,28 +156,100 @@
         }
     }
 
-    // Open checkout modal for paid events, or submit directly for free events
-    function handleFinalSubmit() {
+    // Handle step 2 confirmation - for free events, register directly; for paid events, register then go to step 3
+    async function handleConfirmAndRegister() {
         error_message = '';
         isSubmittingFinal = true;
 
-        if (!isFreeEvent) {
-            // Paid event - open checkout modal
-            checkoutStatus = 'processing';
-            checkoutModalOpen = true;
-
-            // Simulate payment processing
-            setTimeout(() => {
-                checkoutStatus = 'success';
-                // After showing success, proceed with registration
-                setTimeout(() => {
-                    checkoutModalOpen = false;
-                    submitRegistration();
-                }, 500);
-            }, 1000);
+        if (isFreeEvent) {
+            // Free event - submit registration directly
+            await submitRegistration();
         } else {
-            // Free event - submit directly
-            submitRegistration();
+            // Paid event - submit registration first, then move to payment step
+            await submitRegistrationForPayment();
+        }
+    }
+
+    // Submit registration for paid events (before payment)
+    async function submitRegistrationForPayment() {
+        try {
+            const response = await fetch('?/register',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json',
+                    },
+                    body: new URLSearchParams($formData),
+                }
+            );
+
+            if (!response.ok || response.status !== 200) {
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const rtn = await response.json();
+                        error_message = rtn.error?.message || 'Registration failed';
+                    } else {
+                        const text = await response.text();
+                        error_message = text || 'Registration failed';
+                    }
+                } catch (parseErr) {
+                    error_message = 'Registration failed';
+                }
+                isSubmittingFinal = false;
+                return;
+            }
+
+            // Registration successful - move to payment step
+            // Note: Don't call invalidateAll() here to avoid triggering the redirect in the load function
+            isSubmittingFinal = false;
+            currentStep = 3;
+        } catch (err) {
+            console.error('Registration error:', err);
+            error_message = err.message || 'Registration failed';
+            isSubmittingFinal = false;
+        }
+    }
+
+    // Handle payment initiation (step 3)
+    async function handlePayment() {
+        error_message = '';
+        isSubmittingFinal = true;
+
+        try {
+            // Save event info to sessionStorage for retrieval after payment
+            // Note: Attendee is already created in step 2, we just need eventId for payment confirmation
+            const paymentData = {
+                eventId: event.id,
+                eventSlug: event.slug || event.id,
+            };
+            sessionStorage.setItem('pendingPayment', JSON.stringify(paymentData));
+
+            // Generate unique order ID
+            const orderId = generateOrderId();
+
+            // Get user info for Toss
+            const user = data.user;
+            const customerName = user?.korean_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Guest';
+
+            // Open Toss payment
+            await requestCardPayment({
+                customerKey: `user-${user?.id || 'anonymous'}`,
+                amount: event.registration_fee,
+                orderId: orderId,
+                orderName: event.name,
+                successUrl: `${window.location.origin}/payment/success`,
+                failUrl: `${window.location.origin}/payment/fail`,
+                customerEmail: user?.email,
+                customerName: customerName,
+            });
+        } catch (err) {
+            console.error('Payment initiation failed:', err);
+            error_message = err.message || m.eventRegister_paymentError?.() || 'Payment failed';
+            isSubmittingFinal = false;
+            // Clear stored data on error
+            sessionStorage.removeItem('pendingPayment');
         }
     }
 
@@ -216,7 +300,9 @@
 
     function goBackStep() {
         error_message = '';
-        currentStep = 1;
+        if (currentStep > 1) {
+            currentStep = currentStep - 1;
+        }
     }
 
     // Format registration fee
@@ -226,8 +312,6 @@
         const formattedAmount = fee.toLocaleString('ko-KR', {maximumFractionDigits: 0});
         return languageTag() === 'ko' ? `${formattedAmount} 원` : `KRW ${formattedAmount}`;
     });
-
-    const isFreeEvent = event.registration_fee === null || event.registration_fee === 0;
 </script>
 
 {#snippet process_spaces(text)}
@@ -468,15 +552,6 @@
                                 {/each}
                             </dl>
                         {/if}
-
-                        <!-- Registration Fee (if not free) -->
-                        {#if !isFreeEvent}
-                            <hr class="my-6 border-gray-200" />
-                            <div class="flex justify-between items-center">
-                                <span class="text-lg font-semibold text-gray-900">{m.eventDetail_registrationFee()}</span>
-                                <span class="text-2xl font-bold text-gray-900">{formattedRegistrationFee()}</span>
-                            </div>
-                        {/if}
                     </div>
 
                     {#if error_message}
@@ -485,11 +560,52 @@
 
                     <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
                         <Button color="alternative" type="button" size="lg" onclick={goBackStep} disabled={isSubmittingFinal}>{m.eventRegister_goBack()}</Button>
-                        <Button color="primary" type="button" size="lg" onclick={handleFinalSubmit} disabled={isSubmittingFinal}>
-                            {isFreeEvent ? m.eventRegister_register() : m.eventRegister_checkout()}
+                        <Button color="primary" type="button" size="lg" onclick={handleConfirmAndRegister} disabled={isSubmittingFinal}>
+                            {isFreeEvent ? m.eventRegister_register() : m.eventRegister_confirmAndRegister()}
                         </Button>
                     </div>
                 </div>
+
+                <!-- Step 3: Payment (only for paid events) -->
+                {#if !isFreeEvent}
+                    <div class:hidden={currentStep !== 3} class="space-y-6">
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">{m.eventRegister_paymentTitle()}</h2>
+                            <p class="text-gray-700 mb-6">{m.eventRegister_paymentDescription()}</p>
+                        </div>
+
+                        <!-- Payment Summary Card -->
+                        <div class="border border-gray-200 rounded-lg p-6">
+                            <div class="flex items-center justify-center mb-6">
+                                <CheckCircleOutline class="w-12 h-12 text-green-500 mr-3" />
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">{m.eventRegister_registrationComplete()}</h3>
+                                    <p class="text-sm text-gray-600">{m.eventRegister_proceedToPayment()}</p>
+                                </div>
+                            </div>
+
+                            <hr class="my-6 border-gray-200" />
+
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-semibold text-gray-900">{m.eventDetail_registrationFee()}</span>
+                                <span class="text-2xl font-bold text-primary-600">{formattedRegistrationFee()}</span>
+                            </div>
+                        </div>
+
+                        {#if error_message}
+                            <Alert color="red" class="error">{error_message}</Alert>
+                        {/if}
+
+                        <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
+                            <Button color="alternative" type="button" size="lg" href="/event/{event.id}" disabled={isSubmittingFinal}>
+                                {m.eventRegister_payLater()}
+                            </Button>
+                            <Button color="primary" type="button" size="lg" onclick={handlePayment} disabled={isSubmittingFinal}>
+                                {m.eventRegister_payNow()}
+                            </Button>
+                        </div>
+                    </div>
+                {/if}
             </form>
         </div>
 

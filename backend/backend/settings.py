@@ -201,6 +201,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
+# Toss Payments Configuration
+TOSS_SECRET_KEY = os.environ.get('TOSS_SECRET_KEY', '')
+TOSS_API_URL = 'https://api.tosspayments.com/v1'
+
 ADMIN_PAGE_NAME = os.environ.get('DJANGO_ADMIN_PAGE_NAME', 'djangoadmin')
 SITE_ID = 1
 

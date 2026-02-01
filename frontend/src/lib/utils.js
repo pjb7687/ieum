@@ -166,3 +166,36 @@ export function isProfileComplete(user) {
 
     return true;
 }
+
+/**
+ * Open a receipt window for a payment
+ * @param {string} paymentNumber - The order ID / payment number
+ */
+export function openReceiptWindow(paymentNumber) {
+    window.open(
+        `/receipt/${paymentNumber}`,
+        '_blank',
+        'width=800,height=900,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes'
+    );
+}
+
+/**
+ * Open a card receipt window for a card payment
+ * @param {string} paymentNumber - The order ID / payment number
+ */
+export function openCardReceiptWindow(paymentNumber) {
+    window.open(
+        `/card-receipt/${paymentNumber}`,
+        '_blank',
+        'width=800,height=900,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes'
+    );
+}
+
+/**
+ * Check if a payment is a card payment
+ * @param {Object} payment - Payment object with payment_type field
+ * @returns {boolean} - True if payment type is card (카드)
+ */
+export function isCardPayment(payment) {
+    return payment && payment.payment_type === '카드';
+}

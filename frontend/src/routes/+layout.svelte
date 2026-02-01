@@ -73,6 +73,9 @@
 	let nextPath = $derived(
 		$page.url.pathname.includes('/verify-email') ? '/' : $page.url.pathname
 	);
+
+	// Check if current page is a receipt page (hide header/footer for printing)
+	let isReceiptPage = $derived($page.url.pathname.startsWith('/receipt/'));
 </script>
 
 {#if isLoading}
@@ -81,7 +84,8 @@
 	</div>
 {:else}
 	{#key currentLanguage}
-	<div class="min-h-screen bg-slate-50">
+	<div class={isReceiptPage ? '' : 'min-h-screen bg-slate-50'}>
+{#if !isReceiptPage}
 <Navbar class="border-b border-gray-200 bg-white py-2">
 	<div class="container mx-auto flex items-center justify-between px-4">
 		<!-- Logo -->
@@ -115,6 +119,7 @@
 						<span class="block truncate text-sm text-gray-500">{data.user.email}</span>
 					</DropdownHeader>
 					<DropdownItem href="/profile" onclick={() => profileDropdownOpen = false}>{m.nav_myProfile()}</DropdownItem>
+					<DropdownDivider />
 					<DropdownItem href="/registration-history" onclick={() => profileDropdownOpen = false}>{m.nav_registrationHistory()}</DropdownItem>
 					<DropdownItem href="/payment-history" onclick={() => profileDropdownOpen = false}>{m.nav_paymentHistory()}</DropdownItem>
 					{#if data.user.is_staff}
@@ -137,9 +142,11 @@
 		</div>
 	</div>
 </Navbar>
+{/if}
 
 {@render children()}
 
+{#if !isReceiptPage}
 <footer class="bg-gray-50 border-t border-gray-200 mt-20">
 	<div class="container mx-auto py-8 px-3 sm:px-7">
 		<div class="flex flex-col md:flex-row justify-between items-center gap-6">
@@ -160,8 +167,9 @@
 				</p>
 			</div>
 		</div>
-		</div>
-	</footer>
+	</div>
+</footer>
+{/if}
 	</div>
 	{/key}
 {/if}

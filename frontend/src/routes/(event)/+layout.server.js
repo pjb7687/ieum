@@ -17,6 +17,7 @@ export async function load({ parent, params, cookies }) {
         const response_registered = await get(`api/event/${params.slug}/registered`, cookies); // true if registered, false if not
         if (response_registered.ok && response_registered.status === 200) {
             rtn.registered = response_registered.data.registered;
+            rtn.payment_status = response_registered.data.payment_status;
         }
     }
     

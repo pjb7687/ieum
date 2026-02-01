@@ -1,6 +1,7 @@
 import json
 import base64
 import uuid
+import requests
 from functools import wraps
 
 from datetime import datetime
@@ -15,8 +16,11 @@ from django.core.files.storage import default_storage
 from django.template import Template, Context
 
 from django.conf import settings
+import logging
 
-from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory
+logger = logging.getLogger(__name__)
+
+from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings
 from main.schema import *
 from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format
 
@@ -144,47 +148,70 @@ def delete_user(request):
 def get_payment_history(request):
     """
     Get the payment history for the current user.
+    Uses copied fields from PaymentHistory for data preservation.
     """
     user = request.user
-    payments = PaymentHistory.objects.filter(user=user).select_related('event', 'attendee')
+    payments = PaymentHistory.objects.filter(attendee__user=user).select_related('event')
 
     payment_history = []
     for payment in payments:
-        event = payment.event
-        attendee = payment.attendee
-
-        # Construct attendee name
-        if attendee:
-            name_parts = [attendee.first_name or '']
-            if attendee.middle_initial:
-                name_parts.append(attendee.middle_initial)
-            name_parts.append(attendee.last_name or '')
-            attendee_name = ' '.join(filter(None, name_parts))
-            if attendee.korean_name:
-                attendee_name = f"{attendee_name} ({attendee.korean_name})" if attendee_name else attendee.korean_name
-            attendee_institute = attendee.institute or ''
-        else:
-            attendee_name = ''
-            attendee_institute = ''
-
         payment_history.append({
-            'number': payment.id,
+            'number': payment.toss_order_id or str(payment.id),
             'checkout_date': payment.created_at.strftime('%Y-%m-%d'),
             'amount': payment.amount,
-            'event_id': event.id,
-            'event_name': event.name,
-            'start_date': event.start_date.strftime('%Y-%m-%d'),
-            'end_date': event.end_date.strftime('%Y-%m-%d'),
-            'venue': event.venue,
-            'venue_ko': event.venue_ko,
-            'organizers_en': event.organizers_en,
-            'organizers_ko': event.organizers_ko,
+            'event_id': payment.event.id if payment.event else None,
+            'event_name': payment.event_name,
+            'start_date': payment.event_start_date.strftime('%Y-%m-%d') if payment.event_start_date else '',
+            'end_date': payment.event_end_date.strftime('%Y-%m-%d') if payment.event_end_date else '',
+            'venue': payment.event_venue,
+            'venue_ko': payment.event_venue_ko,
+            'organizers_en': payment.event_organizers_en,
+            'organizers_ko': payment.event_organizers_ko,
             'status': payment.status,
-            'attendee_name': attendee_name,
-            'attendee_institute': attendee_institute
+            'payment_type': payment.payment_type,
+            'attendee_name': payment.attendee_name,
+            'attendee_name_ko': payment.attendee_korean_name,
+            'attendee_institute': payment.attendee_institute,
+            'attendee_institute_ko': payment.attendee_institute_ko,
         })
 
     return payment_history
+
+@api.get("/me/payment/{order_id}", response=PaymentHistorySchema)
+def get_payment_by_id(request, order_id: str):
+    """
+    Get a single payment by order ID for the current user.
+    Uses copied fields from PaymentHistory for data preservation.
+    """
+    user = request.user
+    try:
+        payment = PaymentHistory.objects.select_related('event').get(toss_order_id=order_id, attendee__user=user)
+    except PaymentHistory.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "Payment not found"},
+            status=404,
+        )
+
+    return {
+        'number': payment.toss_order_id or str(payment.id),
+        'checkout_date': payment.created_at.strftime('%Y-%m-%d'),
+        'amount': payment.amount,
+        'event_id': payment.event.id if payment.event else None,
+        'event_name': payment.event_name,
+        'start_date': payment.event_start_date.strftime('%Y-%m-%d') if payment.event_start_date else '',
+        'end_date': payment.event_end_date.strftime('%Y-%m-%d') if payment.event_end_date else '',
+        'venue': payment.event_venue,
+        'venue_ko': payment.event_venue_ko,
+        'organizers_en': payment.event_organizers_en,
+        'organizers_ko': payment.event_organizers_ko,
+        'status': payment.status,
+        'payment_type': payment.payment_type,
+        'attendee_name': payment.attendee_name,
+        'attendee_name_ko': payment.attendee_korean_name,
+        'attendee_institute': payment.attendee_institute,
+        'attendee_institute_ko': payment.attendee_institute_ko,
+    }
 
 @api.get("/me/registration-history", response=List[RegistrationHistorySchema])
 def get_registration_history(request):
@@ -589,8 +616,24 @@ def update_event_emailtemplates(request, event_id: int):
 @api.get("/event/{event_id}/registered", response=RegistrationStatusSchema)
 def check_registration_status(request, event_id: int):
     user = request.user
-    registered = Event.objects.get(id=event_id).attendees.filter(user__id=user.id).exists()
-    return {"registered": registered}
+    event = Event.objects.get(id=event_id)
+    attendee = event.attendees.filter(user__id=user.id).first()
+
+    if not attendee:
+        return {"registered": False, "payment_status": None}
+
+    # Check payment status if event has a fee
+    # A registration is considered paid if there's at least one completed payment
+    payment_status = None
+    if event.registration_fee and event.registration_fee > 0:
+        payments = PaymentHistory.objects.filter(attendee=attendee)
+        if payments.filter(status='completed').exists():
+            payment_status = 'completed'
+        else:
+            # No completed payments - show as pending (even if there are cancelled payments)
+            payment_status = 'pending'
+
+    return {"registered": True, "payment_status": payment_status}
 
 @api.get("/event/{event_id}/questions", response=List[QuestionSchema])
 def get_event_questions(request, event_id: int):
@@ -635,7 +678,13 @@ def get_event_stats(request, event_id: int):
 @ensure_event_staff
 def get_event_attendees(request, event_id: int):
     event = Event.objects.get(id=event_id)
-    return event.attendees.all()
+    attendees = event.attendees.all()
+
+    # If event has a registration fee, filter to only those with completed payments
+    if event.registration_fee and event.registration_fee > 0:
+        attendees = attendees.filter(payments__status='completed').distinct()
+
+    return attendees
 
 @api.get("/event/{event_id}/registration", response=AttendeeSchema)
 def get_my_registration(request, event_id: int):
@@ -669,7 +718,7 @@ def get_my_registration_payment(request, event_id: int):
             attendee_name = f"{attendee_name} ({attendee.korean_name})" if attendee_name else attendee.korean_name
 
         return {
-            'number': payment.id,
+            'number': payment.toss_order_id or str(payment.id),
             'checkout_date': payment.created_at.strftime('%Y-%m-%d'),
             'amount': payment.amount,
             'event_id': event.id,
@@ -681,8 +730,11 @@ def get_my_registration_payment(request, event_id: int):
             'organizers_en': event.organizers_en,
             'organizers_ko': event.organizers_ko,
             'status': payment.status,
+            'payment_type': payment.payment_type,
             'attendee_name': attendee_name,
-            'attendee_institute': attendee.institute or ''
+            'attendee_name_ko': attendee.korean_name or '',
+            'attendee_institute': attendee.institute or '',
+            'attendee_institute_ko': attendee.institute_ko or '',
         }
     except PaymentHistory.DoesNotExist:
         return api.create_response(
@@ -852,16 +904,6 @@ def register_event(request, event_id: int):
         )
 
     event.attendees.add(attendee)
-
-    # Create payment history record only for paid events
-    if event.registration_fee and event.registration_fee > 0:
-        PaymentHistory.objects.create(
-            user=user,
-            attendee=attendee,
-            event=event,
-            amount=event.registration_fee,
-            status='completed'
-        )
 
     send_mail.delay(
         Template(event.email_template_registration.subject).render(Context({"event": event, "attendee": attendee}, autoescape=False)),
@@ -1650,3 +1692,422 @@ def update_on_site_attendee(request, event_id: int, onsite_id: int):
     oa.job_title = data.get("job_title")
     oa.save()
     return {"code": "success", "message": "On-site attendee updated."}
+
+@api.get("/business-settings", response=BusinessSettingsSchema, auth=None)
+def get_business_settings(request):
+    """Get business settings for receipts (public endpoint)."""
+    settings = BusinessSettings.get_instance()
+    return {
+        'business_name': settings.business_name,
+        'business_registration_number': settings.business_registration_number,
+        'address': settings.address,
+        'representative': settings.representative,
+        'phone': settings.phone,
+        'email': settings.email,
+    }
+
+@api.post("/admin/business-settings", response=BusinessSettingsSchema)
+@ensure_staff
+def update_business_settings(request, data: BusinessSettingsUpdateSchema):
+    """Update business settings (admin only)."""
+    settings = BusinessSettings.get_instance()
+    settings.business_name = data.business_name
+    settings.business_registration_number = data.business_registration_number
+    settings.address = data.address
+    settings.representative = data.representative
+    settings.phone = data.phone
+    settings.email = data.email
+    settings.save()
+    return {
+        'business_name': settings.business_name,
+        'business_registration_number': settings.business_registration_number,
+        'address': settings.address,
+        'representative': settings.representative,
+        'phone': settings.phone,
+        'email': settings.email,
+    }
+
+
+# ===== Event Payment Management (Event Admin) =====
+
+@api.get("/event/{event_id}/payments", response=List[EventPaymentSchema])
+@ensure_event_staff
+def get_event_payments(request, event_id: int):
+    """Get all payments for an event (event admin only)."""
+    event = Event.objects.get(id=event_id)
+    payments = PaymentHistory.objects.filter(event=event).select_related('attendee', 'attendee__user')
+
+    payment_list = []
+    for payment in payments:
+        attendee = payment.attendee
+        # Construct attendee name
+        name_parts = [attendee.first_name or '']
+        if attendee.middle_initial:
+            name_parts.append(attendee.middle_initial)
+        name_parts.append(attendee.last_name or '')
+        attendee_name = ' '.join(filter(None, name_parts))
+
+        payment_list.append({
+            'id': payment.id,
+            'number': payment.toss_order_id or str(payment.id),
+            'checkout_date': payment.created_at.strftime('%Y-%m-%d'),
+            'amount': payment.amount,
+            'status': payment.status,
+            'payment_type': payment.payment_type,
+            'note': payment.note,
+            'attendee_id': attendee.id,
+            'attendee_name': attendee_name,
+            'attendee_name_ko': attendee.korean_name or '',
+            'attendee_email': attendee.user.email,
+            'attendee_institute': attendee.institute or '',
+            'attendee_institute_ko': attendee.institute_ko or '',
+        })
+
+    return payment_list
+
+
+@api.post("/event/{event_id}/payment/add", response=MessageSchema)
+@ensure_event_staff
+def create_event_payment(request, event_id: int, data: PaymentCreateSchema):
+    """Create a new payment for an attendee (event admin only)."""
+    event = Event.objects.get(id=event_id)
+
+    # Validate attendee exists and belongs to this event
+    try:
+        attendee = Attendee.objects.get(id=data.attendee_id, event=event)
+    except Attendee.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "attendee_not_found", "message": "Attendee not found."},
+            status=404,
+        )
+
+    # Check if attendee already has a payment
+    if PaymentHistory.objects.filter(attendee=attendee).exists():
+        return api.create_response(
+            request,
+            {"code": "payment_exists", "message": "This attendee already has a payment record."},
+            status=400,
+        )
+
+    # Validate payment type
+    if data.payment_type not in ['card', 'transfer', 'cash']:
+        return api.create_response(
+            request,
+            {"code": "invalid_payment_type", "message": "Invalid payment type."},
+            status=400,
+        )
+
+    # Create payment with copied attendee/event info for receipts
+    payment = PaymentHistory(
+        attendee=attendee,
+        event=event,
+        amount=data.amount,
+        status='completed',
+        payment_type=data.payment_type,
+        note=data.note,
+    )
+    payment.copy_attendee_info(attendee)
+    payment.copy_event_info(event)
+    payment.save()
+
+    return {"code": "success", "message": "Payment created successfully."}
+
+
+@api.post("/event/{event_id}/payment/{payment_id}/cancel", response=MessageSchema)
+@ensure_event_staff
+def cancel_event_payment(request, event_id: int, payment_id: int, data: PaymentCancelSchema):
+    """Cancel a payment (event admin only). If paid via Toss, cancels with Toss API."""
+    event = Event.objects.get(id=event_id)
+
+    try:
+        payment = PaymentHistory.objects.get(id=payment_id, event=event)
+    except PaymentHistory.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "payment_not_found", "message": "Payment not found."},
+            status=404,
+        )
+
+    if payment.status == 'cancelled':
+        return api.create_response(
+            request,
+            {"code": "already_cancelled", "message": "Payment is already cancelled."},
+            status=400,
+        )
+
+    # If payment was made via Toss, call Toss API to cancel
+    if payment.toss_payment_key:
+        if not settings.TOSS_SECRET_KEY:
+            return api.create_response(
+                request,
+                {"code": "config_error", "message": "Payment service is not configured."},
+                status=500,
+            )
+
+        auth_string = base64.b64encode(f"{settings.TOSS_SECRET_KEY}:".encode()).decode()
+
+        try:
+            response = requests.post(
+                f"{settings.TOSS_API_URL}/payments/{payment.toss_payment_key}/cancel",
+                headers={
+                    "Authorization": f"Basic {auth_string}",
+                    "Content-Type": "application/json",
+                },
+                json={"cancelReason": data.cancel_reason},
+                timeout=30,
+            )
+        except requests.RequestException as e:
+            logger.error(f"Toss API request failed: {e}")
+            return api.create_response(
+                request,
+                {"code": "api_error", "message": "Failed to connect to payment service."},
+                status=500,
+            )
+
+        if not response.ok:
+            error_data = response.json()
+            logger.error(f"Toss payment cancellation failed: {error_data}")
+            return api.create_response(
+                request,
+                {
+                    "code": error_data.get("code", "cancel_failed"),
+                    "message": error_data.get("message", "Payment cancellation failed."),
+                },
+                status=400,
+            )
+
+        # Toss cancellation successful
+        toss_response = response.json()
+        logger.info(f"Toss payment cancelled: payment_key={payment.toss_payment_key}, status={toss_response.get('status')}")
+
+    payment.status = 'cancelled'
+    payment.save()
+
+    return {"code": "success", "message": "Payment cancelled successfully."}
+
+
+@api.post("/event/{event_id}/payment/{payment_id}/note", response=MessageSchema)
+@ensure_event_staff
+def update_payment_note(request, event_id: int, payment_id: int, data: PaymentNoteUpdateSchema):
+    """Update payment note (event admin only)."""
+    event = Event.objects.get(id=event_id)
+
+    try:
+        payment = PaymentHistory.objects.get(id=payment_id, event=event)
+    except PaymentHistory.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "payment_not_found", "message": "Payment not found."},
+            status=404,
+        )
+
+    payment.note = data.note
+    payment.save()
+
+    return {"code": "success", "message": "Payment note updated successfully."}
+
+
+@api.post("/payment/confirm")
+def confirm_toss_payment(request, data: TossPaymentConfirmSchema):
+    """
+    Confirm a Toss payment after successful authorization.
+    Called from the payment success callback page.
+    The attendee should already be registered with pending payment status.
+    """
+    # Validate secret key is configured
+    if not settings.TOSS_SECRET_KEY:
+        logger.error("TOSS_SECRET_KEY is not configured")
+        return api.create_response(
+            request,
+            {"code": "config_error", "message": "Payment service is not configured."},
+            status=500,
+        )
+
+    # Get event by ID
+    try:
+        event = Event.objects.get(id=data.eventId)
+    except Event.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "event_not_found", "message": "Event not found."},
+            status=404,
+        )
+
+    user = request.user
+
+    # User must already be registered (attendee created in step 2)
+    try:
+        attendee = Attendee.objects.get(event=event, user=user)
+    except Attendee.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_registered", "message": "You are not registered for this event."},
+            status=400,
+        )
+
+    # Check if payment already exists for this attendee
+    existing_payment = PaymentHistory.objects.filter(attendee=attendee).first()
+    if existing_payment and existing_payment.status == 'completed':
+        return api.create_response(
+            request,
+            {"code": "already_paid", "message": "Payment already completed."},
+            status=400,
+        )
+
+    # Verify amount matches event registration fee
+    if data.amount != event.registration_fee:
+        logger.warning(f"Amount mismatch: expected {event.registration_fee}, got {data.amount}")
+        return api.create_response(
+            request,
+            {"code": "amount_mismatch", "message": "Payment amount does not match registration fee."},
+            status=400,
+        )
+
+    # Call Toss Payments confirm API
+    # Authorization: Basic base64(secretKey:)
+    auth_string = base64.b64encode(f"{settings.TOSS_SECRET_KEY}:".encode()).decode()
+
+    try:
+        response = requests.post(
+            f"{settings.TOSS_API_URL}/payments/confirm",
+            headers={
+                "Authorization": f"Basic {auth_string}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "paymentKey": data.paymentKey,
+                "orderId": data.orderId,
+                "amount": data.amount,
+            },
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        logger.error(f"Toss API request failed: {e}")
+        return api.create_response(
+            request,
+            {"code": "api_error", "message": "Failed to connect to payment service."},
+            status=500,
+        )
+
+    if not response.ok:
+        error_data = response.json()
+        logger.error(f"Toss payment confirmation failed: {error_data}")
+        return api.create_response(
+            request,
+            {
+                "code": error_data.get("code", "payment_failed"),
+                "message": error_data.get("message", "Payment confirmation failed."),
+            },
+            status=400,
+        )
+
+    # Parse successful response
+    toss_payment = response.json()
+
+    # Create or update payment record
+    if existing_payment:
+        payment = existing_payment
+    else:
+        payment = PaymentHistory(
+            attendee=attendee,
+            event=event,
+        )
+        payment.copy_attendee_info(attendee)
+        payment.copy_event_info(event)
+
+    payment.amount = data.amount
+    payment.status = 'completed'
+    payment.payment_type = toss_payment.get('method', 'card')  # Payment method from Toss
+    payment.toss_order_id = data.orderId  # Our generated order ID
+    payment.toss_payment_key = data.paymentKey
+    payment.save()
+
+    logger.info(f"Payment confirmed: user={user.id}, event={event.id}, amount={data.amount}")
+
+    return {
+        "code": "success",
+        "message": "Payment confirmed successfully.",
+        "number": payment.toss_order_id or str(payment.id),
+        "amount": payment.amount,
+        "event_id": event.id,
+        "event_name": event.name,
+    }
+
+
+@api.get("/payment/{order_id}/card-receipt")
+def get_card_receipt(request, order_id: str):
+    """
+    Get Toss receipt URL for a card payment.
+    Returns the URL to redirect to Toss's receipt page.
+    """
+    user = request.user
+
+    # Find payment by order_id
+    try:
+        payment = PaymentHistory.objects.get(toss_order_id=order_id, attendee__user=user)
+    except PaymentHistory.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "Payment not found."},
+            status=404,
+        )
+
+    # Check if payment type is card
+    if payment.payment_type != '카드':
+        return api.create_response(
+            request,
+            {"code": "not_card", "message": "This payment is not a card payment."},
+            status=400,
+        )
+
+    # Validate secret key is configured
+    if not settings.TOSS_SECRET_KEY:
+        return api.create_response(
+            request,
+            {"code": "config_error", "message": "Payment service is not configured."},
+            status=500,
+        )
+
+    # Call Toss Payments API to get payment details
+    auth_string = base64.b64encode(f"{settings.TOSS_SECRET_KEY}:".encode()).decode()
+
+    try:
+        response = requests.get(
+            f"{settings.TOSS_API_URL}/payments/orders/{order_id}",
+            headers={
+                "Authorization": f"Basic {auth_string}",
+            },
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        logger.error(f"Toss API request failed: {e}")
+        return api.create_response(
+            request,
+            {"code": "api_error", "message": "Failed to connect to payment service."},
+            status=500,
+        )
+
+    if not response.ok:
+        error_data = response.json()
+        logger.error(f"Toss API error: {error_data}")
+        return api.create_response(
+            request,
+            {
+                "code": error_data.get("code", "api_error"),
+                "message": error_data.get("message", "Failed to get payment details."),
+            },
+            status=400,
+        )
+
+    toss_data = response.json()
+    receipt_url = toss_data.get("receipt", {}).get("url", "")
+
+    if not receipt_url:
+        return api.create_response(
+            request,
+            {"code": "no_receipt", "message": "Receipt URL not available."},
+            status=404,
+        )
+
+    return {"code": "success", "receipt_url": receipt_url}

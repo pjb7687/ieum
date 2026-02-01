@@ -6,6 +6,7 @@
     import TablePagination from '$lib/components/TablePagination.svelte';
     import ChangeRequestModal from '$lib/components/ChangeRequestModal.svelte';
     import { getDisplayVenue, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
+    import ReceiptButtons from '$lib/components/ReceiptButtons.svelte';
     import { generateCertificatePDF } from '$lib/pdfUtils.js';
 
     function formatAmount(amount) {
@@ -69,7 +70,7 @@
         window.open(pdfUri, '_blank');
     }
 
-    let payments = page_data.payments || [];
+    let payments = $derived(page_data.payments || []);
 
     // Search and pagination state
     let searchTerm = $state('');
@@ -141,12 +142,11 @@
                     <TableBodyRow>
                         <TableBodyCell class="align-top">
                             <div class="font-medium">{formatDate(payment.checkout_date)}</div>
-                            <div class="text-sm text-gray-500">#{payment.number.toString().padStart(10, '0')}</div>
+                            <div class="text-sm text-gray-500">{payment.number}</div>
                             <hr class="my-2 border-gray-200" />
                             <div class="text-sm">{m.paymentHistory_amount()}: {formatAmount(payment.amount)}</div>
                             <div class="mt-2 flex flex-col gap-1">
-                                <Button size="xs" color="light" onclick={() => window.print()}>{m.paymentHistory_printReceipt()}</Button>
-                                <Button size="xs" color="light" onclick={() => window.print()}>{m.paymentHistory_printCreditCardSlip()}</Button>
+                                <ReceiptButtons {payment} />
                             </div>
                         </TableBodyCell>
                         <TableBodyCell class="align-top">

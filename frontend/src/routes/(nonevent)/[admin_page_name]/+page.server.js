@@ -26,6 +26,21 @@ export async function load({ parent, params, cookies }) {
         institutions: await get_data_or_404('institutions')
     };
 
+    // Load business settings (public endpoint, doesn't require admin auth)
+    const businessSettingsResponse = await get('api/business-settings', cookies);
+    if (businessSettingsResponse.ok && businessSettingsResponse.status === 200) {
+        data.admin.businessSettings = businessSettingsResponse.data;
+    } else {
+        data.admin.businessSettings = {
+            business_name: '',
+            business_registration_number: '',
+            address: '',
+            representative: '',
+            phone: '',
+            email: ''
+        };
+    }
+
     return data;
 }
 
@@ -120,6 +135,23 @@ export const actions = {
         }
 
         const response = await post(`api/admin/user/${user_id}/update`, data, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'update_business_settings': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const data = {
+            business_name: formdata.get('business_name') || '',
+            business_registration_number: formdata.get('business_registration_number') || '',
+            address: formdata.get('address') || '',
+            representative: formdata.get('representative') || '',
+            phone: formdata.get('phone') || '',
+            email: formdata.get('email') || ''
+        };
+        const response = await post('api/admin/business-settings', data, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
         } else {

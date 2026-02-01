@@ -225,6 +225,7 @@ class EventAdminSchema(Schema):
 
 class RegistrationStatusSchema(Schema):
     registered: bool
+    payment_status: Union[str, None] = None  # 'pending', 'completed', or None (free event/not registered)
 
 class QuestionSchema(Schema):
     id: int
@@ -335,7 +336,7 @@ class OnSiteAttendeeSchema(Schema):
     job_title: str
 
 class PaymentHistorySchema(Schema):
-    number: int
+    number: str
     checkout_date: str
     amount: int
     event_id: int
@@ -347,8 +348,29 @@ class PaymentHistorySchema(Schema):
     organizers_en: str
     organizers_ko: str
     status: str
+    payment_type: str
     attendee_name: str
+    attendee_name_ko: str
     attendee_institute: str
+    attendee_institute_ko: str
+
+
+class BusinessSettingsSchema(Schema):
+    business_name: str
+    business_registration_number: str
+    address: str
+    representative: str
+    phone: str
+    email: str
+
+
+class BusinessSettingsUpdateSchema(Schema):
+    business_name: str = ""
+    business_registration_number: str = ""
+    address: str = ""
+    representative: str = ""
+    phone: str = ""
+    email: str = ""
 
 class RegistrationHistorySchema(Schema):
     id: int
@@ -363,3 +385,46 @@ class RegistrationHistorySchema(Schema):
     organizers_ko: str
     attendee_name: str
     attendee_institute: str
+
+
+class EventPaymentSchema(Schema):
+    """Schema for event admin to view payments"""
+    id: int
+    number: str
+    checkout_date: str
+    amount: int
+    status: str
+    payment_type: str
+    note: str
+    attendee_id: int
+    attendee_name: str
+    attendee_name_ko: str
+    attendee_email: str
+    attendee_institute: str
+    attendee_institute_ko: str
+
+
+class PaymentCreateSchema(Schema):
+    """Schema for creating a new payment"""
+    attendee_id: int
+    amount: int
+    payment_type: str
+    note: str = ""
+
+
+class PaymentNoteUpdateSchema(Schema):
+    """Schema for updating payment note"""
+    note: str
+
+
+class PaymentCancelSchema(Schema):
+    """Schema for cancelling a payment"""
+    cancel_reason: str = "관리자 취소"
+
+
+class TossPaymentConfirmSchema(Schema):
+    """Schema for confirming Toss payment"""
+    paymentKey: str
+    orderId: str
+    amount: int
+    eventId: int  # Event ID for which payment is being made
