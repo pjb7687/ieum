@@ -7,7 +7,6 @@
     import ChangeRequestModal from '$lib/components/ChangeRequestModal.svelte';
     import { getDisplayVenue, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
     import ReceiptButtons from '$lib/components/ReceiptButtons.svelte';
-    import { generateCertificatePDF } from '$lib/pdfUtils.js';
 
     function formatAmount(amount) {
         const formattedAmount = amount.toLocaleString('ko-KR', { maximumFractionDigits: 0 });
@@ -25,49 +24,6 @@
             default:
                 return status;
         }
-    }
-
-    // Check if event has ended (certificate can only be generated after event ends)
-    function hasEventEnded(endDate) {
-        return endDate ? new Date() > new Date(endDate) : false;
-    }
-
-    // Generate certificate PDF for a payment
-    async function generateCertificate(payment) {
-        const certAttendee = {
-            name: payment.attendee_name,
-            institute: payment.attendee_institute
-        };
-
-        const certEvent = {
-            name: payment.event_name,
-            start_date: payment.start_date,
-            end_date: payment.end_date,
-            venue: payment.venue,
-            venue_ko: payment.venue_ko,
-            organizers_en: payment.organizers_en,
-            organizers_ko: payment.organizers_ko
-        };
-
-        const certMessages = {
-            certIssueDate: m.attendees_certIssueDate,
-            certTitle: m.attendees_certTitle,
-            certName: m.attendees_certName,
-            certInstitute: m.attendees_certInstitute,
-            certHasAttended: m.attendees_certHasAttended,
-            certOn: m.attendees_certOn,
-            certHeldAt: m.attendees_certHeldAt,
-            certAsParticipant: m.attendees_certAsParticipant,
-            certFooter: m.attendees_certFooter
-        };
-
-        const pdfUri = await generateCertificatePDF({
-            attendee: certAttendee,
-            event: certEvent,
-            messages: certMessages
-        });
-
-        window.open(pdfUri, '_blank');
     }
 
     let payments = $derived(page_data.payments || []);
@@ -160,9 +116,8 @@
                         <TableBodyCell class="align-top">
                             <span class="font-bold text-orange-500">{getStatusText(payment.status)}</span>
                             <div class="mt-2 flex flex-col gap-1">
-                                <Button size="xs" color="primary" href="/event/{payment.event_id}/registration#payment_info">{m.common_viewDetails()}</Button>
+                                <Button size="xs" color="primary" disabled={payment.status === 'cancelled'} href={payment.status !== 'cancelled' ? `/event/${payment.event_id}/registration#payment_info` : undefined}>{m.common_viewDetails()}</Button>
                                 <Button size="xs" color="light" disabled={payment.status === 'cancelled'} onclick={() => openChangeRequestModal(payment.event_id)}>{m.paymentHistory_requestCancellation()}</Button>
-                                <Button size="xs" color="light" disabled={!hasEventEnded(payment.end_date)} onclick={() => generateCertificate(payment)}>{m.paymentHistory_printCertificate()}</Button>
                             </div>
                         </TableBodyCell>
                     </TableBodyRow>

@@ -385,6 +385,8 @@ class RegistrationHistorySchema(Schema):
     organizers_ko: str
     attendee_name: str
     attendee_institute: str
+    registration_fee: int
+    payment_status: str  # 'free', 'completed', 'pending', 'cancelled'
 
 
 class EventPaymentSchema(Schema):

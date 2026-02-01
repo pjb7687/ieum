@@ -298,7 +298,7 @@
 <p class="font-light mb-6">{m.transactions_description()}</p>
 
 <!-- Summary Stats -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div class="grid grid-cols-3 gap-4 mb-6">
     <div class="bg-green-50 border border-green-200 rounded-lg p-4">
         <div class="text-sm text-green-600">{m.transactions_completedCount()}</div>
         <div class="text-2xl font-bold text-green-700">{countCompleted}</div>
@@ -312,10 +312,6 @@
     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div class="text-sm text-blue-600">{m.transactions_totalCount()}</div>
         <div class="text-2xl font-bold text-blue-700">{payments.length}</div>
-    </div>
-    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div class="text-sm text-gray-600">{m.transactions_netAmount()}</div>
-        <div class="text-2xl font-bold text-gray-700">{formatAmount(totalCompleted - totalCancelled)}</div>
     </div>
 </div>
 

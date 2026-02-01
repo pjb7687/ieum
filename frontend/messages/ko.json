@@ -670,6 +670,8 @@
 	"registrationHistory_organizers": "주최",
 	"registrationHistory_actions": "작업",
 	"registrationHistory_noRecords": "등록 내역이 없습니다.",
+	"registrationHistory_paymentStatus": "결제 상태",
+	"registrationHistory_statusFree": "무료",
 
 	"paymentHistory_title": "결제 내역",
 	"paymentHistory_description": "행사 결제 내역을 확인하세요.",
@@ -768,5 +770,12 @@
 	"payment_eventName": "행사",
 	"payment_viewRegistration": "등록 정보 보기",
 	"payment_viewHistory": "결제 내역 보기",
-	"payment_tryAgain": "다시 시도"
+	"payment_returnToEvent": "행사 페이지로 돌아가기",
+	"payment_tryAgain": "다시 시도",
+
+	"cardReceipt_cardType": "카드종류",
+	"cardReceipt_cardNumber": "카드번호",
+	"cardReceipt_approvalNumber": "승인번호",
+	"cardReceipt_vat": "부가세",
+	"cardReceipt_installment": "할부"
 }

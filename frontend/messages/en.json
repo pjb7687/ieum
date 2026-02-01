@@ -670,6 +670,8 @@
 	"registrationHistory_organizers": "Organizers",
 	"registrationHistory_actions": "Actions",
 	"registrationHistory_noRecords": "No registration records found.",
+	"registrationHistory_paymentStatus": "Payment Status",
+	"registrationHistory_statusFree": "Free",
 
 	"paymentHistory_title": "Payment History",
 	"paymentHistory_description": "View your payment history for events.",
@@ -768,5 +770,12 @@
 	"payment_eventName": "Event",
 	"payment_viewRegistration": "View Registration",
 	"payment_viewHistory": "View Payment History",
-	"payment_tryAgain": "Try Again"
+	"payment_returnToEvent": "Return to Event Page",
+	"payment_tryAgain": "Try Again",
+
+	"cardReceipt_cardType": "Card Type",
+	"cardReceipt_cardNumber": "Card Number",
+	"cardReceipt_approvalNumber": "Approval Number",
+	"cardReceipt_vat": "VAT",
+	"cardReceipt_installment": "Installment"
 }

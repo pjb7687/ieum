@@ -235,6 +235,17 @@ def get_registration_history(request):
             attendee_name = f"{attendee_name} ({attendee.korean_name})" if attendee_name else attendee.korean_name
         attendee_institute = attendee.institute or ''
 
+        # Determine payment status
+        registration_fee = event.registration_fee or 0
+        if registration_fee == 0:
+            payment_status = 'free'
+        else:
+            # Check if there's a completed payment for this attendee
+            if PaymentHistory.objects.filter(attendee=attendee, status='completed').exists():
+                payment_status = 'completed'
+            else:
+                payment_status = 'pending'
+
         registration_history.append({
             'id': attendee.id,
             'registration_date': event.start_date.strftime('%Y-%m-%d'),  # Use event start date as fallback
@@ -247,7 +258,9 @@ def get_registration_history(request):
             'organizers_en': event.organizers_en,
             'organizers_ko': event.organizers_ko,
             'attendee_name': attendee_name,
-            'attendee_institute': attendee_institute
+            'attendee_institute': attendee_institute,
+            'registration_fee': registration_fee,
+            'payment_status': payment_status
         })
 
     # Sort by event start date descending
@@ -706,7 +719,12 @@ def get_my_registration_payment(request, event_id: int):
     event = Event.objects.get(id=event_id)
     try:
         attendee = event.attendees.get(user__id=user.id)
-        payment = PaymentHistory.objects.get(attendee=attendee)
+        # Get the latest completed payment, or latest payment if none completed
+        payment = PaymentHistory.objects.filter(attendee=attendee, status='completed').order_by('-created_at').first()
+        if not payment:
+            payment = PaymentHistory.objects.filter(attendee=attendee).order_by('-created_at').first()
+        if not payment:
+            raise PaymentHistory.DoesNotExist()
 
         # Construct attendee name
         name_parts = [attendee.first_name or '']

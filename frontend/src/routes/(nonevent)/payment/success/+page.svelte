@@ -123,13 +123,13 @@
 
                 <div class="flex flex-col gap-2">
                     {#if paymentResult?.event_id}
-                        <Button color="primary" href="/event/{paymentResult.event_id}">
+                        <Button color="primary" href="/event/{paymentResult.event_id}/registration">
                             {m.payment_viewRegistration()}
                         </Button>
+                        <Button color="light" href="/event/{paymentResult.event_id}">
+                            {m.payment_returnToEvent()}
+                        </Button>
                     {/if}
-                    <Button color="light" href="/payment-history">
-                        {m.payment_viewHistory()}
-                    </Button>
                 </div>
             </div>
         {:else}

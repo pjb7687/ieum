@@ -4,8 +4,78 @@
     import * as m from '$lib/paraglide/messages.js';
     import TablePagination from '$lib/components/TablePagination.svelte';
     import { getDisplayVenue, getDisplayOrganizers, formatDateRange } from '$lib/utils.js';
+    import { generateCertificatePDF } from '$lib/pdfUtils.js';
 
     let registrations = page_data.registrations || [];
+
+    // Check if event has ended (certificate can only be generated after event ends)
+    function hasEventEnded(endDate) {
+        return endDate ? new Date() > new Date(endDate) : false;
+    }
+
+    function getPaymentStatusText(status) {
+        switch (status) {
+            case 'free':
+                return m.registrationHistory_statusFree();
+            case 'completed':
+                return m.paymentHistory_statusCompleted();
+            case 'pending':
+                return m.paymentHistory_statusPending();
+            default:
+                return status;
+        }
+    }
+
+    function getPaymentStatusColor(status) {
+        switch (status) {
+            case 'free':
+                return 'text-blue-600';
+            case 'completed':
+                return 'text-green-600';
+            case 'pending':
+                return 'text-orange-500';
+            default:
+                return 'text-gray-600';
+        }
+    }
+
+    // Generate certificate PDF for a registration
+    async function generateCertificate(registration) {
+        const certAttendee = {
+            name: registration.attendee_name,
+            institute: registration.attendee_institute
+        };
+
+        const certEvent = {
+            name: registration.event_name,
+            start_date: registration.start_date,
+            end_date: registration.end_date,
+            venue: registration.venue,
+            venue_ko: registration.venue_ko,
+            organizers_en: registration.organizers_en,
+            organizers_ko: registration.organizers_ko
+        };
+
+        const certMessages = {
+            certIssueDate: m.attendees_certIssueDate,
+            certTitle: m.attendees_certTitle,
+            certName: m.attendees_certName,
+            certInstitute: m.attendees_certInstitute,
+            certHasAttended: m.attendees_certHasAttended,
+            certOn: m.attendees_certOn,
+            certHeldAt: m.attendees_certHeldAt,
+            certAsParticipant: m.attendees_certAsParticipant,
+            certFooter: m.attendees_certFooter
+        };
+
+        const pdfUri = await generateCertificatePDF({
+            attendee: certAttendee,
+            event: certEvent,
+            messages: certMessages
+        });
+
+        window.open(pdfUri, '_blank');
+    }
 
     // Search and pagination state
     let searchTerm = $state('');
@@ -54,12 +124,13 @@
             <TableHeadCell class="w-full">{m.registrationHistory_eventName()}</TableHeadCell>
             <TableHeadCell class="whitespace-nowrap">{m.registrationHistory_venue()}</TableHeadCell>
             <TableHeadCell class="whitespace-nowrap">{m.registrationHistory_organizers()}</TableHeadCell>
+            <TableHeadCell class="whitespace-nowrap">{m.registrationHistory_paymentStatus()}</TableHeadCell>
             <TableHeadCell class="whitespace-nowrap">{m.registrationHistory_actions()}</TableHeadCell>
         </TableHead>
         <TableBody>
             {#if filteredRegistrations.length === 0}
                 <TableBodyRow>
-                    <TableBodyCell colspan="5" class="text-center text-gray-500 py-8">
+                    <TableBodyCell colspan="6" class="text-center text-gray-500 py-8">
                         {m.registrationHistory_noRecords()}
                     </TableBodyCell>
                 </TableBodyRow>
@@ -79,7 +150,13 @@
                             {getDisplayOrganizers(registration)}
                         </TableBodyCell>
                         <TableBodyCell class="align-top whitespace-nowrap">
-                            <Button size="xs" color="primary" href="/event/{registration.event_id}/registration">{m.common_viewDetails()}</Button>
+                            <span class="font-bold {getPaymentStatusColor(registration.payment_status)}">{getPaymentStatusText(registration.payment_status)}</span>
+                        </TableBodyCell>
+                        <TableBodyCell class="align-top whitespace-nowrap">
+                            <div class="flex flex-row gap-1">
+                                <Button size="xs" color="primary" href="/event/{registration.event_id}/registration">{m.common_viewDetails()}</Button>
+                                <Button size="xs" color="light" disabled={!hasEventEnded(registration.end_date)} onclick={() => generateCertificate(registration)}>{m.paymentHistory_printCertificate()}</Button>
+                            </div>
                         </TableBodyCell>
                     </TableBodyRow>
                 {/each}
