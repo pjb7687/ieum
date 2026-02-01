@@ -8,6 +8,7 @@ const ADMIN_PAGE_NAME = process.env.ADMIN_PAGE_NAME || 'admin';
 const PROFILE_EXEMPT_PATHS = [
     '/complete-profile',
     '/login',
+    '/logout',
     '/registration',
     '/verify-email',
     '/forgot-password',
