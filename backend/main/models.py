@@ -388,3 +388,20 @@ class BusinessSettings(models.Model):
 
     def __str__(self):
         return f"Business Settings - {self.business_name}"
+
+
+class ExchangeRate(models.Model):
+    """
+    Cached exchange rate for currency conversion (e.g., KRW to USD)
+    Updated once per day from Open Exchange Rates API
+    """
+    currency_from = models.CharField(max_length=3)  # e.g., 'KRW'
+    currency_to = models.CharField(max_length=3)  # e.g., 'USD'
+    rate = models.DecimalField(max_digits=20, decimal_places=10)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['currency_from', 'currency_to']
+
+    def __str__(self):
+        return f"{self.currency_from}/{self.currency_to}: {self.rate}"

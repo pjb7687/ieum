@@ -12,6 +12,7 @@
 
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
     import { requestCardPayment, generateOrderId } from '$lib/tossPayments.js';
+    import { renderPayPalButtons } from '$lib/paypalPayments.js';
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
     import { formatDateRange, onlyLatinChars } from '$lib/utils.js';
@@ -119,6 +120,11 @@
     let checkoutModalOpen = $state(false);
     let checkoutStatus = $state('processing'); // 'processing' or 'success'
     let instituteDisplayName = $state('');
+
+    // Payment method selection (for paid events)
+    let paymentMethod = $state('toss'); // 'toss' or 'paypal'
+    let paypalButtonsRendered = $state(false);
+    let paypalContainerRef = $state(null);
 
     const { form: felteForm, data: formData, errors, isSubmitting, validate } = createForm({
         initialValues: {
@@ -312,6 +318,51 @@
         const formattedAmount = fee.toLocaleString('ko-KR', {maximumFractionDigits: 0});
         return languageTag() === 'ko' ? `${formattedAmount} 원` : `KRW ${formattedAmount}`;
     });
+
+    // Render PayPal buttons when PayPal is selected and on step 3
+    $effect(() => {
+        if (currentStep === 3 && paymentMethod === 'paypal' && !paypalButtonsRendered) {
+            // Small delay to ensure the container is rendered
+            setTimeout(() => {
+                const container = document.getElementById('paypal-button-container');
+                if (container && !paypalButtonsRendered) {
+                    renderPayPalButtons({
+                        containerId: 'paypal-button-container',
+                        amount: event.registration_fee,
+                        onSuccess: handlePayPalSuccess,
+                        onError: handlePayPalError,
+                        onCancel: handlePayPalCancel,
+                    });
+                    paypalButtonsRendered = true;
+                }
+            }, 100);
+        }
+    });
+
+    // Handle PayPal payment success
+    function handlePayPalSuccess(result) {
+        // Store payment result in sessionStorage for the success page
+        sessionStorage.setItem('paymentResult', JSON.stringify({
+            success: true,
+            event_id: event.id,
+            event_name: event.name,
+            payment_method: 'paypal',
+            ...result
+        }));
+        // Redirect to success page
+        goto('/payment/success');
+    }
+
+    // Handle PayPal payment error
+    function handlePayPalError(error) {
+        console.error('PayPal payment error:', error);
+        error_message = error.message || m.eventRegister_paymentError?.() || 'Payment failed';
+    }
+
+    // Handle PayPal payment cancellation
+    function handlePayPalCancel() {
+        error_message = m.eventRegister_paymentCancelled?.() || 'Payment was cancelled';
+    }
 </script>
 
 {#snippet process_spaces(text)}
@@ -586,9 +637,66 @@
 
                             <hr class="my-6 border-gray-200" />
 
-                            <div class="flex justify-between items-center">
+                            <div class="flex justify-between items-center mb-6">
                                 <span class="text-lg font-semibold text-gray-900">{m.eventDetail_registrationFee()}</span>
                                 <span class="text-2xl font-bold text-primary-600">{formattedRegistrationFee()}</span>
+                            </div>
+
+                            <hr class="my-6 border-gray-200" />
+
+                            <!-- Payment Method Selection -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">{m.eventRegister_selectPaymentMethod()}</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Toss Payments Option -->
+                                    <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors {paymentMethod === 'toss' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}">
+                                        <input
+                                            type="radio"
+                                            name="payment_method"
+                                            value="toss"
+                                            bind:group={paymentMethod}
+                                            class="sr-only"
+                                        />
+                                        <div class="flex items-center gap-3 w-full">
+                                            <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-blue-100">
+                                                <CreditCardSolid class="w-6 h-6 text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-gray-900">{m.eventRegister_payWithToss()}</p>
+                                                <p class="text-sm text-gray-500">{m.eventRegister_tossDescription()}</p>
+                                            </div>
+                                        </div>
+                                        {#if paymentMethod === 'toss'}
+                                            <CheckCircleSolid class="absolute top-2 right-2 w-5 h-5 text-primary-500" />
+                                        {/if}
+                                    </label>
+
+                                    <!-- PayPal Option -->
+                                    <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors {paymentMethod === 'paypal' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}">
+                                        <input
+                                            type="radio"
+                                            name="payment_method"
+                                            value="paypal"
+                                            bind:group={paymentMethod}
+                                            class="sr-only"
+                                        />
+                                        <div class="flex items-center gap-3 w-full">
+                                            <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-yellow-100">
+                                                <svg class="w-6 h-6 text-blue-800" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .76-.654h6.033c2.027 0 3.621.53 4.585 1.533.928.965 1.248 2.326.954 4.044-.008.05-.018.1-.028.152-.355 2.048-1.527 3.547-3.182 4.319-1.01.472-2.16.694-3.446.694H8.71a.77.77 0 0 0-.76.654l-.873 5.53z"/>
+                                                    <path d="M18.094 8.888c-.01.068-.02.137-.033.205-.866 4.443-3.83 5.98-7.615 5.98H8.67a.935.935 0 0 0-.923.793l-.781 4.943-.222 1.404a.485.485 0 0 0 .479.561h3.362a.773.773 0 0 0 .763-.656l.032-.163.605-3.839.039-.212a.773.773 0 0 1 .763-.657h.48c3.11 0 5.545-1.262 6.258-4.914.297-1.524.143-2.797-.643-3.691a3.062 3.062 0 0 0-.888-.754z"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-gray-900">{m.eventRegister_payWithPayPal()}</p>
+                                                <p class="text-sm text-gray-500">{m.eventRegister_paypalDescription()}</p>
+                                            </div>
+                                        </div>
+                                        {#if paymentMethod === 'paypal'}
+                                            <CheckCircleSolid class="absolute top-2 right-2 w-5 h-5 text-primary-500" />
+                                        {/if}
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -596,13 +704,29 @@
                             <Alert color="red" class="error">{error_message}</Alert>
                         {/if}
 
-                        <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
-                            <Button color="alternative" type="button" size="lg" href="/event/{event.id}" disabled={isSubmittingFinal}>
-                                {m.eventRegister_payLater()}
-                            </Button>
-                            <Button color="primary" type="button" size="lg" onclick={handlePayment} disabled={isSubmittingFinal}>
-                                {m.eventRegister_payNow()}
-                            </Button>
+                        <!-- Payment Actions -->
+                        <div class="flex flex-col gap-4 pt-4">
+                            {#if paymentMethod === 'toss'}
+                                <!-- Toss Payment Button -->
+                                <div class="flex flex-col md:flex-row justify-center gap-4">
+                                    <Button color="alternative" type="button" size="lg" href="/event/{event.id}" disabled={isSubmittingFinal}>
+                                        {m.eventRegister_payLater()}
+                                    </Button>
+                                    <Button color="primary" type="button" size="lg" onclick={handlePayment} disabled={isSubmittingFinal}>
+                                        {m.eventRegister_payNow()}
+                                    </Button>
+                                </div>
+                            {:else}
+                                <!-- PayPal Buttons -->
+                                <div class="max-w-md mx-auto w-full">
+                                    <div id="paypal-button-container" class="min-h-[150px]"></div>
+                                </div>
+                                <div class="flex justify-center">
+                                    <Button color="alternative" type="button" size="lg" href="/event/{event.id}">
+                                        {m.eventRegister_payLater()}
+                                    </Button>
+                                </div>
+                            {/if}
                         </div>
                     </div>
                 {/if}

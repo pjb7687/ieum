@@ -633,6 +633,12 @@
 	"eventRegister_proceedToPayment": "등록을 완료하려면 결제를 진행해주세요.",
 	"eventRegister_payLater": "나중에 결제",
 	"eventRegister_payNow": "지금 결제",
+	"eventRegister_selectPaymentMethod": "결제 수단 선택",
+	"eventRegister_payWithToss": "카드 결제 (토스)",
+	"eventRegister_tossDescription": "국내 신용/체크카드로 결제",
+	"eventRegister_payWithPayPal": "페이팔",
+	"eventRegister_paypalDescription": "페이팔 또는 해외카드로 결제",
+	"eventRegister_paymentCancelled": "결제가 취소되었습니다. 다시 시도해주세요.",
 
 	"myRegistration_title": "내 등록 정보",
 	"myRegistration_description": "이 행사에 대한 등록 세부 정보를 확인하세요.",

@@ -633,6 +633,12 @@
 	"eventRegister_proceedToPayment": "Please complete the payment to finalize your registration.",
 	"eventRegister_payLater": "Pay Later",
 	"eventRegister_payNow": "Pay Now",
+	"eventRegister_selectPaymentMethod": "Select Payment Method",
+	"eventRegister_payWithToss": "Card Payment (Toss)",
+	"eventRegister_tossDescription": "Pay with Korean credit/debit card",
+	"eventRegister_payWithPayPal": "PayPal",
+	"eventRegister_paypalDescription": "Pay with PayPal or international card",
+	"eventRegister_paymentCancelled": "Payment was cancelled. Please try again.",
 
 	"myRegistration_title": "My Registration",
 	"myRegistration_description": "View your registration details for this event.",

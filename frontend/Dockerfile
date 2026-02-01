@@ -11,9 +11,15 @@ RUN pnpm install
 
 COPY . /app/
 
-# Accept build argument and set as environment variable for Vite build
+# Accept build arguments and set as environment variables for Vite build
 ARG GOOGLE_MAPS_API_KEY
 ENV GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY
+
+ARG TOSS_CLIENT_KEY
+ENV TOSS_CLIENT_KEY=$TOSS_CLIENT_KEY
+
+ARG PAYPAL_CLIENT_ID
+ENV PAYPAL_CLIENT_ID=$PAYPAL_CLIENT_ID
 
 RUN pnpm run build
 

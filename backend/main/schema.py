@@ -430,3 +430,15 @@ class TossPaymentConfirmSchema(Schema):
     orderId: str
     amount: int
     eventId: int  # Event ID for which payment is being made
+
+
+class PayPalCreateOrderSchema(Schema):
+    """Schema for creating PayPal order"""
+    eventId: int
+    amount: int  # Amount in KRW
+
+
+class PayPalCaptureOrderSchema(Schema):
+    """Schema for capturing PayPal order"""
+    orderId: str  # PayPal order ID
+    eventId: int

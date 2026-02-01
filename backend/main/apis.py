@@ -4,8 +4,9 @@ import uuid
 import requests
 from functools import wraps
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
+from django.utils import timezone
 
 from ninja import NinjaAPI
 from ninja.security import django_auth
@@ -20,7 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings
+from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate
 from main.schema import *
 from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format
 
@@ -2124,3 +2125,343 @@ def get_card_receipt(request, order_id: str):
         )
 
     return {"code": "success", "receipt_url": receipt_url}
+
+
+def get_paypal_access_token():
+    """Get PayPal OAuth2 access token."""
+    auth = base64.b64encode(f"{settings.PAYPAL_CLIENT_ID}:{settings.PAYPAL_SECRET_KEY}".encode()).decode()
+    response = requests.post(
+        f"{settings.PAYPAL_API_URL}/v1/oauth2/token",
+        headers={
+            "Authorization": f"Basic {auth}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data={"grant_type": "client_credentials"},
+        timeout=30,
+    )
+    if response.ok:
+        return response.json().get("access_token")
+    logger.error(f"Failed to get PayPal access token: {response.text}")
+    return None
+
+
+@api.post("/payment/paypal/create-order")
+def create_paypal_order(request, data: PayPalCreateOrderSchema):
+    """
+    Create a PayPal order for event registration payment.
+    Returns the PayPal order ID for client-side approval.
+    """
+    logger.info(f"PayPal create order request: eventId={data.eventId}, amount={data.amount}, user={request.user}")
+
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return api.create_response(
+            request,
+            {"code": "auth_required", "message": "Authentication required."},
+            status=401,
+        )
+
+    # Validate PayPal is configured
+    if not settings.PAYPAL_CLIENT_ID or not settings.PAYPAL_SECRET_KEY:
+        logger.error("PayPal credentials are not configured")
+        return api.create_response(
+            request,
+            {"code": "config_error", "message": "PayPal is not configured."},
+            status=500,
+        )
+
+    # Get event by ID
+    try:
+        event = Event.objects.get(id=data.eventId)
+    except Event.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "event_not_found", "message": "Event not found."},
+            status=404,
+        )
+
+    user = request.user
+
+    # User must already be registered
+    try:
+        attendee = Attendee.objects.get(event=event, user=user)
+    except Attendee.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_registered", "message": "You are not registered for this event."},
+            status=400,
+        )
+
+    # Check if payment already completed
+    if PaymentHistory.objects.filter(attendee=attendee, status='completed').exists():
+        return api.create_response(
+            request,
+            {"code": "already_paid", "message": "Payment already completed."},
+            status=400,
+        )
+
+    # Verify amount matches event registration fee
+    if data.amount != event.registration_fee:
+        return api.create_response(
+            request,
+            {"code": "amount_mismatch", "message": "Payment amount does not match registration fee."},
+            status=400,
+        )
+
+    # Get PayPal access token
+    access_token = get_paypal_access_token()
+    if not access_token:
+        return api.create_response(
+            request,
+            {"code": "auth_error", "message": "Failed to authenticate with PayPal."},
+            status=500,
+        )
+
+    # Convert KRW to USD (PayPal doesn't support KRW)
+    # Use cached exchange rate from DB (updated once per day)
+    krw_to_usd_rate = None
+    one_day_ago = timezone.now() - timedelta(days=1)
+
+    # Check for cached rate
+    try:
+        cached_rate = ExchangeRate.objects.filter(
+            currency_from='KRW',
+            currency_to='USD',
+            updated_at__gte=one_day_ago
+        ).first()
+        if cached_rate:
+            krw_to_usd_rate = float(cached_rate.rate)
+            logger.info(f"Using cached exchange rate: 1 KRW = {krw_to_usd_rate} USD (updated: {cached_rate.updated_at})")
+    except Exception as e:
+        logger.warning(f"Failed to read cached exchange rate: {e}")
+
+    # Fetch fresh rate if no valid cache
+    if krw_to_usd_rate is None:
+        if not settings.OPENEXCHANGERATES_APP_ID:
+            logger.error("OPENEXCHANGERATES_APP_ID is not configured")
+            return api.create_response(
+                request,
+                {"code": "config_error", "message": "Exchange rate service is not configured."},
+                status=500,
+            )
+
+        try:
+            rate_response = requests.get(
+                f"https://openexchangerates.org/api/latest.json?app_id={settings.OPENEXCHANGERATES_APP_ID}",
+                timeout=10,
+            )
+            if not rate_response.ok:
+                logger.error(f"Exchange rate API returned status {rate_response.status_code}")
+                return api.create_response(
+                    request,
+                    {"code": "exchange_rate_error", "message": "Failed to fetch exchange rate."},
+                    status=500,
+                )
+            rate_data = rate_response.json()
+            krw_rate = rate_data.get("rates", {}).get("KRW")
+            if not krw_rate:
+                logger.error("KRW rate not found in exchange rate response")
+                return api.create_response(
+                    request,
+                    {"code": "exchange_rate_error", "message": "KRW exchange rate not available."},
+                    status=500,
+                )
+            krw_to_usd_rate = 1 / krw_rate
+            logger.info(f"Fetched live exchange rate: 1 USD = {krw_rate} KRW")
+
+            # Save to DB (delete existing first)
+            ExchangeRate.objects.filter(currency_from='KRW', currency_to='USD').delete()
+            ExchangeRate.objects.create(
+                currency_from='KRW',
+                currency_to='USD',
+                rate=krw_to_usd_rate
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch exchange rate: {e}")
+            return api.create_response(
+                request,
+                {"code": "exchange_rate_error", "message": "Failed to fetch exchange rate."},
+                status=500,
+            )
+
+    amount_usd = round(data.amount * krw_to_usd_rate, 2)
+    amount_str = f"{amount_usd:.2f}"
+
+    logger.info(f"Converting {data.amount} KRW to {amount_str} USD (rate: {krw_to_usd_rate})")
+
+    # Create PayPal order
+    try:
+        response = requests.post(
+            f"{settings.PAYPAL_API_URL}/v2/checkout/orders",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "intent": "CAPTURE",
+                "purchase_units": [{
+                    "amount": {
+                        "currency_code": "USD",
+                        "value": amount_str,
+                    },
+                    "description": f"Registration for {event.name}",
+                }],
+            },
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        logger.error(f"PayPal API request failed: {e}")
+        return api.create_response(
+            request,
+            {"code": "api_error", "message": "Failed to connect to PayPal."},
+            status=500,
+        )
+
+    if not response.ok:
+        error_data = response.json()
+        logger.error(f"PayPal order creation failed: {error_data}")
+        return api.create_response(
+            request,
+            {"code": "paypal_error", "message": "Failed to create PayPal order."},
+            status=400,
+        )
+
+    paypal_order = response.json()
+    order_id = paypal_order.get("id")
+
+    logger.info(f"PayPal order created: {order_id} for user={user.id}, event={event.id}")
+
+    return {
+        "code": "success",
+        "orderId": order_id,
+    }
+
+
+@api.post("/payment/paypal/capture-order")
+def capture_paypal_order(request, data: PayPalCaptureOrderSchema):
+    """
+    Capture a PayPal order after user approval.
+    Creates a PaymentHistory record on success.
+    """
+    logger.info(f"PayPal capture order request: orderId={data.orderId}, eventId={data.eventId}, user={request.user}")
+
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return api.create_response(
+            request,
+            {"code": "auth_required", "message": "Authentication required."},
+            status=401,
+        )
+
+    # Validate PayPal is configured
+    if not settings.PAYPAL_CLIENT_ID or not settings.PAYPAL_SECRET_KEY:
+        return api.create_response(
+            request,
+            {"code": "config_error", "message": "PayPal is not configured."},
+            status=500,
+        )
+
+    # Get event by ID
+    try:
+        event = Event.objects.get(id=data.eventId)
+    except Event.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "event_not_found", "message": "Event not found."},
+            status=404,
+        )
+
+    user = request.user
+
+    # User must already be registered
+    try:
+        attendee = Attendee.objects.get(event=event, user=user)
+    except Attendee.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_registered", "message": "You are not registered for this event."},
+            status=400,
+        )
+
+    # Check if payment already completed
+    if PaymentHistory.objects.filter(attendee=attendee, status='completed').exists():
+        return api.create_response(
+            request,
+            {"code": "already_paid", "message": "Payment already completed."},
+            status=400,
+        )
+
+    # Get PayPal access token
+    access_token = get_paypal_access_token()
+    if not access_token:
+        return api.create_response(
+            request,
+            {"code": "auth_error", "message": "Failed to authenticate with PayPal."},
+            status=500,
+        )
+
+    # Capture PayPal order
+    try:
+        response = requests.post(
+            f"{settings.PAYPAL_API_URL}/v2/checkout/orders/{data.orderId}/capture",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        logger.error(f"PayPal capture request failed: {e}")
+        return api.create_response(
+            request,
+            {"code": "api_error", "message": "Failed to connect to PayPal."},
+            status=500,
+        )
+
+    if not response.ok:
+        error_data = response.json()
+        logger.error(f"PayPal capture failed: {error_data}")
+        return api.create_response(
+            request,
+            {"code": "paypal_error", "message": "Failed to capture PayPal payment."},
+            status=400,
+        )
+
+    paypal_capture = response.json()
+
+    # Verify capture was successful
+    if paypal_capture.get("status") != "COMPLETED":
+        return api.create_response(
+            request,
+            {"code": "capture_incomplete", "message": "Payment was not completed."},
+            status=400,
+        )
+
+    # Extract payment amount from the capture response
+    capture_data = paypal_capture.get("purchase_units", [{}])[0].get("payments", {}).get("captures", [{}])[0]
+    amount = int(float(capture_data.get("amount", {}).get("value", 0)))
+
+    # Create PaymentHistory record
+    payment = PaymentHistory(
+        attendee=attendee,
+        event=event,
+        amount=amount,
+        status='completed',
+        payment_type='PayPal',
+        toss_order_id=data.orderId,  # Store PayPal order ID in toss_order_id field
+        toss_payment_key=capture_data.get("id", ""),  # Store PayPal capture ID
+    )
+    payment.copy_attendee_info(attendee)
+    payment.copy_event_info(event)
+    payment.save()
+
+    logger.info(f"PayPal payment captured: user={user.id}, event={event.id}, amount={amount}")
+
+    return {
+        "code": "success",
+        "message": "Payment confirmed successfully.",
+        "number": payment.toss_order_id or str(payment.id),
+        "amount": payment.amount,
+        "event_id": event.id,
+        "event_name": event.name,
+    }

@@ -205,11 +205,20 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 TOSS_SECRET_KEY = os.environ.get('TOSS_SECRET_KEY', '')
 TOSS_API_URL = 'https://api.tosspayments.com/v1'
 
+# PayPal Configuration
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', '')
+PAYPAL_SECRET_KEY = os.environ.get('PAYPAL_SECRET_KEY', '')
+PAYPAL_API_URL = os.environ.get('PAYPAL_API_URL', 'https://api-m.sandbox.paypal.com')  # Use 'https://api-m.paypal.com' for production
+
+# Open Exchange Rates API (for currency conversion)
+OPENEXCHANGERATES_APP_ID = os.environ.get('OPENEXCHANGERATES_APP_ID', '')
+
 ADMIN_PAGE_NAME = os.environ.get('DJANGO_ADMIN_PAGE_NAME', 'djangoadmin')
 SITE_ID = 1
 
 LOGGING = {
     "version": 1,
+    "disable_existing_loggers": False,
     "handlers": {
         'console':{
             'level': 'DEBUG',
@@ -225,6 +234,11 @@ LOGGING = {
             "handlers": ["file", "console"],
             'level': 'INFO',
             'propagate': True,
+        },
+        "main": {
+            "handlers": ["console"],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }

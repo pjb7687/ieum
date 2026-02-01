@@ -33,7 +33,21 @@
     });
 
     onMount(() => {
-        // Validate required parameters
+        // Check if this is a PayPal payment result (stored directly in sessionStorage)
+        const storedPayPalResult = sessionStorage.getItem('paymentResult');
+        if (storedPayPalResult) {
+            try {
+                paymentResult = JSON.parse(storedPayPalResult);
+                sessionStorage.removeItem('paymentResult');
+                sessionStorage.removeItem('pendingPayment');
+                status = 'success';
+                return;
+            } catch (e) {
+                // Continue with Toss flow if parsing fails
+            }
+        }
+
+        // Toss Payments flow: Validate required parameters
         if (!data.paymentKey || !data.orderId || !data.amount) {
             status = 'error';
             errorMessage = 'Missing payment confirmation parameters';

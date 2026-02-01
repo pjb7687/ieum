@@ -77,4 +77,36 @@ export const actions = {
         }
         return;
     },
+    paypal_create_order: async ({ cookies, params, request }) => {
+        const formdata = await request.formData();
+        const amount = parseInt(formdata.get('amount'), 10);
+        const eventId = parseInt(params.slug, 10);
+
+        const response = await post('api/payment/paypal/create-order', {
+            eventId,
+            amount,
+        }, cookies);
+
+        if (!response.ok) {
+            return { success: false, error: response.data?.message || 'Failed to create PayPal order' };
+        }
+
+        return { success: true, orderId: response.data.orderId };
+    },
+    paypal_capture_order: async ({ cookies, params, request }) => {
+        const formdata = await request.formData();
+        const orderId = formdata.get('orderId');
+        const eventId = parseInt(params.slug, 10);
+
+        const response = await post('api/payment/paypal/capture-order', {
+            orderId,
+            eventId,
+        }, cookies);
+
+        if (!response.ok) {
+            return { success: false, error: response.data?.message || 'Failed to capture PayPal payment' };
+        }
+
+        return { success: true, data: response.data };
+    },
 };

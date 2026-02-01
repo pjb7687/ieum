@@ -15,7 +15,8 @@ export default defineConfig({
 	define: {
 		// Expose environment variables to the client
 		'import.meta.env.GOOGLE_MAPS_API_KEY': JSON.stringify(process.env.GOOGLE_MAPS_API_KEY),
-		'import.meta.env.TOSS_CLIENT_KEY': JSON.stringify(process.env.TOSS_CLIENT_KEY)
+		'import.meta.env.TOSS_CLIENT_KEY': JSON.stringify(process.env.TOSS_CLIENT_KEY),
+		'import.meta.env.PAYPAL_CLIENT_ID': JSON.stringify(process.env.PAYPAL_CLIENT_ID)
 	},
 	plugins: [
 		paraglide({
