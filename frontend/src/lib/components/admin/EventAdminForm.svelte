@@ -36,6 +36,9 @@
     let venue_longitude = $state(data.venue_longitude);
     let main_languages = $state(data.main_languages || []);
     let accepts_abstract = $state(data.accepts_abstract);
+    let invitation_code = $state(data.invitation_code?.toUpperCase() || '');
+    let capacity_abstract = $state(data.capacity_abstract ?? 0);
+    let max_votes = $state(data.max_votes ?? 2);
 
     // Keep properties in sync with data object
     $effect(() => {
@@ -47,6 +50,9 @@
         data.venue_longitude = venue_longitude;
         data.main_languages = main_languages;
         data.accepts_abstract = accepts_abstract;
+        data.invitation_code = invitation_code;
+        data.capacity_abstract = capacity_abstract;
+        data.max_votes = max_votes;
     });
 
     // Helper functions for language checkboxes
@@ -150,7 +156,7 @@
 </div>
 <div class="mb-6">
     <Label for="invitation_code" class="block mb-2">{m.eventForm_invitationCode()}</Label>
-    <Input type="text" id="invitation_code" name="invitation_code" value={data.invitation_code} placeholder="" />
+    <Input type="text" id="invitation_code" name="invitation_code" bind:value={invitation_code} oninput={(e) => { invitation_code = e.target.value.toUpperCase(); }} placeholder="" class="uppercase" />
     <span class="text-sm">* {m.eventForm_invitationCodeHelp()}</span>
 </div>
 <div class="mb-6">
@@ -169,13 +175,13 @@
 
 <div class="mb-6">
     <Label for="capacity_abstract" class="block mb-2">{m.eventForm_abstractCapacity()}</Label>
-    <Input type="number" id="capacity_abstract" name="capacity_abstract" value={data.capacity_abstract} />
+    <Input type="number" id="capacity_abstract" name="capacity_abstract" bind:value={capacity_abstract} />
     <span class="text-sm">* {m.eventForm_abstractCapacityHelp()}</span>
 </div>
 
 <div class="mb-6">
     <Label for="max_votes" class="block mb-2">{m.eventForm_maxVotes()}</Label>
-    <Input type="number" id="max_votes" name="max_votes" value={data.max_votes} />
+    <Input type="number" id="max_votes" name="max_votes" bind:value={max_votes} />
     <span class="text-sm">* {m.eventForm_maxVotesHelp()}</span>
 </div>
 {/if}

@@ -451,8 +451,9 @@
                                 id="invitation_code"
                                 name="invitation_code"
                                 bind:value={$formData.invitation_code}
+                                oninput={(e) => { $formData.invitation_code = e.target.value.toUpperCase(); }}
                                 placeholder={m.eventRegister_invitationCodePlaceholder()}
-                                class="bg-white"
+                                class="bg-white uppercase"
                             />
                             {#if $errors.invitation_code}
                                 <p class="text-sm text-red-600 mt-1">{$errors.invitation_code}</p>

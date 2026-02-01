@@ -571,12 +571,12 @@ def update_event(request, event_id: int):
     event.registration_fee = int(data["registration_fee"]) if data.get("registration_fee") not in [None, ""] else None
     event.accepts_abstract = data["accepts_abstract"] == "true"
     event.published = data.get("published", "false") == "true"
-    event.invitation_code = data.get("invitation_code", "").strip()
+    event.invitation_code = data.get("invitation_code", "").strip().upper()
     event.save()
     if event.accepts_abstract:
         event.abstract_deadline = data["abstract_deadline"] if data["abstract_deadline"] else None
-        event.capacity_abstract = data["capacity_abstract"]
-        event.max_votes = data["max_votes"]
+        event.capacity_abstract = int(data["capacity_abstract"]) if data.get("capacity_abstract") not in [None, ""] else 0
+        event.max_votes = int(data["max_votes"]) if data.get("max_votes") not in [None, ""] else 2
         event.save()
 
     return {"code": "success", "message": "Event updated."}
@@ -858,7 +858,7 @@ def register_event(request, event_id: int):
 
     # Validate invitation code if event is invitation-only
     if event.invitation_code:
-        submitted_code = data.get("invitation_code", "").strip()
+        submitted_code = data.get("invitation_code", "").strip().upper()
         if submitted_code != event.invitation_code:
             return api.create_response(
                 request,
