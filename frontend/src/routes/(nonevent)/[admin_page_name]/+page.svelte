@@ -6,7 +6,7 @@
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName, getDisplayVenue } from '$lib/utils.js';
 
-    import EventAdminForm from '$lib/components/EventAdminForm.svelte';
+    import EventAdminForm from '$lib/components/admin/EventAdminForm.svelte';
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
 
     let { data } = $props();

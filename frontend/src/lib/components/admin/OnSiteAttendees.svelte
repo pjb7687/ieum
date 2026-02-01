@@ -7,7 +7,7 @@
     import * as m from '$lib/paraglide/messages.js';
     import { generateNametagPDF, generateCertificatePDF, loadKoreanFonts } from '$lib/pdfUtils.js';
 
-    import OnSiteRegistrationForm from './OnSiteRegistrationForm.svelte';
+    import OnSiteRegistrationForm from '$lib/components/OnSiteRegistrationForm.svelte';
     import TablePagination from '$lib/components/TablePagination.svelte';
     import ConfirmModal from '$lib/components/ConfirmModal.svelte';
     import QRCode from 'qrcode';

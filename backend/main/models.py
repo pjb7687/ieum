@@ -272,3 +272,27 @@ class EmailVerificationKey(models.Model):
         indexes = [
             models.Index(fields=['email', 'verification_key']),
         ]
+
+class PaymentHistory(models.Model):
+    """
+    Payment history for event registrations
+    """
+    STATUS_CHOICES = [
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('pending', 'Pending'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payment_history')
+    attendee = models.OneToOneField(Attendee, on_delete=models.CASCADE, related_name='payment')
+    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='payments')
+    amount = models.IntegerField(default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='completed')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Payment histories'
+
+    def __str__(self):
+        return f"Payment #{self.id} - {self.user.email} - {self.event.name}"

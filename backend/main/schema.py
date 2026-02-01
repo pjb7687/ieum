@@ -333,3 +333,19 @@ class OnSiteAttendeeSchema(Schema):
     email: str
     institute: str
     job_title: str
+
+class PaymentHistorySchema(Schema):
+    number: int
+    checkout_date: str
+    amount: int
+    event_id: int
+    event_name: str
+    start_date: str
+    end_date: str
+    venue: str
+    venue_ko: str
+    organizers_en: str
+    organizers_ko: str
+    status: str
+    attendee_name: str
+    attendee_institute: str

@@ -16,7 +16,7 @@ from django.template import Template, Context
 
 from django.conf import settings
 
-from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution
+from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory
 from main.schema import *
 from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format
 
@@ -139,6 +139,52 @@ def delete_user(request):
         {"success": True, "message": "Account deleted successfully"},
         status=200,
     )
+
+@api.get("/me/payment-history", response=List[PaymentHistorySchema])
+def get_payment_history(request):
+    """
+    Get the payment history for the current user.
+    """
+    user = request.user
+    payments = PaymentHistory.objects.filter(user=user).select_related('event', 'attendee')
+
+    payment_history = []
+    for payment in payments:
+        event = payment.event
+        attendee = payment.attendee
+
+        # Construct attendee name
+        if attendee:
+            name_parts = [attendee.first_name or '']
+            if attendee.middle_initial:
+                name_parts.append(attendee.middle_initial)
+            name_parts.append(attendee.last_name or '')
+            attendee_name = ' '.join(filter(None, name_parts))
+            if attendee.korean_name:
+                attendee_name = f"{attendee_name} ({attendee.korean_name})" if attendee_name else attendee.korean_name
+            attendee_institute = attendee.institute or ''
+        else:
+            attendee_name = ''
+            attendee_institute = ''
+
+        payment_history.append({
+            'number': payment.id,
+            'checkout_date': payment.created_at.strftime('%Y-%m-%d'),
+            'amount': payment.amount,
+            'event_id': event.id,
+            'event_name': event.name,
+            'start_date': event.start_date.strftime('%Y-%m-%d'),
+            'end_date': event.end_date.strftime('%Y-%m-%d'),
+            'venue': event.venue,
+            'venue_ko': event.venue_ko,
+            'organizers_en': event.organizers_en,
+            'organizers_ko': event.organizers_ko,
+            'status': payment.status,
+            'attendee_name': attendee_name,
+            'attendee_institute': attendee_institute
+        })
+
+    return payment_history
 
 @api.get("/csrftoken", auth=None)
 def get_csrf_token(request):
@@ -563,6 +609,52 @@ def get_my_registration(request, event_id: int):
             status=404,
         )
 
+@api.get("/event/{event_id}/registration/payment", response=PaymentHistorySchema)
+def get_my_registration_payment(request, event_id: int):
+    user = request.user
+    event = Event.objects.get(id=event_id)
+    try:
+        attendee = event.attendees.get(user__id=user.id)
+        payment = PaymentHistory.objects.get(attendee=attendee)
+
+        # Construct attendee name
+        name_parts = [attendee.first_name or '']
+        if attendee.middle_initial:
+            name_parts.append(attendee.middle_initial)
+        name_parts.append(attendee.last_name or '')
+        attendee_name = ' '.join(filter(None, name_parts))
+        if attendee.korean_name:
+            attendee_name = f"{attendee_name} ({attendee.korean_name})" if attendee_name else attendee.korean_name
+
+        return {
+            'number': payment.id,
+            'checkout_date': payment.created_at.strftime('%Y-%m-%d'),
+            'amount': payment.amount,
+            'event_id': event.id,
+            'event_name': event.name,
+            'start_date': event.start_date.strftime('%Y-%m-%d'),
+            'end_date': event.end_date.strftime('%Y-%m-%d'),
+            'venue': event.venue,
+            'venue_ko': event.venue_ko,
+            'organizers_en': event.organizers_en,
+            'organizers_ko': event.organizers_ko,
+            'status': payment.status,
+            'attendee_name': attendee_name,
+            'attendee_institute': attendee.institute or ''
+        }
+    except PaymentHistory.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "Payment not found"},
+            status=404,
+        )
+    except Attendee.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "Registration not found"},
+            status=404,
+        )
+
 @api.post("/event/{event_id}/attendee/{attendee_id}/update", response=MessageSchema)
 @ensure_event_staff
 def update_attendee(request, event_id: int, attendee_id: int):
@@ -719,6 +811,16 @@ def register_event(request, event_id: int):
 
     event.attendees.add(attendee)
 
+    # Create payment history record only for paid events
+    if event.registration_fee and event.registration_fee > 0:
+        PaymentHistory.objects.create(
+            user=user,
+            attendee=attendee,
+            event=event,
+            amount=event.registration_fee,
+            status='completed'
+        )
+
     send_mail.delay(
         Template(event.email_template_registration.subject).render(Context({"event": event, "attendee": attendee}, autoescape=False)),
         Template(event.email_template_registration.body).render(Context({"event": event, "attendee": attendee}, autoescape=False)),
@@ -733,6 +835,65 @@ def deregister_event(request, event_id: int, attendee_id: int):
     event = Event.objects.get(id=event_id)
     Attendee.objects.get(id=attendee_id, event=event).delete()
     return {"code": "success", "message": "Successfully deregistered!"}
+
+@api.post("/event/{event_id}/change-request", response=MessageSchema)
+def request_change(request, event_id: int):
+    user = request.user
+    event = Event.objects.get(id=event_id)
+
+    # Verify user is registered for this event
+    try:
+        attendee = Attendee.objects.get(user=user, event=event)
+    except Attendee.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_registered", "message": "You are not registered for this event."},
+            status=400,
+        )
+
+    data = json.loads(request.body)
+    message = data.get("message", "").strip()
+
+    if not message:
+        return api.create_response(
+            request,
+            {"code": "empty_message", "message": "Please provide a message."},
+            status=400,
+        )
+
+    # Send email to all event admins
+    admin_emails = list(event.admins.values_list('email', flat=True))
+
+    if not admin_emails:
+        return api.create_response(
+            request,
+            {"code": "no_admins", "message": "No administrators configured for this event."},
+            status=400,
+        )
+
+    # Build attendee name
+    attendee_name = f"{attendee.first_name} {attendee.last_name}"
+    if attendee.korean_name:
+        attendee_name += f" ({attendee.korean_name})"
+
+    subject = f"[KASRA Events] Registration Change Request from {attendee_name}"
+    body = f"""A registration change/cancellation request has been received.
+
+Event: {event.name}
+Attendee: {attendee_name}
+Email: {user.email}
+Institute: {attendee.institute}
+
+Request Message:
+{message}
+
+Please review and respond to this request.
+"""
+
+    for admin_email in admin_emails:
+        send_mail.delay(subject, body, admin_email)
+
+    return {"code": "success", "message": "Your request has been submitted."}
 
 @api.post("/event/{event_id}/abstract", response=MessageSchema)
 def submit_abstract(request, event_id: int):

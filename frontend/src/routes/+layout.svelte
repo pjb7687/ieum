@@ -115,6 +115,7 @@
 						<span class="block truncate text-sm text-gray-500">{data.user.email}</span>
 					</DropdownHeader>
 					<DropdownItem href="/profile" onclick={() => profileDropdownOpen = false}>{m.nav_myProfile()}</DropdownItem>
+					<DropdownItem href="/payment-history" onclick={() => profileDropdownOpen = false}>{m.nav_paymentHistory()}</DropdownItem>
 					{#if data.user.is_staff}
 						<DropdownDivider />
 						<DropdownItem href="/{data.admin_page_name}" onclick={() => profileDropdownOpen = false}>{m.nav_adminPage()}</DropdownItem>

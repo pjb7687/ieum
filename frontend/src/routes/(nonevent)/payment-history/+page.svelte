@@ -1,0 +1,176 @@
+<script>
+    let { data: page_data } = $props();
+    import { TableSearch, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Button } from 'flowbite-svelte';
+    import * as m from '$lib/paraglide/messages.js';
+    import { languageTag } from '$lib/paraglide/runtime.js';
+    import TablePagination from '$lib/components/TablePagination.svelte';
+    import ChangeRequestModal from '$lib/components/ChangeRequestModal.svelte';
+    import { getDisplayVenue, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
+    import { generateCertificatePDF } from '$lib/pdfUtils.js';
+
+    function formatAmount(amount) {
+        const formattedAmount = amount.toLocaleString('ko-KR', { maximumFractionDigits: 0 });
+        return languageTag() === 'ko' ? `${formattedAmount}원` : `KRW ${formattedAmount}`;
+    }
+
+    function getStatusText(status) {
+        switch (status) {
+            case 'completed':
+                return m.paymentHistory_statusCompleted();
+            case 'cancelled':
+                return m.paymentHistory_statusCancelled();
+            case 'pending':
+                return m.paymentHistory_statusPending();
+            default:
+                return status;
+        }
+    }
+
+    // Check if event has ended (certificate can only be generated after event ends)
+    function hasEventEnded(endDate) {
+        return endDate ? new Date() > new Date(endDate) : false;
+    }
+
+    // Generate certificate PDF for a payment
+    async function generateCertificate(payment) {
+        const certAttendee = {
+            name: payment.attendee_name,
+            institute: payment.attendee_institute
+        };
+
+        const certEvent = {
+            name: payment.event_name,
+            start_date: payment.start_date,
+            end_date: payment.end_date,
+            venue: payment.venue,
+            venue_ko: payment.venue_ko,
+            organizers_en: payment.organizers_en,
+            organizers_ko: payment.organizers_ko
+        };
+
+        const certMessages = {
+            certIssueDate: m.attendees_certIssueDate,
+            certTitle: m.attendees_certTitle,
+            certName: m.attendees_certName,
+            certInstitute: m.attendees_certInstitute,
+            certHasAttended: m.attendees_certHasAttended,
+            certOn: m.attendees_certOn,
+            certHeldAt: m.attendees_certHeldAt,
+            certAsParticipant: m.attendees_certAsParticipant,
+            certFooter: m.attendees_certFooter
+        };
+
+        const pdfUri = await generateCertificatePDF({
+            attendee: certAttendee,
+            event: certEvent,
+            messages: certMessages
+        });
+
+        window.open(pdfUri, '_blank');
+    }
+
+    let payments = page_data.payments || [];
+
+    // Search and pagination state
+    let searchTerm = $state('');
+    let currentPage = $state(1);
+    const itemsPerPage = 5;
+
+    // Change request modal state
+    let showChangeRequestModal = $state(false);
+    let selectedEventId = $state(null);
+
+    function openChangeRequestModal(eventId) {
+        selectedEventId = eventId;
+        showChangeRequestModal = true;
+    }
+
+    // Filter payments based on search term
+    let filteredPayments = $derived(
+        payments.filter((item) =>
+            item.event_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.organizers_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.organizers_ko.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.number.toString().includes(searchTerm)
+        )
+    );
+
+    // Reset to page 1 when search changes
+    $effect(() => {
+        searchTerm;
+        currentPage = 1;
+    });
+
+    let totalPages = $derived(Math.ceil(filteredPayments.length / itemsPerPage));
+    let paginatedPayments = $derived(
+        filteredPayments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    );
+
+    function handlePageChange(page) {
+        currentPage = page;
+    }
+</script>
+
+<!-- Page Header Card -->
+<div class="relative rounded-lg shadow-sm py-16 px-8 mb-8 overflow-hidden" style="background-image: url('/bg-events.webp'); background-size: cover; background-position: center;">
+    <div class="absolute inset-0 bg-slate-900 opacity-60"></div>
+    <div class="relative z-10">
+        <h1 class="text-3xl font-bold text-white">{m.paymentHistory_title()}</h1>
+        <p class="text-slate-200 mt-2">{m.paymentHistory_description()}</p>
+    </div>
+</div>
+
+<!-- Table Card -->
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+    <TableSearch placeholder={m.paymentHistory_searchPlaceholder()} hoverable={true} striped={true} bind:inputValue={searchTerm}>
+        <TableHead>
+            <TableHeadCell>{m.paymentHistory_checkoutDate()}</TableHeadCell>
+            <TableHeadCell>{m.paymentHistory_eventName()}</TableHeadCell>
+            <TableHeadCell>{m.paymentHistory_organizers()}</TableHeadCell>
+            <TableHeadCell>{m.paymentHistory_status()}</TableHeadCell>
+        </TableHead>
+        <TableBody>
+            {#if filteredPayments.length === 0}
+                <TableBodyRow>
+                    <TableBodyCell colspan="4" class="text-center text-gray-500 py-8">
+                        {m.paymentHistory_noRecords()}
+                    </TableBodyCell>
+                </TableBodyRow>
+            {:else}
+                {#each paginatedPayments as payment}
+                    <TableBodyRow>
+                        <TableBodyCell class="align-top">
+                            <div class="font-medium">{formatDate(payment.checkout_date)}</div>
+                            <div class="text-sm text-gray-500">#{payment.number.toString().padStart(10, '0')}</div>
+                            <hr class="my-2 border-gray-200" />
+                            <div class="text-sm">{m.paymentHistory_amount()}: {formatAmount(payment.amount)}</div>
+                            <div class="mt-2 flex flex-col gap-1">
+                                <Button size="xs" color="light" onclick={() => window.print()}>{m.paymentHistory_printReceipt()}</Button>
+                                <Button size="xs" color="light" onclick={() => window.print()}>{m.paymentHistory_printCreditCardSlip()}</Button>
+                            </div>
+                        </TableBodyCell>
+                        <TableBodyCell class="align-top">
+                            <a href="/event/{payment.event_id}" class="font-medium text-gray-900 underline">{payment.event_name}</a>
+                            <div class="text-sm text-gray-500 mt-1">{formatDateRange(payment.start_date, payment.end_date)}</div>
+                            <div class="text-sm text-gray-500">{getDisplayVenue(payment)}</div>
+                        </TableBodyCell>
+                        <TableBodyCell class="align-top">
+                            {getDisplayOrganizers(payment)}
+                        </TableBodyCell>
+                        <TableBodyCell class="align-top">
+                            <span class="font-bold text-orange-500">{getStatusText(payment.status)}</span>
+                            <div class="mt-2 flex flex-col gap-1">
+                                <Button size="xs" color="primary" href="/event/{payment.event_id}/registration#payment_info">{m.common_viewDetails()}</Button>
+                                <Button size="xs" color="light" disabled={payment.status === 'cancelled'} onclick={() => openChangeRequestModal(payment.event_id)}>{m.paymentHistory_requestCancellation()}</Button>
+                                <Button size="xs" color="light" disabled={!hasEventEnded(payment.end_date)} onclick={() => generateCertificate(payment)}>{m.paymentHistory_printCertificate()}</Button>
+                            </div>
+                        </TableBodyCell>
+                    </TableBodyRow>
+                {/each}
+            {/if}
+        </TableBody>
+    </TableSearch>
+    <TablePagination {currentPage} {totalPages} onPageChange={handlePageChange} />
+</div>
+
+<ChangeRequestModal bind:open={showChangeRequestModal} eventId={selectedEventId} />

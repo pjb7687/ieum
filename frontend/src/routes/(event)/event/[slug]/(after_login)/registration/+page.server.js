@@ -1,4 +1,4 @@
-import { get } from '$lib/fetch';
+import { get, post } from '$lib/fetch';
 import { redirect } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
@@ -29,5 +29,32 @@ export async function load({ parent, params, cookies }) {
         }
     }
 
+    // Fetch payment info for the registration
+    try {
+        const response_payment = await get(`api/event/${params.slug}/registration/payment`, cookies);
+        if (response_payment.ok && response_payment.status === 200) {
+            rtn.payment = response_payment.data;
+        }
+    } catch (e) {
+        // Payment might not exist
+        rtn.payment = null;
+    }
+
     return rtn;
 }
+
+/** @type {import('./$types').Actions} */
+export const actions = {
+    changeRequest: async ({ params, cookies, request }) => {
+        const formData = await request.formData();
+        const message = formData.get('message');
+
+        const response = await post(`api/event/${params.slug}/change-request`, { message }, cookies);
+
+        if (!response.ok) {
+            return { success: false, error: response.data?.message || 'An error occurred' };
+        }
+
+        return { success: true };
+    }
+};

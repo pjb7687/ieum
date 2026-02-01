@@ -8,7 +8,7 @@
     import { languageTag } from '$lib/paraglide/runtime.js';
     import { generateNametagPDF, generateCertificatePDF, loadKoreanFonts } from '$lib/pdfUtils.js';
 
-    import RegistrationForm from './RegistrationForm.svelte';
+    import RegistrationForm from '$lib/components/RegistrationForm.svelte';
     import TablePagination from '$lib/components/TablePagination.svelte';
     import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 
