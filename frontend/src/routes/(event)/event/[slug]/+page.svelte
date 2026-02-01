@@ -232,6 +232,7 @@
                             {m.eventDetail_viewRegistration()}
                         </Button>
                         {#if is_event_admin}
+                            <hr class="mt-2 mb-6 border-gray-200" />
                             <Button href="/event/{event.id}/admin" color="primary" size="lg" class="w-full">
                                 {m.eventDetail_manageEvent()}
                             </Button>

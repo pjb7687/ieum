@@ -1946,9 +1946,8 @@ def confirm_toss_payment(request, data: TossPaymentConfirmSchema):
             status=400,
         )
 
-    # Check if payment already exists for this attendee
-    existing_payment = PaymentHistory.objects.filter(attendee=attendee).first()
-    if existing_payment and existing_payment.status == 'completed':
+    # Check if a completed payment already exists for this attendee
+    if PaymentHistory.objects.filter(attendee=attendee, status='completed').exists():
         return api.create_response(
             request,
             {"code": "already_paid", "message": "Payment already completed."},
@@ -2005,22 +2004,18 @@ def confirm_toss_payment(request, data: TossPaymentConfirmSchema):
     # Parse successful response
     toss_payment = response.json()
 
-    # Create or update payment record
-    if existing_payment:
-        payment = existing_payment
-    else:
-        payment = PaymentHistory(
-            attendee=attendee,
-            event=event,
-        )
-        payment.copy_attendee_info(attendee)
-        payment.copy_event_info(event)
-
-    payment.amount = data.amount
-    payment.status = 'completed'
-    payment.payment_type = toss_payment.get('method', 'card')  # Payment method from Toss
-    payment.toss_order_id = data.orderId  # Our generated order ID
-    payment.toss_payment_key = data.paymentKey
+    # Always create a new payment record (don't update cancelled ones)
+    payment = PaymentHistory(
+        attendee=attendee,
+        event=event,
+        amount=data.amount,
+        status='completed',
+        payment_type=toss_payment.get('method', 'card'),
+        toss_order_id=data.orderId,
+        toss_payment_key=data.paymentKey,
+    )
+    payment.copy_attendee_info(attendee)
+    payment.copy_event_info(event)
     payment.save()
 
     logger.info(f"Payment confirmed: user={user.id}, event={event.id}, amount={data.amount}")
