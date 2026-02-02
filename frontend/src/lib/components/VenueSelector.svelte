@@ -1,6 +1,6 @@
 <script>
-  import { Input, Label, Alert, Modal, Button } from 'flowbite-svelte';
-  import { MapPinAltSolid, ArrowLeftOutline } from 'flowbite-svelte-icons';
+  import { Input, Label, Alert, Modal, Button, Hr } from 'flowbite-svelte';
+  import { MapPinAltSolid } from 'flowbite-svelte-icons';
   import * as m from '$lib/paraglide/messages.js';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
@@ -25,15 +25,14 @@
   let modal_open = $state(false);
   let loadError = $state('');
 
-  // Two-step modal state
-  let modalStep = $state(1); // 1 = map selection, 2 = name editing
+  // Temp values for modal editing
   let tempVenueName = $state('');
   let tempVenueNameKo = $state('');
   let tempVenueAddress = $state('');
   let tempVenueAddressKo = $state('');
   let tempLatitude = $state(null);
   let tempLongitude = $state(null);
-  let step2Error = $state('');
+  let formError = $state('');
 
   // Load Google Maps API
   onMount(() => {
@@ -89,8 +88,8 @@
 
     try {
       // Initialize map
-      const center = venueLatitude && venueLongitude
-        ? { lat: venueLatitude, lng: venueLongitude }
+      const center = tempLatitude && tempLongitude
+        ? { lat: tempLatitude, lng: tempLongitude }
         : { lat: 37.5665, lng: 126.9780 }; // Default to Seoul
 
       map = new google.maps.Map(mapContainer, {
@@ -100,9 +99,9 @@
       });
 
       // Add marker if coordinates exist
-      if (venueLatitude && venueLongitude) {
+      if (tempLatitude && tempLongitude) {
         marker = new google.maps.marker.AdvancedMarkerElement({
-          position: { lat: venueLatitude, lng: venueLongitude },
+          position: { lat: tempLatitude, lng: tempLongitude },
           map: map,
           gmpDraggable: true,
         });
@@ -244,7 +243,6 @@
 
   function openModal() {
     modal_open = true;
-    modalStep = 1;
     // Initialize temp values from current values
     tempVenueName = venueName;
     tempVenueNameKo = venueNameKo;
@@ -252,6 +250,7 @@
     tempVenueAddressKo = venueAddressKo;
     tempLatitude = venueLatitude;
     tempLongitude = venueLongitude;
+    formError = '';
     // Initialize map when modal opens
     setTimeout(() => {
       initializeMap();
@@ -260,54 +259,20 @@
 
   function closeModal() {
     modal_open = false;
-    modalStep = 1;
-    step2Error = '';
-  }
-
-  function openModalStep2() {
-    // Can only go directly to step 2 if coordinates already exist
-    if (venueLatitude && venueLongitude) {
-      modal_open = true;
-      modalStep = 2;
-      // Initialize temp values from current values
-      tempVenueName = venueName;
-      tempVenueNameKo = venueNameKo;
-      tempVenueAddress = venueAddress;
-      tempVenueAddressKo = venueAddressKo;
-      tempLatitude = venueLatitude;
-      tempLongitude = venueLongitude;
-      step2Error = '';
-    } else {
-      // No coordinates yet, need to select location first
-      openModal();
-    }
-  }
-
-  function goToStep2() {
-    if (!tempLatitude || !tempLongitude) {
-      loadError = m.form_pleaseSelectLocation();
-      return;
-    }
-    loadError = '';
-    modalStep = 2;
-  }
-
-  function goBackToStep1() {
-    modalStep = 1;
-    step2Error = '';
-    // Reinitialize map when going back
-    setTimeout(() => {
-      initializeMap();
-    }, 100);
+    formError = '';
   }
 
   function confirmVenue() {
     // Validate required fields
-    if (!tempVenueName.trim() || !tempVenueNameKo.trim() || !tempVenueAddress.trim() || !tempVenueAddressKo.trim()) {
-      step2Error = m.form_venueNameAddressRequired();
+    if (!tempLatitude || !tempLongitude) {
+      formError = m.form_pleaseSelectLocation();
       return;
     }
-    step2Error = '';
+    if (!tempVenueName.trim() || !tempVenueNameKo.trim() || !tempVenueAddress.trim() || !tempVenueAddressKo.trim()) {
+      formError = m.form_venueNameAddressRequired();
+      return;
+    }
+    formError = '';
     // Set the actual values from temp values
     venueName = tempVenueName;
     venueNameKo = tempVenueNameKo;
@@ -382,7 +347,7 @@
       required={required}
       readonly
       class="cursor-pointer"
-      onclick={openModalStep2}
+      onclick={openModal}
     />
   </div>
 
@@ -399,7 +364,7 @@
       required={required}
       readonly
       class="cursor-pointer"
-      onclick={openModalStep2}
+      onclick={openModal}
     />
   </div>
   {#if venueLatitude && venueLongitude}
@@ -414,78 +379,67 @@
   {/if}
 </div>
 
-<Modal title={modalStep === 1 ? m.form_selectVenueLocation() : m.form_editVenueNames()} bind:open={modal_open} size="xl" outsideclose={false}>
-  {#if modalStep === 1}
-    <!-- Step 1: Map Selection -->
-    <div class="space-y-4">
-      {#if loadError}
-        <Alert color="red">{loadError}</Alert>
-      {/if}
+<Modal title={m.form_selectVenueLocation()} bind:open={modal_open} size="xl" outsideclose={false}>
+  <div class="space-y-4">
+    {#if loadError || formError}
+      <Alert color="red">{loadError || formError}</Alert>
+    {/if}
 
+    <!-- Map Selection Section -->
+    <div class="relative">
+      <Label for="search_address" class="block mb-2">{m.form_searchAddress()}</Label>
       <div class="relative">
-        <Label for="search_address" class="block mb-2">{m.form_searchAddress()}</Label>
-        <div class="relative">
-          <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-            <MapPinAltSolid class="h-5 w-5 text-gray-500" />
-          </div>
-          <Input
-            id="search_address"
-            type="text"
-            bind:value={searchInput}
-            oninput={handleSearchInput}
-            onfocus={() => { if (predictions.length > 0) showPredictions = true; }}
-            onkeydown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                if (predictions.length > 0) {
-                  selectPlace(predictions[0]);
-                }
-              }
-            }}
-            placeholder={m.form_searchAddressPlaceholder()}
-            class="ps-10"
-            size="md"
-          />
+        <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+          <MapPinAltSolid class="h-5 w-5 text-gray-500" />
         </div>
-
-        {#if showPredictions && predictions.length > 0}
-          <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-            {#each predictions as suggestion}
-              <button
-                type="button"
-                class="w-full text-left px-4 py-2 hover:bg-gray-100 border-b border-gray-200 last:border-b-0"
-                onclick={() => selectPlace(suggestion)}
-              >
-                <div class="font-medium text-sm">{suggestion.placePrediction.mainText?.text || suggestion.placePrediction.text?.text || ''}</div>
-                <div class="text-xs text-gray-600">{suggestion.placePrediction.secondaryText?.text || ''}</div>
-              </button>
-            {/each}
-          </div>
-        {/if}
-
-        <p class="text-sm text-gray-500 mt-2">{m.form_searchAddressHint()}</p>
+        <Input
+          id="search_address"
+          type="text"
+          bind:value={searchInput}
+          oninput={handleSearchInput}
+          onfocus={() => { if (predictions.length > 0) showPredictions = true; }}
+          onkeydown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (predictions.length > 0) {
+                selectPlace(predictions[0]);
+              }
+            }
+          }}
+          placeholder={m.form_searchAddressPlaceholder()}
+          class="ps-10"
+          size="md"
+        />
       </div>
 
-      <div bind:this={mapContainer} class="w-full h-96 rounded-lg border border-gray-300"></div>
+      {#if showPredictions && predictions.length > 0}
+        <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {#each predictions as suggestion}
+            <button
+              type="button"
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 border-b border-gray-200 last:border-b-0"
+              onclick={() => selectPlace(suggestion)}
+            >
+              <div class="font-medium text-sm">{suggestion.placePrediction.mainText?.text || suggestion.placePrediction.text?.text || ''}</div>
+              <div class="text-xs text-gray-600">{suggestion.placePrediction.secondaryText?.text || ''}</div>
+            </button>
+          {/each}
+        </div>
+      {/if}
 
-      <p class="text-sm text-gray-600">
-        {m.form_dragMarkerHint()}
-      </p>
+      <p class="text-sm text-gray-500 mt-2">{m.form_searchAddressHint()}</p>
     </div>
 
-    {#snippet footer()}
-      <div class="flex justify-end gap-2 w-full">
-        <Button color="alternative" onclick={closeModal}>{m.common_cancel()}</Button>
-        <Button color="primary" onclick={goToStep2}>{m.common_next()}</Button>
-      </div>
-    {/snippet}
-  {:else}
-    <!-- Step 2: Name Editing -->
-    <div class="space-y-4">
-      {#if step2Error}
-        <Alert color="red">{step2Error}</Alert>
-      {/if}
+    <div bind:this={mapContainer} class="w-full h-72 rounded-lg border border-gray-300"></div>
 
+    <p class="text-sm text-gray-600">
+      {m.form_dragMarkerHint()}
+    </p>
+
+    <Hr class="my-4" />
+
+    <!-- Name/Address Editing Section -->
+    <div class="space-y-4">
       <div>
         <Label for="edit_venue_address" class="block mb-2">{m.form_venueAddress()} <span class="text-red-500">*</span></Label>
         <Input
@@ -508,40 +462,36 @@
         />
       </div>
 
-      <div>
-        <Label for="edit_venue_name" class="block mb-2">{m.form_venueName()} <span class="text-red-500">*</span></Label>
-        <Input
-          id="edit_venue_name"
-          type="text"
-          bind:value={tempVenueName}
-          placeholder={m.form_venueNamePlaceholder()}
-          required
-        />
-      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label for="edit_venue_name" class="block mb-2">{m.form_venueName()} <span class="text-red-500">*</span></Label>
+          <Input
+            id="edit_venue_name"
+            type="text"
+            bind:value={tempVenueName}
+            placeholder={m.form_venueNamePlaceholder()}
+            required
+          />
+        </div>
 
-      <div>
-        <Label for="edit_venue_name_ko" class="block mb-2">{m.form_venueNameKo()} <span class="text-red-500">*</span></Label>
-        <Input
-          id="edit_venue_name_ko"
-          type="text"
-          bind:value={tempVenueNameKo}
-          placeholder={m.form_venueNameKo()}
-          required
-        />
-      </div>
-    </div>
-
-    {#snippet footer()}
-      <div class="flex justify-between w-full">
-        <Button color="alternative" onclick={goBackToStep1}>
-          <ArrowLeftOutline class="w-4 h-4 me-2" />
-          {m.common_back()}
-        </Button>
-        <div class="flex gap-2">
-          <Button color="alternative" onclick={closeModal}>{m.common_cancel()}</Button>
-          <Button color="primary" onclick={confirmVenue}>{m.common_confirm()}</Button>
+        <div>
+          <Label for="edit_venue_name_ko" class="block mb-2">{m.form_venueNameKo()} <span class="text-red-500">*</span></Label>
+          <Input
+            id="edit_venue_name_ko"
+            type="text"
+            bind:value={tempVenueNameKo}
+            placeholder={m.form_venueNameKo()}
+            required
+          />
         </div>
       </div>
-    {/snippet}
-  {/if}
+    </div>
+  </div>
+
+  {#snippet footer()}
+    <div class="flex justify-end gap-2 w-full">
+      <Button color="alternative" onclick={closeModal}>{m.common_cancel()}</Button>
+      <Button color="primary" onclick={confirmVenue}>{m.common_confirm()}</Button>
+    </div>
+  {/snippet}
 </Modal>
