@@ -536,8 +536,8 @@ def get_event(request, event_id: int):
                 {"code": "not_found", "message": "Event not found."},
                 status=404,
             )
-        # Check if user is staff or event admin
-        is_admin = user.is_staff or event.admins.filter(id=user.id).exists()
+        # Check if user is superuser, staff, or event admin
+        is_admin = user.is_superuser or user.is_staff or event.admins.filter(id=user.id).exists()
         if not is_admin:
             return api.create_response(
                 request,
