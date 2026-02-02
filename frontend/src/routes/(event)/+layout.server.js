@@ -5,7 +5,7 @@ import { error } from '@sveltejs/kit';
 export async function load({ parent, params, cookies }) {
     let rtn = await parent();
 
-    const response_event = await get(`api/event/${params.slug}`);
+    const response_event = await get(`api/event/${params.slug}`, cookies);
     if (response_event.ok && response_event.status === 200) {
         let event = response_event.data;
         rtn.event = event;
