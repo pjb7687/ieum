@@ -526,6 +526,25 @@ def get_event(request, event_id: int):
             {"code": "not_found", "message": "Event not found."},
             status=404,
         )
+
+    # Draft events are only accessible to event admins
+    if not event.published:
+        user = request.user
+        if not user.is_authenticated:
+            return api.create_response(
+                request,
+                {"code": "not_found", "message": "Event not found."},
+                status=404,
+            )
+        # Check if user is staff or event admin
+        is_admin = user.is_staff or event.admins.filter(id=user.id).exists()
+        if not is_admin:
+            return api.create_response(
+                request,
+                {"code": "not_found", "message": "Event not found."},
+                status=404,
+            )
+
     return event
 
 @api.get("/admin/event/{event_id}", response=EventAdminSchema)
