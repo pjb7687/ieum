@@ -153,34 +153,20 @@
       // Get the place from the suggestion
       const place = suggestion.placePrediction.toPlace();
 
-      // Fetch place details in English
+      // Fetch place details (without languageCode - not supported in new API)
       await place.fetchFields({
         fields: ['displayName', 'formattedAddress', 'location'],
-        languageCode: 'en',
       });
 
-      const englishName = place.displayName || suggestion.placePrediction.text?.text || '';
-      const englishAddress = place.formattedAddress || '';
+      const placeName = place.displayName || suggestion.placePrediction.text?.text || '';
       const lat = place.location.lat();
       const lng = place.location.lng();
 
-      // Fetch place details in Korean
-      const placeKo = suggestion.placePrediction.toPlace();
-      await placeKo.fetchFields({
-        fields: ['displayName', 'formattedAddress'],
-        languageCode: 'ko',
-      });
-
-      const koreanName = placeKo.displayName || '';
-      const koreanAddress = placeKo.formattedAddress || '';
-
-      // Update temp venue data
-      tempVenueName = englishName;
-      tempVenueNameKo = koreanName !== englishName ? koreanName : '';
-      tempVenueAddress = englishAddress;
-      tempVenueAddressKo = koreanAddress !== englishAddress ? koreanAddress : '';
+      // Set coordinates and name immediately
       tempLatitude = lat;
       tempLongitude = lng;
+      tempVenueName = placeName;
+      tempVenueNameKo = '';
 
       // Update map
       map.setCenter(place.location);
@@ -202,6 +188,24 @@
           reverseGeocode(tempLatitude, tempLongitude);
         });
       }
+
+      // Use Geocoder to get bilingual addresses (Geocoder supports language parameter)
+      const geocoder = new google.maps.Geocoder();
+      const latlng = { lat, lng };
+
+      // Get English address
+      geocoder.geocode({ location: latlng, language: 'en' }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          tempVenueAddress = results[0].formatted_address;
+        }
+      });
+
+      // Get Korean address
+      geocoder.geocode({ location: latlng, language: 'ko' }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          tempVenueAddressKo = results[0].formatted_address;
+        }
+      });
 
       // Clear search input and hide predictions
       searchInput = '';
