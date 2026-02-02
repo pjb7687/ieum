@@ -19,7 +19,15 @@ export async function load({ parent, params, cookies }) {
             rtn.registered = response_registered.data.registered;
             rtn.payment_status = response_registered.data.payment_status;
         }
+
+        // Check if user has submitted an abstract
+        const response_abstract = await get(`api/event/${params.slug}/abstract`, cookies);
+        if (response_abstract.ok && response_abstract.status === 200) {
+            rtn.abstract_submitted = true;
+        } else {
+            rtn.abstract_submitted = false;
+        }
     }
-    
+
     return rtn;
 }

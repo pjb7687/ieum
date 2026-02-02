@@ -1080,11 +1080,15 @@ def submit_abstract(request, event_id: int):
     file = ContentFile(file_content)
     default_storage.save(file_path, file)
 
+    abstract_type = data.get("type", "poster")
+    wants_short_talk = data.get("wants_short_talk", "false") == "true"
+
     Abstract.objects.create(
         attendee=attendee,
         event=event,
         title=data["title"],
-        is_oral=data["is_oral"] == "true",
+        type=abstract_type,
+        wants_short_talk=wants_short_talk if abstract_type == "poster" else False,
         file_path=file_path,
     )
 
@@ -1281,7 +1285,7 @@ def get_abstracts(request, event_id: int):
     abstracts = event.abstracts.all()
     return abstracts
 
-@api.get("/event/{event_id}/abstract", response=AbstractSchema)
+@api.get("/event/{event_id}/abstract", response=AbstractUserSchema)
 def get_user_abstract(request, event_id: int):
     user = request.user
     event = Event.objects.get(id=event_id)
@@ -1318,8 +1322,8 @@ def update_abstract(request, event_id: int, abstract_id: int):
     abstract = event.abstracts.get(id=abstract_id)
     data = json.loads(request.body)
     abstract.title = data["title"]
-    abstract.is_oral = data["is_oral"]
-    abstract.is_accepted = data["is_accepted"]
+    abstract.type = data.get("type", "poster")
+    abstract.wants_short_talk = data.get("wants_short_talk", False) if abstract.type == "poster" else False
     abstract.save()
     return {"code": "success", "message": "Abstract updated."}
 

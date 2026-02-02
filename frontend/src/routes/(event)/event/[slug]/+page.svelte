@@ -34,6 +34,7 @@
     let registered = data.registered;
     let payment_status = data.payment_status;
     let is_event_admin = data.is_event_admin;
+    let abstract_submitted = data.abstract_submitted;
 
     // Check if user needs to pay (registered for paid event but hasn't paid)
     let needsPayment = $derived(
@@ -224,7 +225,7 @@
                             </div>
                             {#if event.accepts_abstract}
                                 <Button href="/event/{event.id}/abstract" color="primary" size="lg" class="w-full">
-                                    {m.eventDetail_submitAbstract()}
+                                    {abstract_submitted ? m.eventDetail_viewAbstract() : m.eventDetail_submitAbstract()}
                                 </Button>
                             {/if}
                         {/if}

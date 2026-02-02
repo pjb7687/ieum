@@ -280,8 +280,8 @@ class AbstractShortSchema(Schema):
     id: int
     attendee: AttendeeSchema
     title: str
-    is_oral: bool
-    is_accepted: bool
+    type: str
+    wants_short_talk: bool
     votes: int
     link: str
     @staticmethod
@@ -299,8 +299,8 @@ class AbstractSchema(Schema):
     attendee: AttendeeSchema
     title: str
     body: str
-    is_oral: bool
-    is_accepted: bool
+    type: str
+    wants_short_talk: bool
     votes: int
     link: str
     @staticmethod
@@ -325,6 +325,34 @@ class AbstractSchema(Schema):
         full_path = os.path.join(settings.HEADLESS_URL_ROOT, settings.MEDIA_URL, abstract.file_path)
         return full_path
     
+class AbstractUserSchema(Schema):
+    """Schema for user's own abstract - excludes votes"""
+    id: int
+    attendee: AttendeeSchema
+    title: str
+    body: str
+    type: str
+    wants_short_talk: bool
+    link: str
+    @staticmethod
+    def resolve_body(abstract: Abstract) -> str:
+        from django.conf import settings
+        import os
+        full_path = os.path.join(settings.MEDIA_ROOT, abstract.file_path)
+        try:
+            if full_path.endswith(".docx"):
+                return docx_to_html(full_path)
+            elif full_path.endswith(".odt"):
+                return odt_to_html(full_path)
+        except:
+            return "An error occured while trying to convert the file to HTML. Please contact the administrator."
+    @staticmethod
+    def resolve_link(abstract: Abstract) -> str:
+        from django.conf import settings
+        import os
+        full_path = os.path.join(settings.HEADLESS_URL_ROOT, settings.MEDIA_URL, abstract.file_path)
+        return full_path
+
 class AbstractVoteSchema(Schema):
     id: int
     reviewer: AttendeeSchema

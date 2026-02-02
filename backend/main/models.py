@@ -220,12 +220,17 @@ class Abstract(models.Model):
     """
     Abstract model
     """
+    TYPE_CHOICES = [
+        ('speaker', 'Speaker'),
+        ('poster', 'Poster'),
+    ]
+
     attendee = models.ForeignKey(Attendee, null=True, on_delete=models.CASCADE, related_name='abstracts')
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='abstracts')
     title = models.CharField(max_length=1000)
     file_path = models.CharField(max_length=1000)
-    is_oral = models.BooleanField(default=False)
-    is_accepted = models.BooleanField(default=False)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='poster')
+    wants_short_talk = models.BooleanField(default=False)  # Only applicable for poster type
     def delete(self):
         try:
             import os, shutil

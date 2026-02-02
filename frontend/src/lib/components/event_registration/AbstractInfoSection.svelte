@@ -18,24 +18,22 @@
                 <p class="text-sm font-medium text-gray-500">{m.myRegistration_abstractTitle()}</p>
                 <p class="text-base text-gray-900">{my_abstract.title}</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <p class="text-sm font-medium text-gray-500">{m.myRegistration_abstractType()}</p>
-                    <p class="text-base text-gray-900">{my_abstract.is_oral ? m.abstractType_oral() : m.abstractType_poster()}</p>
+                    <p class="text-base text-gray-900">{my_abstract.type === 'speaker' ? m.abstractType_speaker() : m.abstractType_poster()}</p>
                 </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500">{m.myRegistration_abstractStatus()}</p>
-                    <p class="text-base text-gray-900">{my_abstract.is_accepted ? m.myRegistration_abstractAccepted() : m.myRegistration_abstractPending()}</p>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500">{m.myRegistration_abstractVotes()}</p>
-                    <p class="text-base text-gray-900">{my_abstract.votes}</p>
-                </div>
+                {#if my_abstract.type === 'poster' && my_abstract.wants_short_talk}
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">{m.myRegistration_shortTalkNomination()}</p>
+                        <p class="text-base text-gray-900">{m.common_yes()}</p>
+                    </div>
+                {/if}
             </div>
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-4 mt-8 pt-6 border-t border-gray-200">
-                <Button color="light" href="/event/{event.id}/abstract">{m.myRegistration_editAbstract()}</Button>
+                <Button color="light" href="/event/{event.id}/abstract">{m.eventDetail_viewAbstract()}</Button>
             </div>
         </div>
     {:else}

@@ -244,7 +244,6 @@
         <TableHeadCell>{m.abstracts_title()}</TableHeadCell>
         <TableHeadCell>{m.abstracts_presenter()}</TableHeadCell>
         <TableHeadCell>{m.abstracts_type()}</TableHeadCell>
-        <TableHeadCell>{m.abstracts_accepted()}</TableHeadCell>
         <TableHeadCell>{m.abstracts_votes()}</TableHeadCell>
         <TableHeadCell class="w-1">{m.abstracts_actions()}</TableHeadCell>
     </TableHead>
@@ -253,8 +252,12 @@
             <TableBodyRow>
                 <TableBodyCell>{(row.title.length > 10)?row.title.slice(0, 10)+'...':row.title}</TableBodyCell>
                 <TableBodyCell>{getDisplayName(row.attendee)}</TableBodyCell>
-                <TableBodyCell>{row.is_oral ? m.abstractType_oral() : m.abstractType_poster()}</TableBodyCell>
-                <TableBodyCell>{row.is_accepted}</TableBodyCell>
+                <TableBodyCell>
+                    {row.type === 'speaker' ? m.abstractType_speaker() : m.abstractType_poster()}
+                    {#if row.type === 'poster' && row.wants_short_talk}
+                        <span class="text-xs text-gray-500 ml-1">({m.myRegistration_shortTalkNomination()})</span>
+                    {/if}
+                </TableBodyCell>
                 <TableBodyCell>{row.votes}</TableBodyCell>
                 <TableBodyCell>
                     <div class="flex justify-center gap-2">
@@ -339,16 +342,16 @@
             <div class="w-full">
                 <Label for="type" class="block mb-2">{m.abstracts_type()}</Label>
                 <Select id="type" name="type" items={[
-                    { value: 'oral', name: m.abstractType_oral() },
+                    { value: 'speaker', name: m.abstractType_speaker() },
                     { value: 'poster', name: m.abstractType_poster() }
-                ]} value={selected_abstract?selected_abstract.is_oral?'oral':'poster':''} />
+                ]} value={selected_abstract?selected_abstract.type:''} />
             </div>
             <div class="w-full">
-                <Label for="is_accepted" class="block mb-2">{m.abstracts_accepted()}</Label>
-                <Select id="is_accepted" name="is_accepted" items={[
+                <Label for="wants_short_talk" class="block mb-2">{m.myRegistration_shortTalkNomination()}</Label>
+                <Select id="wants_short_talk" name="wants_short_talk" items={[
                     { value: 'true', name: m.abstracts_yes() },
                     { value: 'false', name: m.abstracts_no() }
-                ]} value={selected_abstract?selected_abstract.is_accepted?'true':'false':''} />
+                ]} value={selected_abstract?selected_abstract.wants_short_talk?'true':'false':''} />
             </div>
         </div>
         <div class="mb-6">
