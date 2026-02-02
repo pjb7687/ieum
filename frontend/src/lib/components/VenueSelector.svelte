@@ -149,23 +149,21 @@
 
   async function selectPlace(suggestion) {
     try {
-      // Get the place from the suggestion
-      const place = suggestion.placePrediction.toPlace();
+      // Get placeId for fetching in different languages
+      const placeId = suggestion.placePrediction.placeId;
 
-      // Fetch place details (without languageCode - not supported in new API)
+      // Fetch place details to get location first
+      const place = suggestion.placePrediction.toPlace();
       await place.fetchFields({
-        fields: ['displayName', 'formattedAddress', 'location'],
+        fields: ['displayName', 'location'],
       });
 
-      const placeName = place.displayName || suggestion.placePrediction.text?.text || '';
       const lat = place.location.lat();
       const lng = place.location.lng();
 
-      // Set coordinates and name immediately
+      // Set coordinates immediately
       tempLatitude = lat;
       tempLongitude = lng;
-      tempVenueName = placeName;
-      tempVenueNameKo = '';
 
       // Update map
       map.setCenter(place.location);
@@ -186,6 +184,33 @@
           tempLongitude = event.latLng.lng();
           reverseGeocode(tempLatitude, tempLongitude);
         });
+      }
+
+      // Fetch place name in English using new Places API
+      // requestedLanguage is passed when constructing the Place object
+      try {
+        const placeEn = new google.maps.places.Place({
+          id: placeId,
+          requestedLanguage: 'en',
+        });
+        await placeEn.fetchFields({ fields: ['displayName'] });
+        tempVenueName = placeEn.displayName || place.displayName || '';
+      } catch (e) {
+        console.warn('Failed to fetch English name:', e);
+        tempVenueName = place.displayName || '';
+      }
+
+      // Fetch place name in Korean using new Places API
+      try {
+        const placeKo = new google.maps.places.Place({
+          id: placeId,
+          requestedLanguage: 'ko',
+        });
+        await placeKo.fetchFields({ fields: ['displayName'] });
+        tempVenueNameKo = placeKo.displayName || place.displayName || '';
+      } catch (e) {
+        console.warn('Failed to fetch Korean name:', e);
+        tempVenueNameKo = place.displayName || '';
       }
 
       // Use Geocoder to get bilingual addresses (Geocoder supports language parameter)
