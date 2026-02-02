@@ -308,14 +308,6 @@
     closeModal();
   }
 
-  function clearVenue() {
-    venueName = '';
-    venueNameKo = '';
-    venueAddress = '';
-    venueAddressKo = '';
-    venueLatitude = null;
-    venueLongitude = null;
-  }
 </script>
 
 <div class="space-y-4">
@@ -323,23 +315,16 @@
     <Label for="venue_address" class="block mb-2">
       {m.form_venueAddress()} {#if required}<span class="text-red-500">*</span>{/if}
     </Label>
-    <div class="flex gap-2">
-      <Input
-        id="venue_address"
-        name="venue_address"
-        type="text"
-        value={venueAddress}
-        placeholder={m.form_venueAddressPlaceholder()}
-        class="flex-1 cursor-pointer"
-        readonly
-        onclick={openModal}
-      />
-      {#if venueName || venueAddress}
-        <Button color="alternative" onclick={clearVenue}>
-          {m.common_clear()}
-        </Button>
-      {/if}
-    </div>
+    <Input
+      id="venue_address"
+      name="venue_address"
+      type="text"
+      value={venueAddress}
+      placeholder={m.form_venueAddressPlaceholder()}
+      class="cursor-pointer"
+      readonly
+      onclick={openModal}
+    />
   </div>
 
   <div>
