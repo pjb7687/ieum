@@ -129,7 +129,8 @@ class Event(models.Model):
     end_date = models.DateField()
     venue = models.CharField(max_length=1000)  # Venue display name (English)
     venue_ko = models.CharField(max_length=1000, blank=True)  # Venue display name (Korean)
-    venue_address = models.CharField(max_length=1000, blank=True)  # Full address
+    venue_address = models.CharField(max_length=1000, blank=True)  # Full address (English)
+    venue_address_ko = models.CharField(max_length=1000, blank=True)  # Full address (Korean)
     venue_latitude = models.FloatField(blank=True, null=True)  # Latitude for map
     venue_longitude = models.FloatField(blank=True, null=True)  # Longitude for map
     organizers = models.ManyToManyField('User', related_name='organized_events', blank=True)

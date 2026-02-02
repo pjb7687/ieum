@@ -2,7 +2,7 @@
     import { Input, Label, Button, Checkbox, Spinner, Tooltip } from 'flowbite-svelte';
     import { SearchOutline, CalendarMonthOutline, MapPinAltSolid, UserCircleOutline, CheckCircleSolid, ClockOutline, GlobeSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayVenue, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
+    import { getDisplayVenue, getDisplayVenueAddress, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
@@ -303,8 +303,8 @@
                                         <div class="flex-1">
                                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_location()}</p>
                                             <p class="text-sm text-gray-900 font-medium">{@html highlightText(getDisplayVenue(event), searchKeyword)}</p>
-                                            {#if event.venue_address}
-                                                <p class="text-xs text-gray-600 mt-1">{@html highlightText(event.venue_address, searchKeyword)}</p>
+                                            {#if getDisplayVenueAddress(event)}
+                                                <p class="text-xs text-gray-600 mt-1">{@html highlightText(getDisplayVenueAddress(event), searchKeyword)}</p>
                                             {/if}
                                         </div>
                                     </div>

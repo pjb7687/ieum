@@ -12,6 +12,7 @@
         venue: '',
         venue_ko: '',
         venue_address: '',
+        venue_address_ko: '',
         venue_latitude: null,
         venue_longitude: null,
         main_languages: [],
@@ -32,6 +33,7 @@
     let venue = $state(data.venue);
     let venue_ko = $state(data.venue_ko);
     let venue_address = $state(data.venue_address);
+    let venue_address_ko = $state(data.venue_address_ko);
     let venue_latitude = $state(data.venue_latitude);
     let venue_longitude = $state(data.venue_longitude);
     let main_languages = $state(data.main_languages || []);
@@ -46,6 +48,7 @@
         data.venue = venue;
         data.venue_ko = venue_ko;
         data.venue_address = venue_address;
+        data.venue_address_ko = venue_address_ko;
         data.venue_latitude = venue_latitude;
         data.venue_longitude = venue_longitude;
         data.main_languages = main_languages;
@@ -120,6 +123,7 @@
         bind:venueName={venue}
         bind:venueNameKo={venue_ko}
         bind:venueAddress={venue_address}
+        bind:venueAddressKo={venue_address_ko}
         bind:venueLatitude={venue_latitude}
         bind:venueLongitude={venue_longitude}
         required={true}

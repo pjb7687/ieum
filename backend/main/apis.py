@@ -490,6 +490,7 @@ def add_event(request):
         end_date=data["end_date"],
         venue=data["venue"],
         venue_address=data.get("venue_address", ""),
+        venue_address_ko=data.get("venue_address_ko", ""),
         venue_latitude=float(data["venue_latitude"]) if data.get("venue_latitude") else None,
         venue_longitude=float(data["venue_longitude"]) if data.get("venue_longitude") else None,
         organizers=data["organizers"],
@@ -556,6 +557,7 @@ def update_event(request, event_id: int):
     event.venue = data["venue"]
     event.venue_ko = data.get("venue_ko", "")
     event.venue_address = data.get("venue_address", "")
+    event.venue_address_ko = data.get("venue_address_ko", "")
     event.venue_latitude = float(data["venue_latitude"]) if data.get("venue_latitude") else None
     event.venue_longitude = float(data["venue_longitude"]) if data.get("venue_longitude") else None
     # Parse main_languages if it's a JSON string, otherwise use the array directly

@@ -162,6 +162,7 @@ class EventSchema(Schema):
     venue: str
     venue_ko: str
     venue_address: str
+    venue_address_ko: str
     venue_latitude: Union[float, None]
     venue_longitude: Union[float, None]
     organizers: List[PublicUserSchema]
@@ -204,6 +205,7 @@ class EventAdminSchema(Schema):
     venue: str
     venue_ko: str
     venue_address: str
+    venue_address_ko: str
     venue_latitude: Union[float, None]
     venue_longitude: Union[float, None]
     organizers: List[UserSchema]

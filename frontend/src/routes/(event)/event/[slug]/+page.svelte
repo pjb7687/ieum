@@ -15,7 +15,7 @@
     } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
-    import { getDisplayVenue, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
+    import { getDisplayVenue, getDisplayVenueAddress, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
     import { marked } from 'marked';
     import { browser } from '$app/environment';
     import VenueMapWidget from '$lib/components/VenueMapWidget.svelte';
@@ -162,8 +162,8 @@
                         <div class="flex-1">
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.eventDetail_venue()}</p>
                             <p class="text-sm text-gray-900 font-medium">{getDisplayVenue(event)}</p>
-                            {#if event.venue_address}
-                                <p class="text-xs text-gray-600 mt-1">{event.venue_address}</p>
+                            {#if getDisplayVenueAddress(event)}
+                                <p class="text-xs text-gray-600 mt-1">{getDisplayVenueAddress(event)}</p>
                             {/if}
                         </div>
                     </div>
@@ -293,7 +293,7 @@
             <!-- Location Map -->
             <VenueMapWidget
                 venueName={getDisplayVenue(event)}
-                venueAddress={event.venue_address}
+                venueAddress={getDisplayVenueAddress(event)}
                 venueLatitude={event.venue_latitude}
                 venueLongitude={event.venue_longitude}
             />

@@ -1,8 +1,7 @@
 <script>
   import { Input, Label, Alert, Modal, Button } from 'flowbite-svelte';
-  import { MapPinAltSolid } from 'flowbite-svelte-icons';
+  import { MapPinAltSolid, ArrowLeftOutline } from 'flowbite-svelte-icons';
   import * as m from '$lib/paraglide/messages.js';
-  import { languageTag } from '$lib/paraglide/runtime.js';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
 
@@ -10,6 +9,7 @@
     venueName = $bindable(''),
     venueNameKo = $bindable(''),
     venueAddress = $bindable(''),
+    venueAddressKo = $bindable(''),
     venueLatitude = $bindable(null),
     venueLongitude = $bindable(null),
     error = null,
@@ -24,6 +24,16 @@
   let showPredictions = $state(false);
   let modal_open = $state(false);
   let loadError = $state('');
+
+  // Two-step modal state
+  let modalStep = $state(1); // 1 = map selection, 2 = name editing
+  let tempVenueName = $state('');
+  let tempVenueNameKo = $state('');
+  let tempVenueAddress = $state('');
+  let tempVenueAddressKo = $state('');
+  let tempLatitude = $state(null);
+  let tempLongitude = $state(null);
+  let step2Error = $state('');
 
   // Load Google Maps API
   onMount(() => {
@@ -98,9 +108,9 @@
         });
 
         marker.addListener('dragend', (event) => {
-          venueLatitude = event.latLng.lat();
-          venueLongitude = event.latLng.lng();
-          reverseGeocode(venueLatitude, venueLongitude);
+          tempLatitude = event.latLng.lat();
+          tempLongitude = event.latLng.lng();
+          reverseGeocode(tempLatitude, tempLongitude);
         });
       }
     } catch (error) {
@@ -143,16 +153,34 @@
       // Get the place from the suggestion
       const place = suggestion.placePrediction.toPlace();
 
-      // Fetch place details
+      // Fetch place details in English
       await place.fetchFields({
         fields: ['displayName', 'formattedAddress', 'location'],
+        languageCode: 'en',
       });
 
-      // Update venue data
-      venueName = place.displayName || suggestion.placePrediction.text?.text || '';
-      venueAddress = place.formattedAddress || '';
-      venueLatitude = place.location.lat();
-      venueLongitude = place.location.lng();
+      const englishName = place.displayName || suggestion.placePrediction.text?.text || '';
+      const englishAddress = place.formattedAddress || '';
+      const lat = place.location.lat();
+      const lng = place.location.lng();
+
+      // Fetch place details in Korean
+      const placeKo = suggestion.placePrediction.toPlace();
+      await placeKo.fetchFields({
+        fields: ['displayName', 'formattedAddress'],
+        languageCode: 'ko',
+      });
+
+      const koreanName = placeKo.displayName || '';
+      const koreanAddress = placeKo.formattedAddress || '';
+
+      // Update temp venue data
+      tempVenueName = englishName;
+      tempVenueNameKo = koreanName !== englishName ? koreanName : '';
+      tempVenueAddress = englishAddress;
+      tempVenueAddressKo = koreanAddress !== englishAddress ? koreanAddress : '';
+      tempLatitude = lat;
+      tempLongitude = lng;
 
       // Update map
       map.setCenter(place.location);
@@ -169,9 +197,9 @@
         });
 
         marker.addListener('dragend', (event) => {
-          venueLatitude = event.latLng.lat();
-          venueLongitude = event.latLng.lng();
-          reverseGeocode(venueLatitude, venueLongitude);
+          tempLatitude = event.latLng.lat();
+          tempLongitude = event.latLng.lng();
+          reverseGeocode(tempLatitude, tempLongitude);
         });
       }
 
@@ -190,10 +218,21 @@
     const geocoder = new google.maps.Geocoder();
     const latlng = { lat: lat, lng: lng };
 
-    geocoder.geocode({ location: latlng }, (results, status) => {
+    // Get address in English
+    geocoder.geocode({ location: latlng, language: 'en' }, (results, status) => {
       if (status === 'OK') {
         if (results[0]) {
-          venueAddress = results[0].formatted_address;
+          tempVenueAddress = results[0].formatted_address;
+        }
+      }
+    });
+
+    // Get address in Korean
+    geocoder.geocode({ location: latlng, language: 'ko' }, (results, status) => {
+      if (status === 'OK') {
+        if (results[0]) {
+          const koreanAddress = results[0].formatted_address;
+          tempVenueAddressKo = koreanAddress !== tempVenueAddress ? koreanAddress : '';
         }
       }
     });
@@ -201,6 +240,14 @@
 
   function openModal() {
     modal_open = true;
+    modalStep = 1;
+    // Initialize temp values from current values
+    tempVenueName = venueName;
+    tempVenueNameKo = venueNameKo;
+    tempVenueAddress = venueAddress;
+    tempVenueAddressKo = venueAddressKo;
+    tempLatitude = venueLatitude;
+    tempLongitude = venueLongitude;
     // Initialize map when modal opens
     setTimeout(() => {
       initializeMap();
@@ -209,87 +256,70 @@
 
   function closeModal() {
     modal_open = false;
+    modalStep = 1;
+    step2Error = '';
+  }
+
+  function goToStep2() {
+    if (!tempLatitude || !tempLongitude) {
+      loadError = m.form_pleaseSelectLocation();
+      return;
+    }
+    loadError = '';
+    modalStep = 2;
+  }
+
+  function goBackToStep1() {
+    modalStep = 1;
+    step2Error = '';
+    // Reinitialize map when going back
+    setTimeout(() => {
+      initializeMap();
+    }, 100);
+  }
+
+  function confirmVenue() {
+    // Validate required fields
+    if (!tempVenueName.trim() || !tempVenueNameKo.trim() || !tempVenueAddress.trim()) {
+      step2Error = m.form_venueNameAddressRequired();
+      return;
+    }
+    step2Error = '';
+    // Set the actual values from temp values
+    venueName = tempVenueName;
+    venueNameKo = tempVenueNameKo;
+    venueAddress = tempVenueAddress;
+    venueAddressKo = tempVenueAddressKo;
+    venueLatitude = tempLatitude;
+    venueLongitude = tempLongitude;
+    closeModal();
   }
 
   function clearVenue() {
     venueName = '';
     venueNameKo = '';
     venueAddress = '';
+    venueAddressKo = '';
     venueLatitude = null;
     venueLongitude = null;
   }
 </script>
 
 <div class="space-y-4">
-  {#if languageTag() === 'ko'}
-    <!-- Korean venue name first when UI is Korean -->
-    <div>
-      <Label for="venue_name_ko" class="block mb-2">
-        {m.form_venueNameKo()}
-      </Label>
-      <Input
-        id="venue_name_ko"
-        name="venue_ko"
-        type="text"
-        bind:value={venueNameKo}
-        placeholder={m.form_venueNameKo()}
-      />
-    </div>
-    <div>
-      <Label for="venue_name" class="block mb-2">
-        {m.form_venueName()}{#if required} <span class="text-red-500">*</span>{/if}
-      </Label>
-      <Input
-        id="venue_name"
-        name="venue"
-        type="text"
-        bind:value={venueName}
-        placeholder={m.form_venueNamePlaceholder()}
-        required={required}
-      />
-    </div>
-  {:else}
-    <!-- English venue name first when UI is English -->
-    <div>
-      <Label for="venue_name" class="block mb-2">
-        {m.form_venueName()}{#if required} <span class="text-red-500">*</span>{/if}
-      </Label>
-      <Input
-        id="venue_name"
-        name="venue"
-        type="text"
-        bind:value={venueName}
-        placeholder={m.form_venueNamePlaceholder()}
-        required={required}
-      />
-    </div>
-    <div>
-      <Label for="venue_name_ko" class="block mb-2">
-        {m.form_venueNameKo()}
-      </Label>
-      <Input
-        id="venue_name_ko"
-        name="venue_ko"
-        type="text"
-        bind:value={venueNameKo}
-        placeholder={m.form_venueNameKo()}
-      />
-    </div>
-  {/if}
-
   <div>
     <Label for="venue_address" class="block mb-2">
-      {m.form_venueAddress()}
+      {m.form_venueAddress()} {#if required}<span class="text-red-500">*</span>{/if}
     </Label>
     <div class="flex gap-2">
       <Input
         id="venue_address"
         name="venue_address"
         type="text"
-        bind:value={venueAddress}
+        value={venueAddress}
         placeholder={m.form_venueAddressPlaceholder()}
-        class="flex-1"
+        class="flex-1 cursor-pointer"
         readonly
+        onclick={openModal}
       />
       <Button color="primary" onclick={openModal}>
         <MapPinAltSolid class="w-4 h-4 me-2" />
@@ -303,6 +333,41 @@
     </div>
   </div>
 
+  <div>
+    <Label for="venue_name" class="block mb-2">
+      {m.form_venueName()} {#if required}<span class="text-red-500">*</span>{/if}
+    </Label>
+    <Input
+      id="venue_name"
+      name="venue"
+      type="text"
+      value={venueName}
+      placeholder={m.form_venueNamePlaceholder()}
+      required={required}
+      readonly
+      class="cursor-pointer"
+      onclick={openModal}
+    />
+  </div>
+
+  <div>
+    <Label for="venue_name_ko" class="block mb-2">
+      {m.form_venueNameKo()} {#if required}<span class="text-red-500">*</span>{/if}
+    </Label>
+    <Input
+      id="venue_name_ko"
+      name="venue_ko"
+      type="text"
+      value={venueNameKo}
+      placeholder={m.form_venueNameKo()}
+      required={required}
+      readonly
+      class="cursor-pointer"
+      onclick={openModal}
+    />
+  </div>
+
+  <input type="hidden" name="venue_address_ko" value={venueAddressKo} />
   {#if venueLatitude && venueLongitude}
     <input type="hidden" name="venue_latitude" value={venueLatitude} />
     <input type="hidden" name="venue_longitude" value={venueLongitude} />
@@ -315,59 +380,133 @@
   {/if}
 </div>
 
-<Modal title={m.form_selectVenueLocation()} bind:open={modal_open} size="xl" outsideclose>
-  <div class="space-y-4">
-    {#if loadError}
-      <Alert color="red">{loadError}</Alert>
-    {/if}
+<Modal title={modalStep === 1 ? m.form_selectVenueLocation() : m.form_editVenueNames()} bind:open={modal_open} size="xl" outsideclose={false}>
+  {#if modalStep === 1}
+    <!-- Step 1: Map Selection -->
+    <div class="space-y-4">
+      {#if loadError}
+        <Alert color="red">{loadError}</Alert>
+      {/if}
 
-    <div class="relative">
-      <Label for="search_address" class="block mb-2">{m.form_searchAddress()}</Label>
       <div class="relative">
-        <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-          <MapPinAltSolid class="h-5 w-5 text-gray-500" />
+        <Label for="search_address" class="block mb-2">{m.form_searchAddress()}</Label>
+        <div class="relative">
+          <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+            <MapPinAltSolid class="h-5 w-5 text-gray-500" />
+          </div>
+          <Input
+            id="search_address"
+            type="text"
+            bind:value={searchInput}
+            oninput={handleSearchInput}
+            onfocus={() => { if (predictions.length > 0) showPredictions = true; }}
+            onkeydown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (predictions.length > 0) {
+                  selectPlace(predictions[0]);
+                }
+              }
+            }}
+            placeholder={m.form_searchAddressPlaceholder()}
+            class="ps-10"
+            size="md"
+          />
         </div>
+
+        {#if showPredictions && predictions.length > 0}
+          <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            {#each predictions as suggestion}
+              <button
+                type="button"
+                class="w-full text-left px-4 py-2 hover:bg-gray-100 border-b border-gray-200 last:border-b-0"
+                onclick={() => selectPlace(suggestion)}
+              >
+                <div class="font-medium text-sm">{suggestion.placePrediction.mainText?.text || suggestion.placePrediction.text?.text || ''}</div>
+                <div class="text-xs text-gray-600">{suggestion.placePrediction.secondaryText?.text || ''}</div>
+              </button>
+            {/each}
+          </div>
+        {/if}
+
+        <p class="text-sm text-gray-500 mt-2">{m.form_searchAddressHint()}</p>
+      </div>
+
+      <div bind:this={mapContainer} class="w-full h-96 rounded-lg border border-gray-300"></div>
+
+      <p class="text-sm text-gray-600">
+        {m.form_dragMarkerHint()}
+      </p>
+    </div>
+
+    {#snippet footer()}
+      <div class="flex justify-end gap-2 w-full">
+        <Button color="alternative" onclick={closeModal}>{m.common_cancel()}</Button>
+        <Button color="primary" onclick={goToStep2}>{m.common_next()}</Button>
+      </div>
+    {/snippet}
+  {:else}
+    <!-- Step 2: Name Editing -->
+    <div class="space-y-4">
+      {#if step2Error}
+        <Alert color="red">{step2Error}</Alert>
+      {/if}
+
+      <div>
+        <Label for="edit_venue_address" class="block mb-2">{m.form_venueAddress()} <span class="text-red-500">*</span></Label>
         <Input
-          id="search_address"
+          id="edit_venue_address"
           type="text"
-          bind:value={searchInput}
-          oninput={handleSearchInput}
-          onfocus={() => { if (predictions.length > 0) showPredictions = true; }}
-          placeholder={m.form_searchAddressPlaceholder()}
-          class="ps-10"
-          size="md"
+          bind:value={tempVenueAddress}
+          placeholder={m.form_venueAddressPlaceholder()}
+          required
         />
       </div>
 
-      {#if showPredictions && predictions.length > 0}
-        <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {#each predictions as suggestion}
-            <button
-              type="button"
-              class="w-full text-left px-4 py-2 hover:bg-gray-100 border-b border-gray-200 last:border-b-0"
-              onclick={() => selectPlace(suggestion)}
-            >
-              <div class="font-medium text-sm">{suggestion.placePrediction.mainText?.text || suggestion.placePrediction.text?.text || ''}</div>
-              <div class="text-xs text-gray-600">{suggestion.placePrediction.secondaryText?.text || ''}</div>
-            </button>
-          {/each}
+      <div>
+        <Label for="edit_venue_address_ko" class="block mb-2">{m.form_venueAddressKo()}</Label>
+        <Input
+          id="edit_venue_address_ko"
+          type="text"
+          bind:value={tempVenueAddressKo}
+          placeholder={m.form_venueAddressPlaceholder()}
+        />
+      </div>
+
+      <div>
+        <Label for="edit_venue_name" class="block mb-2">{m.form_venueName()} <span class="text-red-500">*</span></Label>
+        <Input
+          id="edit_venue_name"
+          type="text"
+          bind:value={tempVenueName}
+          placeholder={m.form_venueNamePlaceholder()}
+          required
+        />
+      </div>
+
+      <div>
+        <Label for="edit_venue_name_ko" class="block mb-2">{m.form_venueNameKo()} <span class="text-red-500">*</span></Label>
+        <Input
+          id="edit_venue_name_ko"
+          type="text"
+          bind:value={tempVenueNameKo}
+          placeholder={m.form_venueNameKo()}
+          required
+        />
+      </div>
+    </div>
+
+    {#snippet footer()}
+      <div class="flex justify-between w-full">
+        <Button color="alternative" onclick={goBackToStep1}>
+          <ArrowLeftOutline class="w-4 h-4 me-2" />
+          {m.common_back()}
+        </Button>
+        <div class="flex gap-2">
+          <Button color="alternative" onclick={closeModal}>{m.common_cancel()}</Button>
+          <Button color="primary" onclick={confirmVenue}>{m.common_confirm()}</Button>
         </div>
-      {/if}
-
-      <p class="text-sm text-gray-500 mt-2">{m.form_searchAddressHint()}</p>
-    </div>
-
-    <div bind:this={mapContainer} class="w-full h-96 rounded-lg border border-gray-300"></div>
-
-    <p class="text-sm text-gray-600">
-      {m.form_dragMarkerHint()}
-    </p>
-  </div>
-
-  {#snippet footer()}
-    <div class="flex justify-end gap-2 w-full">
-      <Button color="alternative" onclick={closeModal}>{m.common_cancel()}</Button>
-      <Button color="primary" onclick={closeModal}>{m.common_confirm()}</Button>
-    </div>
-  {/snippet}
+      </div>
+    {/snippet}
+  {/if}
 </Modal>

@@ -43,6 +43,19 @@ export function getDisplayVenue(event) {
 }
 
 /**
+ * Get the display venue address for an event based on the current UI language
+ * @param {Object} event - Event object
+ * @returns {string} - Venue address in the appropriate language
+ */
+export function getDisplayVenueAddress(event) {
+    const currentLang = languageTag();
+    if (currentLang === 'ko' && event.venue_address_ko) {
+        return event.venue_address_ko;
+    }
+    return event.venue_address || '';
+}
+
+/**
  * Get the display organizers for an event based on the current UI language
  * @param {Object} event - Event object
  * @returns {string} - Formatted organizers string in the appropriate language
