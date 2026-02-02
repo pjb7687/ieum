@@ -192,7 +192,7 @@
                 </div>
 
                 {#if descriptionHtml}
-                    <div class="prose prose-gray prose-sm max-w-none mt-6 pt-6 border-t border-gray-200">
+                    <div class="prose prose-gray max-w-none mt-6 pt-6 border-t border-gray-200">
                         {@html descriptionHtml}
                     </div>
                 {/if}
