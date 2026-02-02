@@ -147,7 +147,7 @@
 	"form_dragMarkerHint": "You can drag the marker to fine-tune the location",
 	"form_editVenueNames": "Edit Venue Names",
 	"form_pleaseSelectLocation": "Please select a location on the map first.",
-	"form_venueNameAddressRequired": "Venue names (English and Korean) and address are required.",
+	"form_venueNameAddressRequired": "Venue names and addresses (English and Korean) are required.",
 	"form_coordinates": "Coordinates",
 
 	"registration_title": "Registration",

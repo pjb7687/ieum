@@ -260,6 +260,25 @@
     step2Error = '';
   }
 
+  function openModalStep2() {
+    // Can only go directly to step 2 if coordinates already exist
+    if (venueLatitude && venueLongitude) {
+      modal_open = true;
+      modalStep = 2;
+      // Initialize temp values from current values
+      tempVenueName = venueName;
+      tempVenueNameKo = venueNameKo;
+      tempVenueAddress = venueAddress;
+      tempVenueAddressKo = venueAddressKo;
+      tempLatitude = venueLatitude;
+      tempLongitude = venueLongitude;
+      step2Error = '';
+    } else {
+      // No coordinates yet, need to select location first
+      openModal();
+    }
+  }
+
   function goToStep2() {
     if (!tempLatitude || !tempLongitude) {
       loadError = m.form_pleaseSelectLocation();
@@ -280,7 +299,7 @@
 
   function confirmVenue() {
     // Validate required fields
-    if (!tempVenueName.trim() || !tempVenueNameKo.trim() || !tempVenueAddress.trim()) {
+    if (!tempVenueName.trim() || !tempVenueNameKo.trim() || !tempVenueAddress.trim() || !tempVenueAddressKo.trim()) {
       step2Error = m.form_venueNameAddressRequired();
       return;
     }
@@ -321,16 +340,29 @@
         readonly
         onclick={openModal}
       />
-      <Button color="primary" onclick={openModal}>
-        <MapPinAltSolid class="w-4 h-4 me-2" />
-        {m.form_selectLocation()}
-      </Button>
       {#if venueName || venueAddress}
         <Button color="alternative" onclick={clearVenue}>
           {m.common_clear()}
         </Button>
       {/if}
     </div>
+  </div>
+
+  <div>
+    <Label for="venue_address_ko" class="block mb-2">
+      {m.form_venueAddressKo()} {#if required}<span class="text-red-500">*</span>{/if}
+    </Label>
+    <Input
+      id="venue_address_ko"
+      name="venue_address_ko"
+      type="text"
+      value={venueAddressKo}
+      placeholder={m.form_venueAddressPlaceholder()}
+      required={required}
+      readonly
+      class="cursor-pointer"
+      onclick={openModal}
+    />
   </div>
 
   <div>
@@ -346,7 +378,7 @@
       required={required}
       readonly
       class="cursor-pointer"
-      onclick={openModal}
+      onclick={openModalStep2}
     />
   </div>
 
@@ -363,11 +395,9 @@
       required={required}
       readonly
       class="cursor-pointer"
-      onclick={openModal}
+      onclick={openModalStep2}
     />
   </div>
-
-  <input type="hidden" name="venue_address_ko" value={venueAddressKo} />
   {#if venueLatitude && venueLongitude}
     <input type="hidden" name="venue_latitude" value={venueLatitude} />
     <input type="hidden" name="venue_longitude" value={venueLongitude} />
@@ -464,12 +494,13 @@
       </div>
 
       <div>
-        <Label for="edit_venue_address_ko" class="block mb-2">{m.form_venueAddressKo()}</Label>
+        <Label for="edit_venue_address_ko" class="block mb-2">{m.form_venueAddressKo()} <span class="text-red-500">*</span></Label>
         <Input
           id="edit_venue_address_ko"
           type="text"
           bind:value={tempVenueAddressKo}
           placeholder={m.form_venueAddressPlaceholder()}
+          required
         />
       </div>
 
