@@ -206,7 +206,7 @@
 
     // Custom getters for SearchableUserList (attendee objects)
     function getAttendeeEmail(attendee) {
-        return attendee.user?.email || '';
+        return attendee.user?.email || attendee.user_email || '';
     }
 
     const showCreateModal = () => {

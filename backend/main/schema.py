@@ -262,6 +262,7 @@ class AttendeeSchema(Schema):
     job_title: str
     disability: str
     dietary: str
+    user_email: str
     custom_answers: List[AnswerSchema]
 
     @staticmethod

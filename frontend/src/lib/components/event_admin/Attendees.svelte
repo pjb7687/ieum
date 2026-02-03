@@ -67,7 +67,7 @@
                 middle_initial: item.middle_initial,
                 last_name: item.last_name,
                 korean_name: item.korean_name,
-                email: item.user.email,
+                email: item.user?.email || item.user_email || '',
                 nationality: item.nationality.toString(),
                 institute: getDisplayInstitute(item),
                 institute_en: item.institute,

@@ -50,12 +50,12 @@
 
     // Custom getters for SearchableUserList
     function getAttendeeEmail(attendee) {
-        return attendee.user?.email || '';
+        return attendee.user?.email || attendee.user_email || '';
     }
 
     function selectAttendeeForSpeaker(attendee) {
         speakerName = getDisplayName(attendee);
-        speakerEmail = attendee.user?.email || '';
+        speakerEmail = attendee.user?.email || attendee.user_email || '';
         speakerAffiliation = getDisplayInstitute(attendee);
     }
 

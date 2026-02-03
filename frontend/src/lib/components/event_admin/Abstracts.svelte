@@ -31,7 +31,7 @@
     }
 
     // Normalize attendees list for UserSelectionModal
-    const attendeeUserList = $derived(data.attendees.map(a => ({ id: a.id, email: a.user?.email, ...a })));
+    const attendeeUserList = $derived(data.attendees.map(a => ({ id: a.id, email: a.user?.email || a.user_email || '', ...a })));
 
     let searchTermReviewer = $state('');
     let selectedReviewers = $state([]);
@@ -217,7 +217,7 @@
                     }
                 }} /></TableBodyCell>
                 <TableBodyCell>{getDisplayName(row)}</TableBodyCell>
-                <TableBodyCell>{row.user.email}</TableBodyCell>
+                <TableBodyCell>{row.user?.email || row.user_email || ''}</TableBodyCell>
                 <TableBodyCell>{getDisplayInstitute(row)}</TableBodyCell>
                 <TableBodyCell>
                     <div class="flex justify-center gap-2">
@@ -312,7 +312,7 @@
     <form method="post" action="?/send_emails" use:enhance={afterSuccessfulSendEmails}>
         <div class="mb-6">
             <Label for="to" class="block mb-2 text-black">{m.abstracts_to()}</Label>
-            <Input id="to" name="to" type="text" value={selectedReviewers.map(id => data.reviewers.find(a => a.id === id).user.email).join("; ")} readonly />
+            <Input id="to" name="to" type="text" value={selectedReviewers.map(id => { const r = data.reviewers.find(a => a.id === id); return r?.user?.email || r?.user_email; }).filter(Boolean).join("; ")} readonly />
         </div>
         <div class="mb-6">
             <Label for="subject" class="block mb-2">{m.abstracts_subject()}</Label>

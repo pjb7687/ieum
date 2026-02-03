@@ -31,7 +31,7 @@
     }
 
     function defaultGetEmail(item) {
-        return item.email || item.user?.email || '';
+        return item.email || item.user?.email || item.user_email || '';
     }
 
     // Use custom functions if provided, otherwise use defaults

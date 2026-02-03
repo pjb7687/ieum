@@ -11,7 +11,8 @@
     let { data } = $props();
 
     // Staff users get full user list, event admins get attendees only
-    const userList = $derived(data.users ? data.users.map(u => ({ id: u.id, ...u })) : data.attendees.map(a => ({ ...a, id: a.user.id })));
+    // Filter out attendees whose user has been deleted (they can't be organizers without an account)
+    const userList = $derived(data.users ? data.users.map(u => ({ id: u.id, ...u })) : data.attendees.filter(a => a.user).map(a => ({ ...a, id: a.user.id })));
 
     // Filter out users who are already organizers
     const existingOrganizerIds = $derived(data.organizers.map(o => o.id));

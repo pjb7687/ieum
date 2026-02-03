@@ -27,7 +27,7 @@
 
     // Custom display functions for user objects
     function getUserEmail(user) {
-        return user.email || user.user?.email || '';
+        return user.email || user.user?.email || user.user_email || '';
     }
 </script>
 
