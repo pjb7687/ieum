@@ -129,40 +129,44 @@ def cleanup_old_data():
     """
     Clean up old Attendee and PaymentHistory records based on retention settings.
 
-    - Attendee records: Deleted after attendee_retention_years from user_deleted_at
-    - PaymentHistory records: Deleted after payment_retention_years from created_at
+    - Attendee records: Deleted after attendee_retention_years from registration (created_at)
+    - PaymentHistory records: Deleted after payment_retention_years from payment (created_at)
     """
+    from django.db.models import Q
     from main.models import Attendee, PaymentHistory, AccountSettings
 
     account_settings = AccountSettings.get_instance()
     now = timezone.now()
 
-    # Calculate retention thresholds
+    # Calculate retention thresholds (from registration/payment date)
     attendee_threshold = now - timedelta(days=account_settings.attendee_retention_years * 365)
     payment_threshold = now - timedelta(days=account_settings.payment_retention_years * 365)
 
-    # Delete old attendee records (only those where user was already deleted)
+    # Delete old attendee records (only those where user was already deleted AND older than retention period from registration)
+    # For records with created_at: use created_at
+    # For legacy records without created_at: fall back to user_deleted_at (old behavior)
     old_attendees = Attendee.objects.filter(
         user__isnull=True,  # User was deleted
-        user_deleted_at__isnull=False,
-        user_deleted_at__lte=attendee_threshold
+    ).filter(
+        Q(created_at__lte=attendee_threshold) |  # Registration is older than retention period
+        Q(created_at__isnull=True, user_deleted_at__lte=attendee_threshold)  # Legacy: use user_deleted_at as fallback
     )
     attendee_count = old_attendees.count()
     old_attendees.delete()
 
     if attendee_count > 0:
-        logger.info(f"Deleted {attendee_count} old attendee records (retention: {account_settings.attendee_retention_years} years)")
+        logger.info(f"Deleted {attendee_count} old attendee records (retention: {account_settings.attendee_retention_years} years from registration)")
 
-    # Delete old payment history records (only those where attendee is null)
+    # Delete old payment history records (only those where attendee is null AND older than retention period from payment)
     old_payments = PaymentHistory.objects.filter(
         attendee__isnull=True,  # Attendee was deleted
-        created_at__lte=payment_threshold
+        created_at__lte=payment_threshold  # Payment is older than retention period
     )
     payment_count = old_payments.count()
     old_payments.delete()
 
     if payment_count > 0:
-        logger.info(f"Deleted {payment_count} old payment history records (retention: {account_settings.payment_retention_years} years)")
+        logger.info(f"Deleted {payment_count} old payment history records (retention: {account_settings.payment_retention_years} years from payment)")
 
     return {
         'attendees_deleted': attendee_count,

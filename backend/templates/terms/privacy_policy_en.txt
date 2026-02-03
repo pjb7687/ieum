@@ -12,8 +12,8 @@
 <p>The Company processes and retains personal information within the retention and use period prescribed by law or the retention and use period agreed upon when collecting personal information from the data subject.</p>
 <ul>
 <li><strong>Member Account Information:</strong> Automatically deleted after {{ account_deletion_years }} years ({{ account_deletion_period }} days) of inactivity. A warning email will be sent {{ account_warning_period }} days before deletion.</li>
-<li><strong>Event Participant Records:</strong> Retained for {{ attendee_retention_years }} years after account deletion or event completion.</li>
-<li><strong>Payment Records:</strong> Retained for {{ payment_retention_years }} years in accordance with relevant laws.</li>
+<li><strong>Event Participant Records:</strong> Retained for {{ attendee_retention_years }} years after registration in accordance with relevant laws.</li>
+<li><strong>Payment Records:</strong> Retained for {{ payment_retention_years }} years after payment in accordance with relevant laws.</li>
 </ul>
 
 <h2>3. Personal Information Items Processed</h2>

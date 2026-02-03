@@ -71,6 +71,7 @@ class Attendee(models.Model):
     job_title = models.CharField(max_length=1000, blank=True)
     disability = models.TextField(blank=True)
     dietary = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)  # When the registration was created
     user_deleted_at = models.DateTimeField(null=True, blank=True)  # When the associated user was deleted
     user_email = models.EmailField(blank=True)  # Preserved email after user deletion
 
