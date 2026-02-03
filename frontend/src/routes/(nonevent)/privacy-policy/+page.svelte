@@ -6,8 +6,20 @@
     let { data } = $props();
 
     let currentLang = $derived(languageTag());
-    let content = $derived(currentLang === 'ko' ? data.privacyPolicy.content_ko : data.privacyPolicy.content_en);
     let updatedAt = $derived(data.privacyPolicy.updated_at ? new Date(data.privacyPolicy.updated_at).toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US') : '');
+
+    // For English, show English content + Korean content below
+    let content = $derived(() => {
+        if (currentLang === 'ko') {
+            return data.privacyPolicy.content_ko;
+        } else {
+            let result = data.privacyPolicy.content_en || '';
+            if (data.privacyPolicy.content_ko) {
+                result += '<hr class="my-8 border-gray-300"><h2>한국어 버전 (Korean Version)</h2>' + data.privacyPolicy.content_ko;
+            }
+            return result;
+        }
+    });
 </script>
 
 <svelte:head>
@@ -34,8 +46,8 @@
         {/if}
 
         <Card class="w-full p-6 sm:p-8 prose max-w-none leading-normal prose-p:my-2 prose-ul:my-2 prose-li:my-0 prose-h2:mt-6 prose-h2:mb-2">
-            {#if content}
-                {@html content}
+            {#if content()}
+                {@html content()}
             {:else}
                 <p class="text-gray-500 italic">{m.privacyPolicy_noContent()}</p>
             {/if}

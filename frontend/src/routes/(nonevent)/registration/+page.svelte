@@ -19,8 +19,31 @@
     let agreedToTerms = $state(false);
 
     let currentLang = $derived(languageTag());
-    let privacyContent = $derived(currentLang === 'ko' ? page_data.privacyPolicy?.content_ko : page_data.privacyPolicy?.content_en);
-    let termsContent = $derived(currentLang === 'ko' ? page_data.termsOfService?.content_ko : page_data.termsOfService?.content_en);
+
+    // For English, show English content + Korean content below
+    let privacyContent = $derived(() => {
+        if (currentLang === 'ko') {
+            return page_data.privacyPolicy?.content_ko || '';
+        } else {
+            let result = page_data.privacyPolicy?.content_en || '';
+            if (page_data.privacyPolicy?.content_ko) {
+                result += '<hr class="my-8 border-gray-300"><h2>한국어 버전 (Korean Version)</h2>' + page_data.privacyPolicy.content_ko;
+            }
+            return result;
+        }
+    });
+
+    let termsContent = $derived(() => {
+        if (currentLang === 'ko') {
+            return page_data.termsOfService?.content_ko || '';
+        } else {
+            let result = page_data.termsOfService?.content_en || '';
+            if (page_data.termsOfService?.content_ko) {
+                result += '<hr class="my-8 border-gray-300"><h2>한국어 버전 (Korean Version)</h2>' + page_data.termsOfService.content_ko;
+            }
+            return result;
+        }
+    });
 
     let canProceed = $derived(agreedToPrivacy && agreedToTerms);
 
@@ -146,9 +169,14 @@
         <!-- Privacy Policy -->
         <div class="mb-6">
             <h3 class="text-lg font-medium mb-2">{m.privacyPolicy_pageTitle()}</h3>
+            {#if currentLang === 'en' && page_data.privacyPolicy?.content_ko}
+                <Alert color="blue" class="mb-3">
+                    {m.privacyPolicy_koreanBindingNotice()}
+                </Alert>
+            {/if}
             <div class="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50 prose prose-sm max-w-none leading-normal prose-p:my-2 prose-ul:my-2 prose-li:my-0 prose-h2:mt-6 prose-h2:mb-2">
-                {#if privacyContent}
-                    {@html privacyContent}
+                {#if privacyContent()}
+                    {@html privacyContent()}
                 {:else}
                     <p class="text-gray-500 italic">{m.privacyPolicy_noContent()}</p>
                 {/if}
@@ -161,9 +189,14 @@
         <!-- Terms of Service -->
         <div class="mb-6">
             <h3 class="text-lg font-medium mb-2">{m.termsOfService_pageTitle()}</h3>
+            {#if currentLang === 'en' && page_data.termsOfService?.content_ko}
+                <Alert color="blue" class="mb-3">
+                    {m.termsOfService_koreanBindingNotice()}
+                </Alert>
+            {/if}
             <div class="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50 prose prose-sm max-w-none leading-normal prose-p:my-2 prose-ul:my-2 prose-li:my-0 prose-h2:mt-6 prose-h2:mb-2">
-                {#if termsContent}
-                    {@html termsContent}
+                {#if termsContent()}
+                    {@html termsContent()}
                 {:else}
                     <p class="text-gray-500 italic">{m.termsOfService_noContent()}</p>
                 {/if}

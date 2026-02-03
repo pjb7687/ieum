@@ -825,7 +825,7 @@
 	"admin_privacyPolicy_success": "Privacy policy saved successfully.",
 
 	"privacyPolicy_pageTitle": "Privacy Policy",
-	"privacyPolicy_koreanBindingNotice": "Note: The Korean version of this privacy policy is the legally binding document. This is a translation provided for convenience.",
+	"privacyPolicy_koreanBindingNotice": "Note: The Korean version of this privacy policy is the legally binding document. The Korean version can be found below.",
 	"privacyPolicy_noContent": "No privacy policy has been defined yet.",
 	"privacyPolicy_lastUpdated": "Last updated: {date}",
 
@@ -851,7 +851,7 @@
 	"admin_termsOfService_success": "Terms of service saved successfully.",
 
 	"termsOfService_pageTitle": "Terms of Service",
-	"termsOfService_koreanBindingNotice": "Note: The Korean version of these terms of service is the legally binding document. This is a translation provided for convenience.",
+	"termsOfService_koreanBindingNotice": "Note: The Korean version of these terms of service is the legally binding document. The Korean version can be found below.",
 	"termsOfService_noContent": "No terms of service have been defined yet.",
 	"termsOfService_lastUpdated": "Last updated: {date}",
 

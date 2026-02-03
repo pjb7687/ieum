@@ -825,7 +825,7 @@
 	"admin_privacyPolicy_success": "개인정보처리방침이 성공적으로 저장되었습니다.",
 
 	"privacyPolicy_pageTitle": "개인정보처리방침",
-	"privacyPolicy_koreanBindingNotice": "참고: 이 개인정보처리방침의 한국어 버전이 법적 구속력이 있는 문서입니다. 이것은 편의를 위해 제공된 번역본입니다.",
+	"privacyPolicy_koreanBindingNotice": "참고: 이 개인정보처리방침의 한국어 버전이 법적 구속력이 있는 문서입니다. 한국어 버전은 아래에서 확인할 수 있습니다.",
 	"privacyPolicy_noContent": "아직 개인정보처리방침이 정의되지 않았습니다.",
 	"privacyPolicy_lastUpdated": "최종 업데이트: {date}",
 
@@ -851,7 +851,7 @@
 	"admin_termsOfService_success": "이용약관이 성공적으로 저장되었습니다.",
 
 	"termsOfService_pageTitle": "이용약관",
-	"termsOfService_koreanBindingNotice": "참고: 이 이용약관의 한국어 버전이 법적 구속력이 있는 문서입니다. 이것은 편의를 위해 제공된 번역본입니다.",
+	"termsOfService_koreanBindingNotice": "참고: 이 이용약관의 한국어 버전이 법적 구속력이 있는 문서입니다. 한국어 버전은 아래에서 확인할 수 있습니다.",
 	"termsOfService_noContent": "아직 이용약관이 정의되지 않았습니다.",
 	"termsOfService_lastUpdated": "최종 업데이트: {date}",
 
