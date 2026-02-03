@@ -263,18 +263,26 @@
                 {:else}
                     <div class="divide-y divide-gray-200">
                         {#each allEvents as event}
-                            <a href="/event/{event.id}" class={`flex items-center gap-4 sm:gap-6 py-6 -mx-4 sm:-mx-6 px-4 sm:px-6 hover:bg-gray-50 transition-colors cursor-pointer ${!isEventOpen(event) ? 'opacity-50' : ''}`}>
-                                <!-- Left Color Bar + Date -->
-                                <div class="flex items-center flex-shrink-0">
-                                    <div class={`w-1 h-16 rounded-full ${getBorderColor(event)}`}></div>
-                                    <div class="w-32 sm:w-40 pl-4 pr-5 flex flex-col justify-center">
-                                        <span class="text-xs sm:text-sm text-gray-400">{getYear(event.start_date)}</span>
-                                        <div class="flex items-baseline gap-1.5 text-base sm:text-xl font-bold text-gray-800">
+                            <a href="/event/{event.id}" class={`flex items-stretch gap-4 sm:gap-6 py-6 -mx-4 sm:-mx-6 px-4 sm:px-6 hover:bg-gray-50 transition-colors cursor-pointer ${!isEventOpen(event) ? 'opacity-50' : ''}`}>
+                                <!-- Left Color Bar + Date (hidden below 2xl) -->
+                                <div class="hidden 2xl:flex items-center flex-shrink-0">
+                                    <div class={`w-1 self-stretch rounded-full ${getBorderColor(event)}`}></div>
+                                    <div class="w-48 pl-4 pr-5 flex flex-col justify-center">
+                                        <span class="text-sm text-gray-400">{getYear(event.start_date)}</span>
+                                        <div class="flex items-baseline gap-1.5 text-xl font-bold text-gray-800">
                                             <span>{formatShortDate(event.start_date)}</span>
                                             <span class="text-gray-400 font-normal text-sm">~</span>
                                             <span>{formatShortDate(event.end_date)}</span>
                                         </div>
+                                        {#if event.registration_deadline}
+                                            <span class="text-xs text-gray-400 mt-0.5">{m.events_registrationDeadline()}: {formatShortDate(event.registration_deadline)}</span>
+                                        {/if}
                                     </div>
+                                </div>
+
+                                <!-- Left Color Bar only (shown below 2xl) -->
+                                <div class="flex 2xl:hidden items-center flex-shrink-0">
+                                    <div class={`w-1 self-stretch rounded-full ${getBorderColor(event)}`}></div>
                                 </div>
 
                                 <!-- Main Content -->
@@ -316,6 +324,15 @@
                                             <Tooltip triggeredBy="#draft-badge-{event.id}" placement="right">
                                                 {m.eventStatus_draftTooltip()}
                                             </Tooltip>
+                                        {/if}
+                                    </div>
+
+                                    <!-- Date info (shown below 2xl) -->
+                                    <div class="2xl:hidden mt-1.5 flex items-center gap-2 text-sm text-gray-500">
+                                        <span class="font-medium">{getYear(event.start_date)} {formatShortDate(event.start_date)} ~ {formatShortDate(event.end_date)}</span>
+                                        {#if event.registration_deadline}
+                                            <span class="text-gray-400">|</span>
+                                            <span>{m.events_registrationDeadline()}: {formatShortDate(event.registration_deadline)}</span>
                                         {/if}
                                     </div>
 
