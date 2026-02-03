@@ -41,6 +41,42 @@ export async function load({ parent, params, cookies }) {
         };
     }
 
+    // Load account settings (admin only)
+    const accountSettingsResponse = await get('api/admin/account-settings', cookies);
+    if (accountSettingsResponse.ok && accountSettingsResponse.status === 200) {
+        data.admin.accountSettings = accountSettingsResponse.data;
+    } else {
+        data.admin.accountSettings = {
+            account_deletion_period: 3 * 365,
+            account_warning_period: 7,
+            attendee_retention_years: 5,
+            payment_retention_years: 5,
+            minimum_retention_years: 5
+        };
+    }
+
+    // Load privacy policy (admin only)
+    const privacyPolicyResponse = await get('api/admin/privacy-policy', cookies);
+    if (privacyPolicyResponse.ok && privacyPolicyResponse.status === 200) {
+        data.admin.privacyPolicy = privacyPolicyResponse.data;
+    } else {
+        data.admin.privacyPolicy = {
+            content_en: '',
+            content_ko: ''
+        };
+    }
+
+    // Load terms of service (admin only)
+    const termsOfServiceResponse = await get('api/admin/terms-of-service', cookies);
+    if (termsOfServiceResponse.ok && termsOfServiceResponse.status === 200) {
+        data.admin.termsOfService = termsOfServiceResponse.data;
+    } else {
+        data.admin.termsOfService = {
+            content_en: '',
+            content_ko: ''
+        };
+    }
+
     return data;
 }
 
@@ -152,6 +188,47 @@ export const actions = {
             email: formdata.get('email') || ''
         };
         const response = await post('api/admin/business-settings', data, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'update_account_settings': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const data = {
+            account_deletion_period: parseInt(formdata.get('account_deletion_period')) || 3 * 365,
+            account_warning_period: parseInt(formdata.get('account_warning_period')) || 7,
+            attendee_retention_years: parseInt(formdata.get('attendee_retention_years')) || 5,
+            payment_retention_years: parseInt(formdata.get('payment_retention_years')) || 5
+        };
+        const response = await post('api/admin/account-settings', data, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'update_privacy_policy': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const data = {
+            content_en: formdata.get('content_en') || '',
+            content_ko: formdata.get('content_ko') || ''
+        };
+        const response = await post('api/admin/privacy-policy', data, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'update_terms_of_service': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const data = {
+            content_en: formdata.get('content_en') || '',
+            content_ko: formdata.get('content_ko') || ''
+        };
+        const response = await post('api/admin/terms-of-service', data, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
         } else {

@@ -47,10 +47,11 @@
     };
 </script>
 
-<div class="flex justify-between items-center mb-6">
+<div class="flex justify-between items-center mb-2">
     <h2 class="text-2xl font-bold">{m.admin_manageInstitutions_title()}</h2>
     <Button color="primary" onclick={() => openInstitutionModal(null)}>{m.admin_addInstitution()}</Button>
 </div>
+<p class="text-gray-600 mb-6">{m.admin_manageInstitutions_description()}</p>
 
 <TableSearch placeholder={m.admin_searchInstitutions()} bind:inputValue={institution_search_term} hoverable={true}>
     <TableHead>

@@ -1,0 +1,103 @@
+<h2>1. Introduction</h2>
+<p>These Terms of Service ("Terms") govern your use of the conference management system operated by {{ business_name }} ("we", "us", or "our"). By accessing or using our service, you agree to be bound by these Terms.</p>
+
+<h2>2. Service Provider</h2>
+<p>
+<strong>Company Name:</strong> {{ business_name }}<br>
+<strong>Business Registration Number:</strong> {{ business_registration_number }}<br>
+<strong>Address:</strong> {{ address }}<br>
+<strong>Representative:</strong> {{ representative }}<br>
+<strong>Contact Phone:</strong> {{ phone }}<br>
+<strong>Contact Email:</strong> {{ email }}
+</p>
+
+<h2>3. Service Description</h2>
+<p>Our service provides:</p>
+<ul>
+<li>Conference and event registration management</li>
+<li>Abstract submission and review processes</li>
+<li>Payment processing for event fees</li>
+<li>Event-related communications and notifications</li>
+</ul>
+
+<h2>4. Account Registration</h2>
+<p>To use certain features of our service, you must create an account. You agree to:</p>
+<ul>
+<li>Provide accurate and complete information during registration</li>
+<li>Maintain the security of your account credentials</li>
+<li>Notify us immediately of any unauthorized access</li>
+<li>Be responsible for all activities under your account</li>
+</ul>
+
+<h2>5. Account Retention and Deletion</h2>
+<p>Account management policies:</p>
+<ul>
+<li><strong>Inactive Accounts:</strong> Accounts that have been inactive for {{ account_deletion_years }} years ({{ account_deletion_period }} days) will be automatically deleted.</li>
+<li><strong>Deletion Warning:</strong> You will receive a warning email {{ account_warning_period }} days before automatic deletion.</li>
+<li><strong>Event Records:</strong> Registration records may be retained for {{ attendee_retention_years }} years after account deletion for compliance purposes.</li>
+<li><strong>Voluntary Deletion:</strong> You may request account deletion at any time by contacting us.</li>
+</ul>
+
+<h2>6. User Responsibilities</h2>
+<p>When using our service, you agree not to:</p>
+<ul>
+<li>Violate any applicable laws or regulations</li>
+<li>Infringe upon the rights of others</li>
+<li>Submit false or misleading information</li>
+<li>Attempt to gain unauthorized access to our systems</li>
+<li>Interfere with the proper functioning of the service</li>
+<li>Use the service for any unlawful purpose</li>
+</ul>
+
+<h2>7. Event Registration and Payments</h2>
+<p>For event registrations involving payments:</p>
+<ul>
+<li>All fees are displayed before confirmation and are in the currency specified</li>
+<li>Payments are processed through secure third-party payment providers (Toss Payments, PayPal)</li>
+<li>Payment records are retained for {{ payment_retention_years }} years as required by financial regulations</li>
+<li>Refund policies are determined by individual event organizers and will be clearly stated during registration</li>
+</ul>
+
+<h2>8. Abstract Submissions</h2>
+<p>For abstract submissions:</p>
+<ul>
+<li>You retain ownership of your submitted content</li>
+<li>You grant us a license to use the content for event-related purposes</li>
+<li>You are responsible for ensuring your submission does not violate third-party rights</li>
+<li>Submission decisions are made by event organizers and reviewers at their discretion</li>
+</ul>
+
+<h2>9. Intellectual Property</h2>
+<p>The service, including its design, features, and content (excluding user submissions), is owned by {{ business_name }} and protected by intellectual property laws. You may not copy, modify, or distribute any part of our service without our prior written consent.</p>
+
+<h2>10. Privacy</h2>
+<p>Your use of the service is also governed by our Privacy Policy. By using our service, you consent to the collection and use of your information as described in our Privacy Policy.</p>
+
+<h2>11. Disclaimer of Warranties</h2>
+<p>The service is provided "as is" and "as available" without warranties of any kind, either express or implied. We do not guarantee that the service will be uninterrupted, secure, or error-free.</p>
+
+<h2>12. Limitation of Liability</h2>
+<p>To the maximum extent permitted by law, {{ business_name }} shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the service.</p>
+
+<h2>13. Indemnification</h2>
+<p>You agree to indemnify and hold harmless {{ business_name }} and its officers, employees, and agents from any claims, damages, or expenses arising from your violation of these Terms or your use of the service.</p>
+
+<h2>14. Modifications to Terms</h2>
+<p>We reserve the right to modify these Terms at any time. We will notify users of significant changes by posting a notice on our service. Your continued use of the service after such modifications constitutes acceptance of the updated Terms.</p>
+
+<h2>15. Termination</h2>
+<p>We may suspend or terminate your access to the service at any time for violation of these Terms or for any other reason at our discretion. Upon termination, your right to use the service will immediately cease.</p>
+
+<h2>16. Governing Law</h2>
+<p>These Terms shall be governed by and construed in accordance with the laws of the Republic of Korea. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts of the Republic of Korea.</p>
+
+<h2>17. Severability</h2>
+<p>If any provision of these Terms is found to be unenforceable, the remaining provisions will continue in full force and effect.</p>
+
+<h2>18. Contact Us</h2>
+<p>If you have questions about these Terms of Service, please contact us:</p>
+<p>
+<strong>Email:</strong> {{ email }}<br>
+<strong>Phone:</strong> {{ phone }}<br>
+<strong>Address:</strong> {{ address }}
+</p>

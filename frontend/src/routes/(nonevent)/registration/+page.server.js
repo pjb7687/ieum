@@ -43,6 +43,21 @@ export async function load({ parent, cookies, request }) {
     }
     data.next = next;
 
+    // Load privacy policy and terms of service
+    const privacyPolicyResponse = await get('api/privacy-policy', cookies);
+    if (privacyPolicyResponse.ok && privacyPolicyResponse.status === 200) {
+        data.privacyPolicy = privacyPolicyResponse.data;
+    } else {
+        data.privacyPolicy = { content_en: '', content_ko: '' };
+    }
+
+    const termsOfServiceResponse = await get('api/terms-of-service', cookies);
+    if (termsOfServiceResponse.ok && termsOfServiceResponse.status === 200) {
+        data.termsOfService = termsOfServiceResponse.data;
+    } else {
+        data.termsOfService = { content_en: '', content_ko: '' };
+    }
+
     return data;
 }
 

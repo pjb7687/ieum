@@ -18,6 +18,7 @@
 	import { page } from '$app/stores';
 	import { languageTag, setLanguageTag, onSetLanguageTag } from '$lib/paraglide/runtime.js';
 	import * as m from '$lib/paraglide/messages.js';
+	import CookieConsent from '$lib/components/CookieConsent.svelte';
 
 	const languages = [
 		{ code: 'en', name: 'English' },
@@ -146,25 +147,33 @@
 
 {@render children()}
 
+<CookieConsent />
+
 {#if !isReceiptPage}
 <footer class="bg-gray-50 border-t border-gray-200 mt-20">
 	<div class="container mx-auto py-8 px-3 sm:px-7">
 		<div class="flex flex-col md:flex-row justify-between items-center gap-6">
 			<!-- Logo Section -->
-			<div class="flex items-center">
+			<div class="flex items-center md:w-1/3">
 				<a href="/">
 					<img src="/logo.webp" class="h-12" alt="Logo" />
 				</a>
 			</div>
 
-			<!-- Copyright and Credits -->
-			<div class="text-center md:text-right">
+			<!-- Copyright and Credits (centered) -->
+			<div class="text-center md:w-1/3">
 				<p class="text-sm text-gray-600">
 					© {new Date().getFullYear()} {m.footer_copyright()}
 				</p>
 				<p class="text-xs text-gray-500 mt-1">
 					Powered by <a href="https://github.com/pjb7687/ieum" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">IEUM</a>
 				</p>
+			</div>
+
+			<!-- Legal Links (right-aligned) -->
+			<div class="flex gap-6 text-sm text-gray-600 md:w-1/3 md:justify-end">
+				<a href="/privacy-policy" class="hover:text-gray-900 hover:underline">{m.footer_privacyPolicy()}</a>
+				<a href="/terms-of-service" class="hover:text-gray-900 hover:underline">{m.footer_termsOfService()}</a>
 			</div>
 		</div>
 	</div>

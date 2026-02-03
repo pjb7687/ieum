@@ -7,10 +7,34 @@
     import { createForm } from 'felte';
     import { validator } from '@felte/validator-yup';
     import * as yup from 'yup';
-    import { Alert, Input, Textarea, Select, Button, Label, InputAddon, ButtonGroup, Heading, Card } from 'flowbite-svelte';
-    import { UserCircleSolid } from 'flowbite-svelte-icons';
+    import { Alert, Input, Textarea, Select, Button, Label, InputAddon, ButtonGroup, Heading, Card, Checkbox } from 'flowbite-svelte';
+    import { UserCircleSolid, ChevronLeftOutline, ChevronRightOutline } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
+    import { languageTag } from '$lib/paraglide/runtime.js';
     import { onlyLatinChars } from '$lib/utils.js';
+
+    // Step management
+    let currentStep = $state(1);
+    let agreedToPrivacy = $state(false);
+    let agreedToTerms = $state(false);
+
+    let currentLang = $derived(languageTag());
+    let privacyContent = $derived(currentLang === 'ko' ? page_data.privacyPolicy?.content_ko : page_data.privacyPolicy?.content_en);
+    let termsContent = $derived(currentLang === 'ko' ? page_data.termsOfService?.content_ko : page_data.termsOfService?.content_en);
+
+    let canProceed = $derived(agreedToPrivacy && agreedToTerms);
+
+    function goToStep2() {
+        if (canProceed) {
+            currentStep = 2;
+            window.scrollTo(0, 0);
+        }
+    }
+
+    function goToStep1() {
+        currentStep = 1;
+        window.scrollTo(0, 0);
+    }
 
     const schema = yup.object({
         email: yup.string().email().required(m.validation_emailRequired()),
@@ -98,14 +122,78 @@
     </div>
 </div>
 
-<!-- Form Card -->
-<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
-    <form use:felteForm method="post">
-        <RegistrationForm data={$data} errors={$errors} config={form_config} />
-        <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
-            <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>
-                {m.registration_submit()}
+<!-- Step Indicator -->
+<div class="flex justify-center mb-6">
+    <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+            <div class={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep === 1 ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'}`}>1</div>
+            <span class={`text-sm ${currentStep === 1 ? 'text-primary-600 font-medium' : 'text-gray-500'}`}>{m.registration_stepTerms()}</span>
+        </div>
+        <div class="w-12 h-0.5 bg-gray-300"></div>
+        <div class="flex items-center gap-2">
+            <div class={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep === 2 ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'}`}>2</div>
+            <span class={`text-sm ${currentStep === 2 ? 'text-primary-600 font-medium' : 'text-gray-500'}`}>{m.registration_stepInfo()}</span>
+        </div>
+    </div>
+</div>
+
+{#if currentStep === 1}
+    <!-- Step 1: Terms Agreement -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 sm:p-8">
+        <h2 class="text-xl font-semibold mb-4">{m.registration_termsAgreementTitle()}</h2>
+        <p class="text-gray-600 mb-6">{m.registration_termsAgreementDescription()}</p>
+
+        <!-- Privacy Policy -->
+        <div class="mb-6">
+            <h3 class="text-lg font-medium mb-2">{m.privacyPolicy_pageTitle()}</h3>
+            <div class="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50 prose prose-sm max-w-none leading-normal prose-p:my-2 prose-ul:my-2 prose-li:my-0 prose-h2:mt-6 prose-h2:mb-2">
+                {#if privacyContent}
+                    {@html privacyContent}
+                {:else}
+                    <p class="text-gray-500 italic">{m.privacyPolicy_noContent()}</p>
+                {/if}
+            </div>
+            <div class="mt-3">
+                <Checkbox bind:checked={agreedToPrivacy}>{m.registration_agreePrivacyPolicy()}</Checkbox>
+            </div>
+        </div>
+
+        <!-- Terms of Service -->
+        <div class="mb-6">
+            <h3 class="text-lg font-medium mb-2">{m.termsOfService_pageTitle()}</h3>
+            <div class="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50 prose prose-sm max-w-none leading-normal prose-p:my-2 prose-ul:my-2 prose-li:my-0 prose-h2:mt-6 prose-h2:mb-2">
+                {#if termsContent}
+                    {@html termsContent}
+                {:else}
+                    <p class="text-gray-500 italic">{m.termsOfService_noContent()}</p>
+                {/if}
+            </div>
+            <div class="mt-3">
+                <Checkbox bind:checked={agreedToTerms}>{m.registration_agreeTermsOfService()}</Checkbox>
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-8">
+            <Button color="primary" size="lg" disabled={!canProceed} onclick={goToStep2}>
+                {m.registration_next()}
+                <ChevronRightOutline class="w-4 h-4 ml-2" />
             </Button>
         </div>
-    </form>
-</div>
+    </div>
+{:else}
+    <!-- Step 2: Registration Form -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+        <form use:felteForm method="post">
+            <RegistrationForm data={$data} errors={$errors} config={form_config} />
+            <div class="flex flex-col md:flex-row justify-between gap-4 mt-8">
+                <Button color="alternative" size="lg" onclick={goToStep1}>
+                    <ChevronLeftOutline class="w-4 h-4 mr-2" />
+                    {m.registration_back()}
+                </Button>
+                <Button type="submit" size="lg" color="primary" disabled={$isSubmitting}>
+                    {m.registration_submit()}
+                </Button>
+            </div>
+        </form>
+    </div>
+{/if}

@@ -1,0 +1,73 @@
+<h2>1. Purpose of Processing Personal Information</h2>
+<p>{{ business_name }} ("Company") processes personal information for the following purposes. The personal information being processed will not be used for purposes other than those stated below, and if the purpose of use changes, necessary measures such as obtaining separate consent will be taken.</p>
+<ul>
+<li>Processing and management of conference and event registrations</li>
+<li>Payment processing and transaction record management</li>
+<li>Delivery of event-related announcements and notices</li>
+<li>Management of abstract submission and review processes</li>
+<li>Service improvement and new service development</li>
+</ul>
+
+<h2>2. Processing and Retention Period of Personal Information</h2>
+<p>The Company processes and retains personal information within the retention and use period prescribed by law or the retention and use period agreed upon when collecting personal information from the data subject.</p>
+<ul>
+<li><strong>Member Account Information:</strong> Automatically deleted after {{ account_deletion_years }} years ({{ account_deletion_period }} days) of inactivity. A warning email will be sent {{ account_warning_period }} days before deletion.</li>
+<li><strong>Event Participant Records:</strong> Retained for {{ attendee_retention_years }} years after account deletion or event completion.</li>
+<li><strong>Payment Records:</strong> Retained for {{ payment_retention_years }} years in accordance with relevant laws.</li>
+</ul>
+
+<h2>3. Personal Information Items Processed</h2>
+<p>The Company processes the following personal information items:</p>
+<ul>
+<li><strong>Required Items:</strong> Name, email address, password, nationality, institution/affiliation, department, job title</li>
+<li><strong>Optional Items:</strong> Dietary requirements, disability accommodation requests, other event-related information</li>
+<li><strong>Automatically Collected Items:</strong> Access IP, cookies, service usage records</li>
+</ul>
+
+<h2>4. Provision of Personal Information to Third Parties</h2>
+<p>The Company processes personal information only within the scope specified in Article 1, and provides personal information to third parties only in cases falling under Articles 17 and 18 of the Personal Information Protection Act, such as the data subject's consent or special provisions of law.</p>
+<ul>
+<li><strong>Event Organizers:</strong> Information necessary for event operation and management</li>
+<li><strong>Payment Processors:</strong> Information for secure payment processing</li>
+</ul>
+
+<h2>5. Entrustment of Personal Information Processing</h2>
+<p>The Company entrusts personal information processing as follows for smooth handling of personal information tasks:</p>
+<ul>
+<li><strong>Payment Processing:</strong> Toss Payments, PayPal (payment information processing)</li>
+</ul>
+
+<h2>6. Rights and Obligations of Data Subjects and How to Exercise Them</h2>
+<p>Data subjects may exercise the following rights related to personal information protection against the Company at any time:</p>
+<ul>
+<li>Request to access personal information</li>
+<li>Request for correction if there are errors</li>
+<li>Request for deletion</li>
+<li>Request to stop processing</li>
+</ul>
+<p>Rights may be exercised through written request, phone, or email to the Company, and the Company will take action without delay.</p>
+
+<h2>7. Destruction of Personal Information</h2>
+<p>When personal information becomes unnecessary due to the expiration of the retention period or achievement of the processing purpose, the Company destroys such personal information without delay.</p>
+<ul>
+<li><strong>Destruction Procedure:</strong> Unnecessary personal information is destroyed after approval by the personal information protection officer.</li>
+<li><strong>Destruction Method:</strong> Information in electronic file format is destroyed in a way that cannot be recovered, and personal information printed on paper is shredded or incinerated.</li>
+</ul>
+
+<h2>8. Personal Information Protection Officer</h2>
+<p>The Company has designated the following personal information protection officer to oversee personal information processing and handle complaints and remedies related to personal information processing:</p>
+<p>
+<strong>Personal Information Protection Officer:</strong> {{ representative }}<br>
+<strong>Contact:</strong> {{ phone }}<br>
+<strong>Email:</strong> {{ email }}
+</p>
+
+<h2>Business Information</h2>
+<p>
+<strong>Business Name:</strong> {{ business_name }}<br>
+<strong>Business Registration Number:</strong> {{ business_registration_number }}<br>
+<strong>Address:</strong> {{ address }}<br>
+<strong>Representative:</strong> {{ representative }}<br>
+<strong>Phone:</strong> {{ phone }}<br>
+<strong>Email:</strong> {{ email }}
+</p>

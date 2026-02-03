@@ -46,6 +46,7 @@ class User(AbstractUser):
     department = models.CharField(max_length=1000, blank=True)
     disability = models.TextField(blank=True)
     dietary = models.TextField(blank=True)
+    deletion_warning_sent = models.BooleanField(default=False)  # True if 1-week warning email was sent
 
     @property
     def name(self):
@@ -57,7 +58,7 @@ class Attendee(models.Model):
     """
     Attendee model
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     event = models.ForeignKey('Event', on_delete=models.CASCADE)
     first_name = models.CharField(max_length=1000)
     middle_initial = models.CharField(max_length=1, blank=True)
@@ -70,6 +71,9 @@ class Attendee(models.Model):
     job_title = models.CharField(max_length=1000, blank=True)
     disability = models.TextField(blank=True)
     dietary = models.TextField(blank=True)
+    user_deleted_at = models.DateTimeField(null=True, blank=True)  # When the associated user was deleted
+    user_email = models.EmailField(blank=True)  # Preserved email after user deletion
+
     @property
     def name(self):
         return f'{self.first_name}{" " + self.middle_initial if self.middle_initial else ""} {self.last_name}'
@@ -395,6 +399,204 @@ class BusinessSettings(models.Model):
 
     def __str__(self):
         return f"Business Settings - {self.business_name}"
+
+
+class AccountSettings(models.Model):
+    """
+    Singleton model for account and data retention settings
+    """
+    # Account inactivity settings (in days)
+    account_deletion_period = models.IntegerField(default=3 * 365)  # 3 years default
+    account_warning_period = models.IntegerField(default=7)  # Warning sent 7 days before deletion
+
+    # Data retention settings (in years) - minimum 5 years
+    attendee_retention_years = models.IntegerField(default=5)  # Minimum 5 years
+    payment_retention_years = models.IntegerField(default=5)  # Minimum 5 years
+
+    MINIMUM_RETENTION_YEARS = 5  # Cannot be set lower than this
+
+    class Meta:
+        verbose_name = 'Account Settings'
+        verbose_name_plural = 'Account Settings'
+
+    def save(self, *args, **kwargs):
+        # Ensure only one instance exists (singleton pattern)
+        self.pk = 1
+        # Enforce minimum retention periods
+        if self.attendee_retention_years < self.MINIMUM_RETENTION_YEARS:
+            self.attendee_retention_years = self.MINIMUM_RETENTION_YEARS
+        if self.payment_retention_years < self.MINIMUM_RETENTION_YEARS:
+            self.payment_retention_years = self.MINIMUM_RETENTION_YEARS
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # Prevent deletion of the singleton instance
+        pass
+
+    @classmethod
+    def get_instance(cls):
+        """Get or create the singleton instance"""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return "Account Settings"
+
+
+class PrivacyPolicy(models.Model):
+    """
+    Singleton model for privacy policy content in English and Korean.
+    Content supports Django template syntax for dynamic values from BusinessSettings.
+    """
+    content_en = models.TextField(blank=True, default='')  # English content (informational)
+    content_ko = models.TextField(blank=True, default='')  # Korean content (legally binding)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Privacy Policy'
+        verbose_name_plural = 'Privacy Policies'
+
+    def save(self, *args, **kwargs):
+        # Ensure only one instance exists (singleton pattern)
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # Prevent deletion of the singleton instance
+        pass
+
+    @classmethod
+    def get_instance(cls):
+        """Get or create the singleton instance"""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def render_content(self, language='en'):
+        """
+        Render the content using Django's template engine with BusinessSettings and AccountSettings context.
+        If no content is set, loads default template from file.
+        """
+        from django.template import Template, Context
+        import os
+        from django.conf import settings
+
+        business = BusinessSettings.get_instance()
+        account = AccountSettings.get_instance()
+
+        context = Context({
+            # BusinessSettings
+            'business_name': business.business_name,
+            'business_registration_number': business.business_registration_number,
+            'address': business.address,
+            'representative': business.representative,
+            'phone': business.phone,
+            'email': business.email,
+            # AccountSettings
+            'account_deletion_period': account.account_deletion_period,
+            'account_deletion_years': account.account_deletion_period // 365,
+            'account_warning_period': account.account_warning_period,
+            'attendee_retention_years': account.attendee_retention_years,
+            'payment_retention_years': account.payment_retention_years,
+        })
+
+        content = self.content_ko if language == 'ko' else self.content_en
+
+        # Load default template if content is empty
+        if not content.strip():
+            template_name = f'privacy_policy_{"ko" if language == "ko" else "en"}.txt'
+            template_path = os.path.join(settings.BASE_DIR, 'templates', 'terms', template_name)
+            try:
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except FileNotFoundError:
+                return ''
+
+        try:
+            template = Template(content)
+            return template.render(context)
+        except Exception:
+            return content  # Return raw content if template rendering fails
+
+    def __str__(self):
+        return "Privacy Policy"
+
+
+class TermsOfService(models.Model):
+    """
+    Singleton model for terms of service content in English and Korean.
+    Content supports Django template syntax for dynamic values from BusinessSettings.
+    """
+    content_en = models.TextField(blank=True, default='')  # English content (informational)
+    content_ko = models.TextField(blank=True, default='')  # Korean content (legally binding)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Terms of Service'
+        verbose_name_plural = 'Terms of Service'
+
+    def save(self, *args, **kwargs):
+        # Ensure only one instance exists (singleton pattern)
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # Prevent deletion of the singleton instance
+        pass
+
+    @classmethod
+    def get_instance(cls):
+        """Get or create the singleton instance"""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def render_content(self, language='en'):
+        """
+        Render the content using Django's template engine with BusinessSettings and AccountSettings context.
+        If no content is set, loads default template from file.
+        """
+        from django.template import Template, Context
+        import os
+        from django.conf import settings
+
+        business = BusinessSettings.get_instance()
+        account = AccountSettings.get_instance()
+
+        context = Context({
+            # BusinessSettings
+            'business_name': business.business_name,
+            'business_registration_number': business.business_registration_number,
+            'address': business.address,
+            'representative': business.representative,
+            'phone': business.phone,
+            'email': business.email,
+            # AccountSettings
+            'account_deletion_period': account.account_deletion_period,
+            'account_deletion_years': account.account_deletion_period // 365,
+            'account_warning_period': account.account_warning_period,
+            'attendee_retention_years': account.attendee_retention_years,
+            'payment_retention_years': account.payment_retention_years,
+        })
+
+        content = self.content_ko if language == 'ko' else self.content_en
+
+        # Load default template if content is empty
+        if not content.strip():
+            template_name = f'terms_of_service_{"ko" if language == "ko" else "en"}.txt'
+            template_path = os.path.join(settings.BASE_DIR, 'templates', 'terms', template_name)
+            try:
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except FileNotFoundError:
+                return ''
+
+        try:
+            template = Template(content)
+            return template.render(context)
+        except Exception:
+            return content  # Return raw content if template rendering fails
+
+    def __str__(self):
+        return "Terms of Service"
 
 
 class ManualTransaction(models.Model):

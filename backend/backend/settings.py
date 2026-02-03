@@ -201,6 +201,19 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
+# Celery Beat schedule - periodic tasks
+from celery.schedules import crontab
+CELERY_BEAT_SCHEDULE = {
+    'check-inactive-users-daily': {
+        'task': 'main.tasks.check_inactive_users',
+        'schedule': crontab(hour=2, minute=0),  # Run daily at 2:00 AM UTC
+    },
+    'cleanup-old-data-daily': {
+        'task': 'main.tasks.cleanup_old_data',
+        'schedule': crontab(hour=3, minute=0),  # Run daily at 3:00 AM UTC
+    },
+}
+
 # Toss Payments Configuration
 TOSS_SECRET_KEY = os.environ.get('TOSS_SECRET_KEY', '')
 TOSS_API_URL = 'https://api.tosspayments.com/v1'

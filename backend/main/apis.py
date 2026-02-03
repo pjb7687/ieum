@@ -21,7 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate, ManualTransaction
+from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate, ManualTransaction, AccountSettings, PrivacyPolicy, TermsOfService
 from main.schema import *
 from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format
 
@@ -1788,6 +1788,41 @@ def update_business_settings(request, data: BusinessSettingsUpdateSchema):
     }
 
 
+# ===== Account Settings (Global Admin) =====
+
+@api.get("/admin/account-settings", response=AccountSettingsSchema)
+@ensure_staff
+def get_account_settings(request):
+    """Get account and data retention settings (admin only)."""
+    account_settings = AccountSettings.get_instance()
+    return {
+        'account_deletion_period': account_settings.account_deletion_period,
+        'account_warning_period': account_settings.account_warning_period,
+        'attendee_retention_years': account_settings.attendee_retention_years,
+        'payment_retention_years': account_settings.payment_retention_years,
+        'minimum_retention_years': AccountSettings.MINIMUM_RETENTION_YEARS,
+    }
+
+
+@api.post("/admin/account-settings", response=AccountSettingsSchema)
+@ensure_staff
+def update_account_settings(request, data: AccountSettingsUpdateSchema):
+    """Update account and data retention settings (admin only)."""
+    account_settings = AccountSettings.get_instance()
+    account_settings.account_deletion_period = data.account_deletion_period
+    account_settings.account_warning_period = data.account_warning_period
+    account_settings.attendee_retention_years = data.attendee_retention_years
+    account_settings.payment_retention_years = data.payment_retention_years
+    account_settings.save()  # save() enforces minimum retention years
+    return {
+        'account_deletion_period': account_settings.account_deletion_period,
+        'account_warning_period': account_settings.account_warning_period,
+        'attendee_retention_years': account_settings.attendee_retention_years,
+        'payment_retention_years': account_settings.payment_retention_years,
+        'minimum_retention_years': AccountSettings.MINIMUM_RETENTION_YEARS,
+    }
+
+
 # ===== Event Payment Management (Event Admin) =====
 
 @api.get("/event/{event_id}/payments", response=List[EventPaymentSchema])
@@ -2557,4 +2592,84 @@ def capture_paypal_order(request, data: PayPalCaptureOrderSchema):
         "amount": payment.amount,
         "event_id": event.id,
         "event_name": event.name,
+    }
+
+
+# ===== Privacy Policy =====
+
+@api.get("/privacy-policy", response=PrivacyPolicySchema, auth=None)
+def get_privacy_policy(request):
+    """Get rendered privacy policy content (public endpoint)."""
+    policy = PrivacyPolicy.get_instance()
+    return {
+        'content_en': policy.render_content('en'),
+        'content_ko': policy.render_content('ko'),
+        'updated_at': policy.updated_at.isoformat() if policy.updated_at else '',
+    }
+
+
+@api.get("/admin/privacy-policy", response=PrivacyPolicyAdminSchema)
+@ensure_staff
+def get_privacy_policy_admin(request):
+    """Get raw privacy policy content for editing (admin only)."""
+    policy = PrivacyPolicy.get_instance()
+    return {
+        'content_en': policy.content_en,
+        'content_ko': policy.content_ko,
+        'updated_at': policy.updated_at.isoformat() if policy.updated_at else '',
+    }
+
+
+@api.post("/admin/privacy-policy", response=PrivacyPolicyAdminSchema)
+@ensure_staff
+def update_privacy_policy(request, data: PrivacyPolicyUpdateSchema):
+    """Update privacy policy content (admin only)."""
+    policy = PrivacyPolicy.get_instance()
+    policy.content_en = data.content_en
+    policy.content_ko = data.content_ko
+    policy.save()
+    return {
+        'content_en': policy.content_en,
+        'content_ko': policy.content_ko,
+        'updated_at': policy.updated_at.isoformat() if policy.updated_at else '',
+    }
+
+
+# ===== Terms of Service =====
+
+@api.get("/terms-of-service", response=TermsOfServiceSchema, auth=None)
+def get_terms_of_service(request):
+    """Get rendered terms of service content (public endpoint)."""
+    terms = TermsOfService.get_instance()
+    return {
+        'content_en': terms.render_content('en'),
+        'content_ko': terms.render_content('ko'),
+        'updated_at': terms.updated_at.isoformat() if terms.updated_at else '',
+    }
+
+
+@api.get("/admin/terms-of-service", response=TermsOfServiceAdminSchema)
+@ensure_staff
+def get_terms_of_service_admin(request):
+    """Get raw terms of service content for editing (admin only)."""
+    terms = TermsOfService.get_instance()
+    return {
+        'content_en': terms.content_en,
+        'content_ko': terms.content_ko,
+        'updated_at': terms.updated_at.isoformat() if terms.updated_at else '',
+    }
+
+
+@api.post("/admin/terms-of-service", response=TermsOfServiceAdminSchema)
+@ensure_staff
+def update_terms_of_service(request, data: TermsOfServiceUpdateSchema):
+    """Update terms of service content (admin only)."""
+    terms = TermsOfService.get_instance()
+    terms.content_en = data.content_en
+    terms.content_ko = data.content_ko
+    terms.save()
+    return {
+        'content_en': terms.content_en,
+        'content_ko': terms.content_ko,
+        'updated_at': terms.updated_at.isoformat() if terms.updated_at else '',
     }

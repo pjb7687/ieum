@@ -403,6 +403,22 @@ class BusinessSettingsUpdateSchema(Schema):
     phone: str = ""
     email: str = ""
 
+
+class AccountSettingsSchema(Schema):
+    account_deletion_period: int
+    account_warning_period: int
+    attendee_retention_years: int
+    payment_retention_years: int
+    minimum_retention_years: int
+
+
+class AccountSettingsUpdateSchema(Schema):
+    account_deletion_period: int = 3 * 365
+    account_warning_period: int = 7
+    attendee_retention_years: int = 5
+    payment_retention_years: int = 5
+
+
 class RegistrationHistorySchema(Schema):
     id: int
     registration_date: str
@@ -497,3 +513,43 @@ class PayPalCaptureOrderSchema(Schema):
     """Schema for capturing PayPal order"""
     orderId: str  # PayPal order ID
     eventId: int
+
+
+class PrivacyPolicySchema(Schema):
+    """Schema for privacy policy (rendered content)"""
+    content_en: str
+    content_ko: str
+    updated_at: str
+
+
+class PrivacyPolicyAdminSchema(Schema):
+    """Schema for privacy policy admin (raw content for editing)"""
+    content_en: str
+    content_ko: str
+    updated_at: str
+
+
+class PrivacyPolicyUpdateSchema(Schema):
+    """Schema for updating privacy policy"""
+    content_en: str
+    content_ko: str
+
+
+class TermsOfServiceSchema(Schema):
+    """Schema for terms of service (rendered content)"""
+    content_en: str
+    content_ko: str
+    updated_at: str
+
+
+class TermsOfServiceAdminSchema(Schema):
+    """Schema for terms of service admin (raw content for editing)"""
+    content_en: str
+    content_ko: str
+    updated_at: str
+
+
+class TermsOfServiceUpdateSchema(Schema):
+    """Schema for updating terms of service"""
+    content_en: str
+    content_ko: str

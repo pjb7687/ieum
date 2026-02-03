@@ -46,7 +46,8 @@
     };
 </script>
 
-<h2 class="text-2xl font-bold mb-6">{m.admin_manageUsers_title()}</h2>
+<h2 class="text-2xl font-bold mb-2">{m.admin_manageUsers_title()}</h2>
+<p class="text-gray-600 mb-6">{m.admin_manageUsers_description()}</p>
 
 <TableSearch placeholder={m.admin_searchUsers()} bind:inputValue={user_search_term} hoverable={true}>
     <TableHead>

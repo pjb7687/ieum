@@ -1,7 +1,7 @@
 <script>
     import { Card, Button } from 'flowbite-svelte';
     import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper } from 'flowbite-svelte';
-    import { CalendarMonthSolid, UsersGroupSolid, BuildingSolid, CogSolid } from 'flowbite-svelte-icons';
+    import { CalendarMonthSolid, UsersGroupSolid, BuildingSolid, CogSolid, ClockSolid, FileLinesSolid, ClipboardListSolid } from 'flowbite-svelte-icons';
     import { onMount } from 'svelte';
     import { fly } from 'svelte/transition';
     import * as m from '$lib/paraglide/messages.js';
@@ -10,6 +10,9 @@
     import Users from '$lib/components/admin/Users.svelte';
     import Institutions from '$lib/components/admin/Institutions.svelte';
     import BusinessSettings from '$lib/components/admin/BusinessSettings.svelte';
+    import AccountSettings from '$lib/components/admin/AccountSettings.svelte';
+    import PrivacyPolicy from '$lib/components/admin/PrivacyPolicy.svelte';
+    import TermsOfService from '$lib/components/admin/TermsOfService.svelte';
 
     let { data } = $props();
 
@@ -22,7 +25,10 @@
         if (location.hash !== '#events' &&
             location.hash !== '#users' &&
             location.hash !== '#institutions' &&
-            location.hash !== '#business_settings'
+            location.hash !== '#business_settings' &&
+            location.hash !== '#account_settings' &&
+            location.hash !== '#privacy_policy' &&
+            location.hash !== '#terms_of_service'
         ) {
             location.hash = '#events';
             return;
@@ -117,6 +123,21 @@
                                     <CogSolid class="w-6 h-6" />
                                 {/snippet}
                             </SidebarItem>
+                            <SidebarItem label={m.admin_sidebar_accountSettings()} active={sidebar_selected === 'account_settings'} href="#account_settings">
+                                {#snippet icon()}
+                                    <ClockSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.admin_sidebar_privacyPolicy()} active={sidebar_selected === 'privacy_policy'} href="#privacy_policy">
+                                {#snippet icon()}
+                                    <FileLinesSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.admin_sidebar_termsOfService()} active={sidebar_selected === 'terms_of_service'} href="#terms_of_service">
+                                {#snippet icon()}
+                                    <ClipboardListSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
                         </SidebarGroup>
                         </div>
                     </Sidebar>
@@ -145,6 +166,18 @@
 
                 {#if sidebar_selected === 'business_settings'}
                 <BusinessSettings {data} />
+                {/if}
+
+                {#if sidebar_selected === 'account_settings'}
+                <AccountSettings {data} />
+                {/if}
+
+                {#if sidebar_selected === 'privacy_policy'}
+                <PrivacyPolicy {data} />
+                {/if}
+
+                {#if sidebar_selected === 'terms_of_service'}
+                <TermsOfService {data} />
                 {/if}
             </div>
         </div>
