@@ -29,15 +29,15 @@
     }) } = $props();
 
     // Create local reactive state for properties to enable two-way binding
-    let description = $state(data.description);
-    let venue = $state(data.venue);
-    let venue_ko = $state(data.venue_ko);
-    let venue_address = $state(data.venue_address);
-    let venue_address_ko = $state(data.venue_address_ko);
-    let venue_latitude = $state(data.venue_latitude);
-    let venue_longitude = $state(data.venue_longitude);
+    let description = $state(data.description ?? '');
+    let venue = $state(data.venue ?? '');
+    let venue_ko = $state(data.venue_ko ?? '');
+    let venue_address = $state(data.venue_address ?? '');
+    let venue_address_ko = $state(data.venue_address_ko ?? '');
+    let venue_latitude = $state(data.venue_latitude ?? null);
+    let venue_longitude = $state(data.venue_longitude ?? null);
     let main_languages = $state(data.main_languages || []);
-    let accepts_abstract = $state(data.accepts_abstract);
+    let accepts_abstract = $state(data.accepts_abstract ?? false);
     let invitation_code = $state(data.invitation_code?.toUpperCase() || '');
     let capacity_abstract = $state(data.capacity_abstract ?? 0);
     let max_votes = $state(data.max_votes ?? 2);
