@@ -7,6 +7,7 @@
     import { getDisplayVenue, getDisplayVenueAddress } from '$lib/utils.js';
 
     import EventAdminForm from '$lib/components/event_admin/EventAdminForm.svelte';
+    import MultiUserSelector from '$lib/components/MultiUserSelector.svelte';
 
     let { data } = $props();
 
@@ -47,7 +48,6 @@
         name: '',
         description: '',
         category: 'conference',
-        organizers: '',
         venue: '',
         venue_address: '',
         venue_address_ko: '',
@@ -64,6 +64,9 @@
         max_votes: 2,
     });
 
+    // Organizers selection
+    let selectedOrganizerIds = $state([]);
+
     const afterCreate = () => {
         return async ({ result, action, update }) => {
             if (result.type === "success") {
@@ -74,7 +77,6 @@
                     name: '',
                     description: '',
                     category: 'conference',
-                    organizers: '',
                     venue: '',
                     venue_address: '',
                     venue_address_ko: '',
@@ -90,6 +92,7 @@
                     capacity_abstract: 0,
                     max_votes: 2,
                 };
+                selectedOrganizerIds = [];
             } else {
                 create_error = result.error.message;
             }
@@ -104,6 +107,11 @@
             if (errorElement) {
                 errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+            return false;
+        }
+        if (selectedOrganizerIds.length === 0) {
+            event.preventDefault();
+            create_error = m.organizers_required();
             return false;
         }
         create_error = '';
@@ -185,6 +193,18 @@
 <Modal id="create_modal" size="xl" title={m.admin_createEventTitle()} bind:open={create_modal} outsideclose>
     <form method="post" action="?/create_event" use:enhance={afterCreate} onsubmit={handleCreateSubmit}>
         <EventAdminForm bind:data={newEventData} />
+
+        <!-- Organizers Selection -->
+        <MultiUserSelector
+            users={data.admin.users || []}
+            bind:selectedIds={selectedOrganizerIds}
+            label={m.organizers_title()}
+            description={m.organizers_description()}
+            required={true}
+        />
+
+        <input type="hidden" name="organizer_ids" value={JSON.stringify(selectedOrganizerIds)} />
+
         {#if create_error}
             <Alert color="red" class="mb-6">{create_error}</Alert>
         {/if}

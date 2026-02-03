@@ -609,6 +609,7 @@
 	"organizers_deleteConfirm": "정말로 이 주최자를 삭제하시겠습니까?",
 	"organizers_delete": "삭제",
 	"organizers_cancel": "취소",
+	"organizers_required": "최소 한 명의 주최자가 필요합니다.",
 
 	"eventDetail_breadcrumbEvents": "행사",
 	"eventDetail_organizer": "주최",

@@ -5,13 +5,17 @@
     import { enhance } from '$app/forms';
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
-    import UserSelectionModal from '$lib/components/UserSelectionModal.svelte';
+    import MultiUserSelector from '$lib/components/MultiUserSelector.svelte';
     import TablePagination from '$lib/components/TablePagination.svelte';
 
     let { data } = $props();
 
     // Staff users get full user list, event admins get attendees only
     const userList = $derived(data.users ? data.users.map(u => ({ id: u.id, ...u })) : data.attendees.map(a => ({ ...a, id: a.user.id })));
+
+    // Filter out users who are already organizers
+    const existingOrganizerIds = $derived(data.organizers.map(o => o.id));
+    const availableUsers = $derived(userList.filter(u => !existingOrganizerIds.includes(u.id)));
 
     let searchTermOrganizer = $state('');
     let currentPage = $state(1);
@@ -43,9 +47,10 @@
     let organizer_modal = $state(false);
     let delete_organizer_modal = $state(false);
     let selected_organizer = $state(null);
+    let selectedOrganizerIds = $state([]);
 
     const addOrganizerModal = () => {
-        selected_organizer = null;
+        selectedOrganizerIds = [];
         organizer_modal = true;
     };
     const deleteOrganizerModal = (id) => {
@@ -60,6 +65,7 @@
                 await update({ reset: false });
                 organizer_modal = false;
                 add_organizer_error = '';
+                selectedOrganizerIds = [];
             } else {
                 add_organizer_error = m.userSelection_error();
             }
@@ -117,15 +123,22 @@
 
 <TablePagination {currentPage} {totalPages} onPageChange={handlePageChange} />
 
-<UserSelectionModal
-    bind:open={organizer_modal}
-    title={m.organizers_addOrganizerTitle()}
-    userList={userList}
-    action="?/add_organizer"
-    submitLabel={m.organizers_add()}
-    bind:error={add_organizer_error}
-    onSubmit={afterAddOrganizer}
-/>
+<Modal bind:open={organizer_modal} title={m.organizers_addOrganizerTitle()} size="lg">
+    <form method="POST" action="?/add_organizer" use:enhance={afterAddOrganizer}>
+        <MultiUserSelector
+            users={availableUsers}
+            bind:selectedIds={selectedOrganizerIds}
+        />
+        <input type="hidden" name="ids" value={JSON.stringify(selectedOrganizerIds)} />
+        {#if add_organizer_error}
+            <Alert color="red" class="mb-6">{add_organizer_error}</Alert>
+        {/if}
+        <div class="flex justify-center gap-2">
+            <Button color="alternative" type="button" onclick={() => organizer_modal = false}>{m.common_cancel()}</Button>
+            <Button color="primary" type="submit" disabled={selectedOrganizerIds.length === 0}>{m.organizers_add()}</Button>
+        </div>
+    </form>
+</Modal>
 
 <Modal bind:open={delete_organizer_modal} title={m.organizers_deleteOrganizer()} size="sm">
     <form method="POST" action="?/delete_organizer" use:enhance={afterDeleteOrganizer}>

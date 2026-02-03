@@ -609,6 +609,7 @@
 	"organizers_deleteConfirm": "Are you sure you want to delete the organizer?",
 	"organizers_delete": "Delete",
 	"organizers_cancel": "Cancel",
+	"organizers_required": "At least one organizer is required.",
 
 	"eventDetail_breadcrumbEvents": "Events",
 	"eventDetail_organizer": "Organizer",

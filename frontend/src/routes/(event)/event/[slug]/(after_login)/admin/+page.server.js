@@ -296,15 +296,25 @@ export const actions = {
     },
     add_organizer: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
-        const response = await post(`api/event/${params.slug}/organizer/add`, {
-            id: parseInt(formdata.get('id')),
-        }, cookies);
-        if (response.ok && response.status === 200) {
-            return response.data;
-        } else {
-            error(response.status, response.data);
+        // Support both single ID and multiple IDs (JSON array)
+        const idsJson = formdata.get('ids');
+        const singleId = formdata.get('id');
+
+        let ids = [];
+        if (idsJson) {
+            ids = JSON.parse(idsJson);
+        } else if (singleId) {
+            ids = [parseInt(singleId)];
         }
-        return;
+
+        // Add each organizer
+        for (const id of ids) {
+            const response = await post(`api/event/${params.slug}/organizer/add`, { id }, cookies);
+            if (!response.ok || response.status !== 200) {
+                error(response.status, response.data);
+            }
+        }
+        return { code: 'success', message: 'Organizers added.' };
     },
     delete_organizer: async ({ cookies, params, request }) => {
         let formdata = await request.formData();

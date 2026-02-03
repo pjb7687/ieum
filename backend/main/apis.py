@@ -430,7 +430,7 @@ def get_events(request, offset: int = 0, limit: int = 20, year: str = None, sear
 @ensure_staff
 def add_event(request):
     data = json.loads(request.body)
-    if not data["name"] or not data["organizers"] or not data["venue"] or not data["start_date"] or not data["end_date"] or not data["capacity"]:
+    if not data["name"] or not data["venue"] or not data["start_date"] or not data["end_date"] or not data["capacity"]:
         return api.create_response(
             request,
             {"code": "missing_fields", "message": "Please fill all required fields."},
@@ -496,7 +496,6 @@ def add_event(request):
         venue_address_ko=data.get("venue_address_ko", ""),
         venue_latitude=float(data["venue_latitude"]) if data.get("venue_latitude") else None,
         venue_longitude=float(data["venue_longitude"]) if data.get("venue_longitude") else None,
-        organizers=data["organizers"],
         main_languages=main_languages,
         registration_deadline=data["registration_deadline"] if data["registration_deadline"] else None,
         capacity=data["capacity"],
@@ -505,6 +504,14 @@ def add_event(request):
         email_template_abstract_submission=email_template_abstract_submission,
         email_template_certificate=email_template_certificate,
     )
+
+    # Add organizers (M2M field)
+    organizer_ids = data.get("organizer_ids", [])
+    if isinstance(organizer_ids, str):
+        organizer_ids = json.loads(organizer_ids) if organizer_ids else []
+    if organizer_ids:
+        organizers = User.objects.filter(id__in=organizer_ids)
+        event.organizers.add(*organizers)
 
     # Set default link_info if not provided
     if not link_info:
