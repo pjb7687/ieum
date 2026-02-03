@@ -1,8 +1,8 @@
 <script>
     import { Input, Label, Button, Checkbox, Spinner, Tooltip } from 'flowbite-svelte';
-    import { SearchOutline, CalendarMonthOutline, MapPinAltSolid, UserCircleOutline, CheckCircleSolid, ClockOutline, GlobeSolid } from 'flowbite-svelte-icons';
+    import { SearchOutline, CalendarMonthOutline, MapPinAltSolid, UserCircleOutline, ClockOutline, GlobeSolid, CheckOutline, CloseCircleOutline } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayVenue, getDisplayVenueAddress, getDisplayOrganizers, formatDate, formatDateRange } from '$lib/utils.js';
+    import { getDisplayVenue, getDisplayOrganizers } from '$lib/utils.js';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
@@ -139,7 +139,7 @@
     }
 
     function getStatusColor(event) {
-        if (!isEventOpen(event)) return 'text-red-600';
+        if (!isEventOpen(event)) return 'text-gray-500';
         if (isClosingSoon(event)) return 'text-orange-600';
         return 'text-green-600';
     }
@@ -148,6 +148,40 @@
         if (!isEventOpen(event)) return m.events_registrationClosed();
         if (isClosingSoon(event)) return m.events_registrationClosingSoon();
         return m.events_registrationOpen();
+    }
+
+    // Get border color based on event status
+    function getBorderColor(event) {
+        if (!isEventOpen(event)) return 'bg-gray-400';
+        if (isClosingSoon(event)) return 'bg-orange-500';
+        return 'bg-green-600';
+    }
+
+    // Get category badge color
+    function getCategoryColor(category) {
+        switch (category) {
+            case 'hackathon': return 'text-green-700 bg-green-100';
+            case 'symposium': return 'text-blue-700 bg-blue-100';
+            case 'workshop': return 'text-purple-700 bg-purple-100';
+            case 'meeting': return 'text-gray-700 bg-gray-100';
+            case 'conference': return 'text-indigo-700 bg-indigo-100';
+            default: return 'text-blue-700 bg-blue-100';
+        }
+    }
+
+    // Format date as MM.DD
+    function formatShortDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${month}.${day}`;
+    }
+
+    // Get year from date
+    function getYear(dateStr) {
+        if (!dateStr) return '';
+        return new Date(dateStr).getFullYear();
     }
 
     // Highlight matched text in search results
@@ -214,7 +248,7 @@
 
         <!-- Right Content - Events List -->
         <div class="lg:col-span-2 xl:col-span-3">
-            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm px-4 sm:px-6">
                 {#if navigating && allEvents.length === 0}
                     <div class="text-center py-16">
                         <Spinner size="12" />
@@ -227,27 +261,48 @@
                         <p class="text-gray-600">{m.events_noResultsDesc()}</p>
                     </div>
                 {:else}
-                    <div class="space-y-8">
+                    <div class="divide-y divide-gray-200">
                         {#each allEvents as event}
-                            <div class="pb-8 border-b border-gray-200 last:border-b-0 last:pb-0">
-                                <!-- Event Category, Invitation Only, and Draft Badge -->
-                                {#if event.category}
-                                    <div class="mb-2 flex items-center gap-2">
-                                        <span class="inline-block text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">
-                                            {#if event.category === 'workshop'}
-                                                {m.eventCategory_workshop()}
-                                            {:else if event.category === 'hackathon'}
-                                                {m.eventCategory_hackathon()}
-                                            {:else if event.category === 'symposium'}
-                                                {m.eventCategory_symposium()}
-                                            {:else if event.category === 'meeting'}
-                                                {m.eventCategory_meeting()}
-                                            {:else if event.category === 'conference'}
-                                                {m.eventCategory_conference()}
-                                            {/if}
-                                        </span>
+                            <a href="/event/{event.id}" class={`flex items-center gap-4 sm:gap-6 py-6 -mx-4 sm:-mx-6 px-4 sm:px-6 hover:bg-gray-50 transition-colors cursor-pointer ${!isEventOpen(event) ? 'opacity-50' : ''}`}>
+                                <!-- Left Color Bar + Date -->
+                                <div class="flex items-center flex-shrink-0">
+                                    <div class={`w-1 h-16 rounded-full ${getBorderColor(event)}`}></div>
+                                    <div class="w-32 sm:w-40 pl-4 pr-5 flex flex-col justify-center">
+                                        <span class="text-xs sm:text-sm text-gray-400">{getYear(event.start_date)}</span>
+                                        <div class="flex items-baseline gap-1.5 text-base sm:text-xl font-bold text-gray-800">
+                                            <span>{formatShortDate(event.start_date)}</span>
+                                            <span class="text-gray-400 font-normal text-sm">~</span>
+                                            <span>{formatShortDate(event.end_date)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Main Content -->
+                                <div class="flex-1 min-w-0">
+                                    <!-- Event Title -->
+                                    <span class="text-lg sm:text-xl font-bold text-gray-900 line-clamp-2">
+                                        {@html highlightText(event.name, searchKeyword)}
+                                    </span>
+
+                                    <!-- Badges -->
+                                    <div class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                        {#if event.category}
+                                            <span class={`inline-block text-xs font-medium px-2 py-0.5 rounded ${getCategoryColor(event.category)}`}>
+                                                {#if event.category === 'workshop'}
+                                                    {m.eventCategory_workshop()}
+                                                {:else if event.category === 'hackathon'}
+                                                    {m.eventCategory_hackathon()}
+                                                {:else if event.category === 'symposium'}
+                                                    {m.eventCategory_symposium()}
+                                                {:else if event.category === 'meeting'}
+                                                    {m.eventCategory_meeting()}
+                                                {:else if event.category === 'conference'}
+                                                    {m.eventCategory_conference()}
+                                                {/if}
+                                            </span>
+                                        {/if}
                                         {#if event.is_invitation_only}
-                                            <span id="invitation-badge-{event.id}" class="inline-block text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-1 rounded">
+                                            <span id="invitation-badge-{event.id}" class="inline-block text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded">
                                                 {m.eventStatus_invitationOnly()}
                                             </span>
                                             <Tooltip triggeredBy="#invitation-badge-{event.id}" placement="right">
@@ -255,7 +310,7 @@
                                             </Tooltip>
                                         {/if}
                                         {#if !event.published}
-                                            <span id="draft-badge-{event.id}" class="inline-block text-xs font-semibold text-gray-700 bg-gray-200 px-2 py-1 rounded">
+                                            <span id="draft-badge-{event.id}" class="inline-block text-xs font-medium text-gray-600 bg-gray-200 px-2 py-0.5 rounded">
                                                 {m.eventStatus_draft()}
                                             </span>
                                             <Tooltip triggeredBy="#draft-badge-{event.id}" placement="right">
@@ -263,75 +318,46 @@
                                             </Tooltip>
                                         {/if}
                                     </div>
-                                {/if}
-                                <!-- Event Title and Status -->
-                                <div class="flex justify-between items-start gap-4 mb-4">
-                                    <a href="/event/{event.id}" class="text-2xl font-bold text-gray-900 hover:underline">
-                                        {@html highlightText(event.name, searchKeyword)}
-                                    </a>
-                                    <span class={`flex items-center gap-1.5 text-sm font-semibold whitespace-nowrap ${getStatusColor(event)}`}>
-                                        {#if !isEventOpen(event)}
-                                            <ClockOutline class="w-4 h-4" />
-                                        {:else if isClosingSoon(event)}
-                                            <ClockOutline class="w-4 h-4" />
-                                        {:else}
-                                            <CheckCircleSolid class="w-4 h-4" />
+
+                                    <!-- Meta Info -->
+                                    <div class="mt-2 flex items-center gap-3 text-sm text-gray-500 flex-wrap">
+                                        <span class="flex items-center gap-1">
+                                            <MapPinAltSolid class="w-4 h-4" />
+                                            <span>{@html highlightText(getDisplayVenue(event), searchKeyword)}</span>
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <UserCircleOutline class="w-4 h-4" />
+                                            <span>{@html highlightText(getDisplayOrganizers(event), searchKeyword)}</span>
+                                        </span>
+                                        {#if event.main_languages && event.main_languages.length > 0}
+                                            <span class="flex items-center gap-1">
+                                                <GlobeSolid class="w-4 h-4" />
+                                                <span>{event.main_languages.map(lang => lang === 'ko' ? m.language_korean() : m.language_english()).join(', ')}</span>
+                                            </span>
                                         {/if}
-                                        {getStatusText(event)}
-                                    </span>
+                                    </div>
                                 </div>
 
-                                <!-- Event Details Grid -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <!-- Dates -->
-                                    <div class="flex items-start gap-3">
-                                        <CalendarMonthOutline class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                                        <div class="flex-1">
-                                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_dates()}</p>
-                                            <p class="text-sm text-gray-900 font-medium">{formatDateRange(event.start_date, event.end_date)}</p>
-                                            {#if event.registration_deadline}
-                                                <p class="text-xs text-gray-600 mt-1.5">
-                                                    <span class="font-medium">{m.events_registrationDeadline()}:</span> {formatDate(event.registration_deadline)}
-                                                </p>
-                                            {/if}
-                                        </div>
-                                    </div>
-
-                                    <!-- Location -->
-                                    <div class="flex items-start gap-3">
-                                        <MapPinAltSolid class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                                        <div class="flex-1">
-                                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_location()}</p>
-                                            <p class="text-sm text-gray-900 font-medium">{@html highlightText(getDisplayVenue(event), searchKeyword)}</p>
-                                            {#if getDisplayVenueAddress(event)}
-                                                <p class="text-xs text-gray-600 mt-1">{@html highlightText(getDisplayVenueAddress(event), searchKeyword)}</p>
-                                            {/if}
-                                        </div>
-                                    </div>
-
-                                    <!-- Organizer -->
-                                    <div class="flex items-start gap-3">
-                                        <UserCircleOutline class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-                                        <div class="flex-1">
-                                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_organizer()}</p>
-                                            <p class="text-sm text-gray-900 font-medium">{@html highlightText(getDisplayOrganizers(event), searchKeyword)}</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Main Languages -->
-                                    {#if event.main_languages && event.main_languages.length > 0}
-                                    <div class="flex items-start gap-3">
-                                        <GlobeSolid class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                                        <div class="flex-1">
-                                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{m.events_mainLanguages()}</p>
-                                            <p class="text-sm text-gray-900 font-medium">
-                                                {event.main_languages.map(lang => lang === 'ko' ? m.language_korean() : m.language_english()).join(', ')}
-                                            </p>
-                                        </div>
-                                    </div>
+                                <!-- Right: Registration Status -->
+                                <div
+                                    class={`hidden sm:flex flex-shrink-0 items-center gap-1.5 pl-4 text-sm font-medium whitespace-nowrap ${
+                                        !isEventOpen(event)
+                                            ? 'text-gray-400'
+                                            : isClosingSoon(event)
+                                                ? 'text-orange-500'
+                                                : 'text-green-600'
+                                    }`}
+                                >
+                                    {#if !isEventOpen(event)}
+                                        <CloseCircleOutline class="w-5 h-5" />
+                                    {:else if isClosingSoon(event)}
+                                        <ClockOutline class="w-5 h-5" />
+                                    {:else}
+                                        <CheckOutline class="w-5 h-5" />
                                     {/if}
+                                    {getStatusText(event)}
                                 </div>
-                            </div>
+                            </a>
                         {/each}
 
                         <!-- Load More Indicator -->
