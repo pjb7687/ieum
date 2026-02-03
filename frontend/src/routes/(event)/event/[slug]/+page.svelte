@@ -133,8 +133,8 @@
 
     <!-- Main Content -->
     <div class="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-        <!-- Left Column - Main Content -->
-        <div class="lg:col-span-2 2xl:col-span-3 space-y-6">
+        <!-- Left Column - Main Content (appears second on mobile) -->
+        <div class="lg:col-span-2 2xl:col-span-3 space-y-6 order-2 lg:order-1">
             <!-- Event Details -->
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -200,8 +200,8 @@
             </div>
         </div>
 
-        <!-- Right Column - Sidebar -->
-        <div class="space-y-6">
+        <!-- Right Column - Sidebar (appears first on mobile) -->
+        <div class="space-y-6 order-1 lg:order-2">
             <!-- Registration Information -->
             <div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-6">
                 {#if user && registered}
@@ -215,7 +215,7 @@
                                 <span class="text-base font-medium text-gray-700">{m.eventDetail_registrationFee()}</span>
                                 <span class="{languageTag() === 'ko' ? 'text-xl' : 'text-lg'} font-bold text-gray-900">{formattedRegistrationFee}</span>
                             </div>
-                            <Button href="/event/{event.id}/register" color="primary" size="lg" class="w-full">
+                            <Button href="/event/{event.id}/register" color="primary" class="w-full">
                                 {m.eventRegister_payNow()}
                             </Button>
                         {:else}
@@ -224,17 +224,17 @@
                                 <p class="text-sm mt-1">{m.eventDetail_registeredThankYou()}</p>
                             </div>
                             {#if event.accepts_abstract}
-                                <Button href="/event/{event.id}/abstract" color="primary" size="lg" class="w-full">
+                                <Button href="/event/{event.id}/abstract" color="primary" class="w-full">
                                     {abstract_submitted ? m.eventDetail_viewAbstract() : m.eventDetail_submitAbstract()}
                                 </Button>
                             {/if}
                         {/if}
-                        <Button href="/event/{event.id}/registration" color="alternative" size="lg" class="w-full">
+                        <Button href="/event/{event.id}/registration" color="alternative" class="w-full">
                             {m.eventDetail_viewRegistration()}
                         </Button>
                         {#if is_event_admin}
                             <hr class="mt-2 mb-6 border-gray-200" />
-                            <Button href="/event/{event.id}/admin" color="primary" size="lg" class="w-full">
+                            <Button href="/event/{event.id}/admin" color="primary" class="w-full">
                                 {m.eventDetail_manageEvent()}
                             </Button>
                         {/if}
@@ -250,7 +250,7 @@
                                 <span class="text-base font-medium text-gray-700">{m.eventDetail_registrationFee()}</span>
                                 <span class="{languageTag() === 'ko' ? 'text-xl' : 'text-lg'} font-bold text-gray-900">{formattedRegistrationFee}</span>
                             </div>
-                            <Button href="/event/{event.id}/register" color="primary" size="lg" class="w-full">
+                            <Button href="/event/{event.id}/register" color="primary" class="w-full">
                                 {m.eventDetail_registerNow()}
                             </Button>
                         {:else}
@@ -258,7 +258,7 @@
                                 <span class="text-base font-medium text-gray-700">{m.eventDetail_registrationFee()}</span>
                                 <span class="{languageTag() === 'ko' ? 'text-xl' : 'text-lg'} font-bold text-gray-900">{formattedRegistrationFee}</span>
                             </div>
-                            <Button href="/login?next={encodeURIComponent(`/event/${event.id}`)}" color="primary" size="lg" class="w-full">
+                            <Button href="/login?next={encodeURIComponent(`/event/${event.id}`)}" color="primary" class="w-full">
                                 {m.eventDetail_loginToRegister()}
                             </Button>
                             <p class="text-xs text-center text-gray-600">
@@ -268,7 +268,7 @@
                         {/if}
 
                         {#if is_event_admin}
-                            <Button href="/event/{event.id}/admin" color="primary" size="lg" class="w-full">
+                            <Button href="/event/{event.id}/admin" color="primary" class="w-full">
                                 {m.eventDetail_manageEvent()}
                             </Button>
                         {/if}
@@ -291,13 +291,15 @@
                 </div>
             </div>
 
-            <!-- Location Map -->
+            <!-- Location Map (hidden on mobile) -->
+            <div class="hidden lg:block">
             <VenueMapWidget
                 venueName={getDisplayVenue(event)}
                 venueAddress={getDisplayVenueAddress(event)}
                 venueLatitude={event.venue_latitude}
                 venueLongitude={event.venue_longitude}
             />
+            </div>
         </div>
     </div>
 </div>
