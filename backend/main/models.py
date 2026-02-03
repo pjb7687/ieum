@@ -466,19 +466,33 @@ class PrivacyPolicy(models.Model):
         pass
 
     @classmethod
+    def _load_default_template(cls, language):
+        """Load default template content from file"""
+        import os
+        from django.conf import settings
+        template_name = f'privacy_policy_{language}.txt'
+        template_path = os.path.join(settings.BASE_DIR, 'templates', 'terms', template_name)
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except FileNotFoundError:
+            return ''
+
+    @classmethod
     def get_instance(cls):
-        """Get or create the singleton instance"""
+        """Get or create the singleton instance. Initialize with default templates if newly created."""
         obj, created = cls.objects.get_or_create(pk=1)
+        if created:
+            obj.content_en = cls._load_default_template('en')
+            obj.content_ko = cls._load_default_template('ko')
+            obj.save()
         return obj
 
     def render_content(self, language='en'):
         """
         Render the content using Django's template engine with BusinessSettings and AccountSettings context.
-        If no content is set, loads default template from file.
         """
         from django.template import Template, Context
-        import os
-        from django.conf import settings
 
         business = BusinessSettings.get_instance()
         account = AccountSettings.get_instance()
@@ -501,15 +515,8 @@ class PrivacyPolicy(models.Model):
 
         content = self.content_ko if language == 'ko' else self.content_en
 
-        # Load default template if content is empty
         if not content.strip():
-            template_name = f'privacy_policy_{"ko" if language == "ko" else "en"}.txt'
-            template_path = os.path.join(settings.BASE_DIR, 'templates', 'terms', template_name)
-            try:
-                with open(template_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            except FileNotFoundError:
-                return ''
+            return ''
 
         try:
             template = Template(content)
@@ -544,19 +551,33 @@ class TermsOfService(models.Model):
         pass
 
     @classmethod
+    def _load_default_template(cls, language):
+        """Load default template content from file"""
+        import os
+        from django.conf import settings
+        template_name = f'terms_of_service_{language}.txt'
+        template_path = os.path.join(settings.BASE_DIR, 'templates', 'terms', template_name)
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except FileNotFoundError:
+            return ''
+
+    @classmethod
     def get_instance(cls):
-        """Get or create the singleton instance"""
+        """Get or create the singleton instance. Initialize with default templates if newly created."""
         obj, created = cls.objects.get_or_create(pk=1)
+        if created:
+            obj.content_en = cls._load_default_template('en')
+            obj.content_ko = cls._load_default_template('ko')
+            obj.save()
         return obj
 
     def render_content(self, language='en'):
         """
         Render the content using Django's template engine with BusinessSettings and AccountSettings context.
-        If no content is set, loads default template from file.
         """
         from django.template import Template, Context
-        import os
-        from django.conf import settings
 
         business = BusinessSettings.get_instance()
         account = AccountSettings.get_instance()
@@ -579,15 +600,8 @@ class TermsOfService(models.Model):
 
         content = self.content_ko if language == 'ko' else self.content_en
 
-        # Load default template if content is empty
         if not content.strip():
-            template_name = f'terms_of_service_{"ko" if language == "ko" else "en"}.txt'
-            template_path = os.path.join(settings.BASE_DIR, 'templates', 'terms', template_name)
-            try:
-                with open(template_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            except FileNotFoundError:
-                return ''
+            return ''
 
         try:
             template = Template(content)
