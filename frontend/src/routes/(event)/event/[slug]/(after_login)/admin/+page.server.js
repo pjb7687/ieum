@@ -415,5 +415,19 @@ export const actions = {
             error(response.status, response.data);
         }
         return;
+    },
+    save_nametag_settings: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/nametag_settings`, {
+            nametag_paper_width: parseInt(formdata.get('nametag_paper_width')) || 90,
+            nametag_paper_height: parseInt(formdata.get('nametag_paper_height')) || 100,
+            nametag_orientation: formdata.get('nametag_orientation') || 'portrait',
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
     }
 };

@@ -109,54 +109,97 @@ function createAddLineHelper(doc, { centerX, maxWidth }) {
 /**
  * Generate a nametag PDF
  * Handles long names/institutes with multi-line wrapping and vertical centering
+ * In landscape mode, content is rotated 90 degrees clockwise
  * @param {Object} options
  * @param {string} options.name - Attendee name
  * @param {string} options.institute - Attendee institution
  * @param {string} options.role - Role to display (e.g., 'Participant', 'Speaker')
  * @param {number} [options.id] - Optional attendee ID to display
+ * @param {number} [options.paperWidth=90] - Paper width in mm
+ * @param {number} [options.paperHeight=100] - Paper height in mm
+ * @param {string} [options.orientation='portrait'] - Paper orientation ('portrait' or 'landscape')
  * @returns {Promise<string>} - Blob URI of the generated PDF
  */
-export async function generateNametagPDF({ name, institute, role, id }) {
+export async function generateNametagPDF({ name, institute, role, id, paperWidth = 90, paperHeight = 100, orientation = 'portrait' }) {
     await loadKoreanFonts();
 
+    let pdf_orientation = orientation;
+    if (orientation === 'portrait' && paperWidth > paperHeight) {
+        pdf_orientation = 'landscape';
+    } else if (orientation === 'landscape' && paperWidth > paperHeight) {
+        pdf_orientation = 'portrait';
+    }
+
     const doc = new jsPDF({
-        orientation: 'portrait',
+        orientation: pdf_orientation,
         unit: 'mm',
-        format: [90, 100]
+        format: [paperWidth, paperHeight]
     });
 
     addFontsToDoc(doc);
     const fontFamily = getFontFamily();
-    const centerX = 45;
-    const maxWidth = 80;
+
+    // Use dimensions as provided
+    const contentWidth = paperWidth;
+    const contentHeight = paperHeight;
+
+    // Scale factors based on default 90x100mm content size
+    const scaleX = contentWidth / 90;
+    const scaleY = contentHeight / 100;
+    const scale = Math.min(scaleX, scaleY) * ((Math.sin((contentWidth - contentHeight) / Math.max(contentWidth, contentHeight) * (Math.PI/4)) + 1));
+
+    const centerX = contentWidth / 2;
+    const centerY = contentHeight / 2;
+    const maxWidth = contentWidth - 10 * scaleX;
+
+    // Helper to draw centered text with rotation
+    // In landscape: x,y are "logical" positions that get swapped for the rotated layout
+    const drawCenteredText = (text, logicalX, logicalY) => {
+        if (orientation === 'landscape') {
+            // For 90° rotated text: swap x/y, use text width for centering
+            const textWidth = doc.getTextWidth(text);
+            // logicalY becomes paperX (horizontal position)
+            // logicalX becomes paperY (vertical position, centered)
+            const paperX = logicalY;
+            const paperY = logicalX + textWidth / 2;
+            doc.text(text, paperX, paperY, { angle: 90 });
+        } else {
+            doc.text(text, logicalX, logicalY, { align: 'center' });
+        }
+    };
 
     // ID at top (if provided)
     if (id !== undefined) {
         doc.setFont(fontFamily, 'bold');
-        doc.setFontSize(10);
-        doc.text(`${id}`, centerX, 10, { align: 'center' });
+        doc.setFontSize(10 * scale);
+        drawCenteredText(`${id}`, centerX, 10 * scaleY);
     }
+
+    // Font sizes scaled
+    const nameFontSize = Math.round(30 * scale);
+    const instituteFontSize = Math.round(20 * scale);
+    const roleFontSize = Math.round(23 * scale);
 
     // Calculate wrapped text for name and institute
     doc.setFont(fontFamily, 'bold');
-    doc.setFontSize(30);
+    doc.setFontSize(nameFontSize);
     const nameLines = doc.splitTextToSize(name || '', maxWidth);
-    const nameLineHeight = 12; // mm per line for font size 30
+    const nameLineHeight = 12 * scale;
 
     doc.setFont(fontFamily, 'normal');
-    doc.setFontSize(20);
+    doc.setFontSize(instituteFontSize);
     const instituteLines = doc.splitTextToSize(institute || '', maxWidth);
-    const instituteLineHeight = 7; // mm per line for font size 20
+    const instituteLineHeight = 7 * scale;
 
     // Calculate total content height
     const nameHeight = nameLines.length * nameLineHeight;
     const instituteHeight = instituteLines.length * instituteLineHeight;
-    const gap = 5; // gap between name and institute
+    const gap = 5 * scale;
     const totalHeight = nameHeight + gap + instituteHeight;
 
     // Available vertical space (between ID area and divider line)
-    const topBound = 18; // below ID
-    const bottomBound = 78; // above divider line
+    const topBound = 18 * scaleY;
+    const bottomBound = contentHeight - 22 * scaleY;
     const availableHeight = bottomBound - topBound;
 
     // Calculate starting Y to vertically center the content
@@ -164,28 +207,35 @@ export async function generateNametagPDF({ name, institute, role, id }) {
 
     // Draw name (bold, centered)
     doc.setFont(fontFamily, 'bold');
-    doc.setFontSize(30);
-    let currentY = startY + nameLineHeight * 0.7; // adjust for baseline
+    doc.setFontSize(nameFontSize);
+    let currentY = startY + nameLineHeight * 0.7;
     nameLines.forEach((line, index) => {
-        doc.text(line, centerX, currentY + index * nameLineHeight, { align: 'center' });
+        drawCenteredText(line, centerX, currentY + index * nameLineHeight);
     });
 
     // Draw institute (normal, centered)
     doc.setFont(fontFamily, 'normal');
-    doc.setFontSize(20);
+    doc.setFontSize(instituteFontSize);
     currentY = startY + nameHeight + gap + instituteLineHeight * 0.7;
     instituteLines.forEach((line, index) => {
-        doc.text(line, centerX, currentY + index * instituteLineHeight, { align: 'center' });
+        drawCenteredText(line, centerX, currentY + index * instituteLineHeight);
     });
 
-    // Divider line
-    doc.setLineWidth(1);
-    doc.line(5, 82, 85, 82);
+    // Divider line (rotated for landscape)
+    const dividerY = contentHeight - 18 * scaleY;
+    doc.setLineWidth(1 * scale);
+    if (orientation === 'landscape') {
+        // Vertical line for landscape - positioned to separate content from role
+        const dividerX = dividerY; // Same logical position as portrait, but as X coordinate
+        doc.line(dividerX, 5 * scaleX, dividerX, contentWidth - 5 * scaleX);
+    } else {
+        doc.line(5 * scaleX, dividerY, contentWidth - 5 * scaleX, dividerY);
+    }
 
     // Role (bold, fixed at bottom)
     doc.setFont(fontFamily, 'bold');
-    doc.setFontSize(23);
-    doc.text(role || 'Participant', centerX, 93, { align: 'center' });
+    doc.setFontSize(roleFontSize);
+    drawCenteredText(role || 'Participant', centerX, contentHeight - 7 * scaleY);
 
     return doc.output('bloburi');
 }

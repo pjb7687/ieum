@@ -499,6 +499,13 @@
 	"onsiteAttendees_print": "인쇄",
 	"onsiteAttendees_close": "닫기",
 
+	"nametag_role": "역할",
+	"nametag_orientation": "방향",
+	"nametag_portrait": "세로",
+	"nametag_landscape": "가로",
+	"nametag_width": "너비",
+	"nametag_height": "높이",
+
 	"onsiteRegistration_complete": "등록 완료",
 	"onsiteRegistration_thankYou": "의 현장 등록이 완료되었습니다",
 	"onsiteRegistration_yourId": "등록 번호",

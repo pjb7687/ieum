@@ -225,6 +225,9 @@ class EventAdminSchema(Schema):
     invitation_code: str
     published: bool
     is_archived: bool
+    nametag_paper_width: float
+    nametag_paper_height: float
+    nametag_orientation: str
 
 class RegistrationStatusSchema(Schema):
     registered: bool

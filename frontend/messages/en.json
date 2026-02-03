@@ -499,6 +499,13 @@
 	"onsiteAttendees_print": "Print",
 	"onsiteAttendees_close": "Close",
 
+	"nametag_role": "Role",
+	"nametag_orientation": "Orientation",
+	"nametag_portrait": "Portrait",
+	"nametag_landscape": "Landscape",
+	"nametag_width": "Width",
+	"nametag_height": "Height",
+
 	"onsiteRegistration_complete": "Registration Complete",
 	"onsiteRegistration_thankYou": "Thank you for registering on-site for",
 	"onsiteRegistration_yourId": "Your Registration ID",

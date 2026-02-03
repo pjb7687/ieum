@@ -157,6 +157,11 @@ class Event(models.Model):
     published = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
 
+    # Nametag settings
+    nametag_paper_width = models.FloatField(default=90)  # Width in mm
+    nametag_paper_height = models.FloatField(default=100)  # Height in mm
+    nametag_orientation = models.CharField(max_length=20, default='portrait')  # 'portrait' or 'landscape'
+
     def __str__(self):
         return self.name
 

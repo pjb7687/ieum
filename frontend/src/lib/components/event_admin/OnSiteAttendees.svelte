@@ -125,12 +125,52 @@
     let selected_nametag_id = $state(null);
     let selected_role = $state('Participant');
 
+    // Nametag paper settings from event
+    let nametag_paper_width = $state(data.event.nametag_paper_width ?? 90);
+    let nametag_paper_height = $state(data.event.nametag_paper_height ?? 100);
+    let nametag_orientation = $state(data.event.nametag_orientation ?? 'portrait');
+
+    const saveNametagSettings = async () => {
+        try {
+            const formData = new FormData();
+            formData.append('nametag_paper_width', nametag_paper_width);
+            formData.append('nametag_paper_height', nametag_paper_height);
+            formData.append('nametag_orientation', nametag_orientation);
+            await fetch('?/save_nametag_settings', {
+                method: 'POST',
+                body: formData
+            });
+        } catch (e) {
+            console.error('Failed to save nametag settings:', e);
+        }
+    };
+
+    const regenerateNametag = async () => {
+        if (selected_nametag_id !== null) {
+            await generateNametag(selected_nametag_id, selected_role);
+        }
+    };
+
+    const onPaperDimensionChange = async () => {
+        await saveNametagSettings();
+        await regenerateNametag();
+    };
+
+    const onOrientationChange = async (e) => {
+        nametag_orientation = e.target.value;
+        await saveNametagSettings();
+        await regenerateNametag();
+    };
+
     const generateNametag = async (id, role) => {
         const p = sortedAttendees.find(a => a.id === id);
         selected_nametag = await generateNametagPDF({
             name: p.name,
             institute: p.institute,
-            role
+            role,
+            paperWidth: nametag_paper_width,
+            paperHeight: nametag_paper_height,
+            orientation: nametag_orientation
         });
     };
 
@@ -451,18 +491,39 @@
 </Modal>
 
 <Modal id="nametag_modal" size="lg" title={m.onsiteAttendees_nametag()} bind:open={nametag_modal} outsideclose>
-    <div class="mb-4 flex gap-2 items-center">
-        <Label for="role" class="whitespace-nowrap">Role:</Label>
-        <Select id="role" bind:value={selected_role} onchange={onRoleChange} items={[
-            { value: 'Participant', name: 'Participant' },
-            { value: 'Speaker', name: 'Speaker' },
-            { value: 'Organizer', name: 'Organizer' },
-            { value: 'Staff', name: 'Staff' },
-            { value: 'Volunteer', name: 'Volunteer' }
-        ]} class="flex-1" />
+    <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex gap-2 items-center">
+            <Label for="role" class="whitespace-nowrap">{m.nametag_role()}:</Label>
+            <Select id="role" bind:value={selected_role} onchange={onRoleChange} items={[
+                { value: 'Participant', name: 'Participant' },
+                { value: 'Speaker', name: 'Speaker' },
+                { value: 'Organizer', name: 'Organizer' },
+                { value: 'Staff', name: 'Staff' },
+                { value: 'Volunteer', name: 'Volunteer' }
+            ]} class="flex-1" />
+        </div>
+        <div class="flex gap-2 items-center">
+            <Label for="orientation" class="whitespace-nowrap">{m.nametag_orientation()}:</Label>
+            <Select id="orientation" value={nametag_orientation} onchange={onOrientationChange} items={[
+                { value: 'portrait', name: m.nametag_portrait() },
+                { value: 'landscape', name: m.nametag_landscape() }
+            ]} class="flex-1" />
+        </div>
+    </div>
+    <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex gap-2 items-center">
+            <Label for="width" class="whitespace-nowrap">{m.nametag_width()}:</Label>
+            <Input type="number" id="width" bind:value={nametag_paper_width} onchange={onPaperDimensionChange} min="30" max="300" step="1" class="w-24" />
+            <span class="text-sm text-gray-500">mm</span>
+        </div>
+        <div class="flex gap-2 items-center">
+            <Label for="height" class="whitespace-nowrap">{m.nametag_height()}:</Label>
+            <Input type="number" id="height" bind:value={nametag_paper_height} onchange={onPaperDimensionChange} min="30" max="300" step="1" class="w-24" />
+            <span class="text-sm text-gray-500">mm</span>
+        </div>
     </div>
     <iframe id="nametag" class="w-full h-[500px]" src={selected_nametag} title="Nametag">
-        Your browser does not support iframes.
+        {m.attendees_iframeNotSupported()}
     </iframe>
     <div class="flex justify-center mt-6 gap-2">
         <Button color="primary" onclick={() => {

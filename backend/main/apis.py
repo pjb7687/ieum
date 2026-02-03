@@ -638,6 +638,30 @@ def archive_event(request, event_id: int):
         )
     return {"code": "success", "message": "Event archived." if event.is_archived else "Event unarchived."}
 
+@api.post("/event/{event_id}/nametag_settings", response=MessageSchema)
+@ensure_event_staff
+def update_nametag_settings(request, event_id: int):
+    """Update nametag paper size and orientation settings for an event"""
+    data = json.loads(request.body)
+    try:
+        event = Event.objects.get(id=event_id)
+    except Event.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_found", "message": "Event not found."},
+            status=404,
+        )
+
+    if "nametag_paper_width" in data:
+        event.nametag_paper_width = float(data["nametag_paper_width"])
+    if "nametag_paper_height" in data:
+        event.nametag_paper_height = float(data["nametag_paper_height"])
+    if "nametag_orientation" in data:
+        event.nametag_orientation = data["nametag_orientation"]
+
+    event.save()
+    return {"code": "success", "message": "Nametag settings updated."}
+
 @api.post("/event/{event_id}/emailtemplates", response=MessageSchema)
 @ensure_event_staff
 def update_event_emailtemplates(request, event_id: int):
