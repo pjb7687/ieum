@@ -34,7 +34,6 @@
 <ul>
 <li><strong>Inactive Accounts:</strong> Accounts that have been inactive for {{ account_deletion_years }} years ({{ account_deletion_period }} days) will be automatically deleted.</li>
 <li><strong>Deletion Warning:</strong> You will receive a warning email {{ account_warning_period }} days before automatic deletion.</li>
-<li><strong>Event Records:</strong> Registration records are retained for {{ attendee_retention_years }} years after registration in accordance with relevant laws.</li>
 <li><strong>Voluntary Deletion:</strong> You may request account deletion at any time by contacting us.</li>
 </ul>
 

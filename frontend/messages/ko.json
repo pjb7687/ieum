@@ -796,10 +796,8 @@
 	"admin_accountSettings_days": "일",
 	"admin_accountSettings_retentionTitle": "데이터 보존 정책",
 	"admin_accountSettings_retentionNote": "법적 준수를 위해 데이터 보존 기간은 {years}년 미만으로 설정할 수 없습니다.",
-	"admin_accountSettings_attendeeRetention": "참가자 데이터 보존",
-	"admin_accountSettings_attendeeRetentionHelp": "사용자 삭제 후 참가자 기록 보존 기간입니다.",
 	"admin_accountSettings_paymentRetention": "결제 내역 보존",
-	"admin_accountSettings_paymentRetentionHelp": "참가자 삭제 후 결제 기록 보존 기간입니다.",
+	"admin_accountSettings_paymentRetentionHelp": "결제 후 결제 기록 보존 기간입니다.",
 	"admin_accountSettings_save": "설정 저장",
 	"admin_accountSettings_success": "계정 설정이 성공적으로 저장되었습니다.",
 

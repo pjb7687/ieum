@@ -796,10 +796,8 @@
 	"admin_accountSettings_days": "days",
 	"admin_accountSettings_retentionTitle": "Data Retention Policy",
 	"admin_accountSettings_retentionNote": "Data retention periods cannot be set lower than {years} years for legal compliance.",
-	"admin_accountSettings_attendeeRetention": "Attendee Data Retention",
-	"admin_accountSettings_attendeeRetentionHelp": "How long to keep attendee records after user deletion.",
 	"admin_accountSettings_paymentRetention": "Payment History Retention",
-	"admin_accountSettings_paymentRetentionHelp": "How long to keep payment records after attendee deletion.",
+	"admin_accountSettings_paymentRetentionHelp": "How long to keep payment records after payment.",
 	"admin_accountSettings_save": "Save Settings",
 	"admin_accountSettings_success": "Account settings saved successfully.",
 

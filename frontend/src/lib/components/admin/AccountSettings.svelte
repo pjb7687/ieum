@@ -101,39 +101,21 @@
         <Alert color="blue" class="mb-4">
             {m.admin_accountSettings_retentionNote({ years: accountSettings.minimum_retention_years })}
         </Alert>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label for="attendee_retention_years" class="block mb-2 text-sm font-medium">{m.admin_accountSettings_attendeeRetention()}</label>
-                <div class="flex gap-2 items-center">
-                    <input
-                        type="number"
-                        id="attendee_retention_years"
-                        name="attendee_retention_years"
-                        min={accountSettings.minimum_retention_years}
-                        max="20"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-20 p-2.5"
-                        bind:value={accountSettings.attendee_retention_years}
-                    />
-                    <span class="text-sm text-gray-600">{m.admin_accountSettings_years()}</span>
-                </div>
-                <Helper class="mt-1">{m.admin_accountSettings_attendeeRetentionHelp()}</Helper>
+        <div>
+            <label for="payment_retention_years" class="block mb-2 text-sm font-medium">{m.admin_accountSettings_paymentRetention()}</label>
+            <div class="flex gap-2 items-center">
+                <input
+                    type="number"
+                    id="payment_retention_years"
+                    name="payment_retention_years"
+                    min={accountSettings.minimum_retention_years}
+                    max="20"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-20 p-2.5"
+                    bind:value={accountSettings.payment_retention_years}
+                />
+                <span class="text-sm text-gray-600">{m.admin_accountSettings_years()}</span>
             </div>
-            <div>
-                <label for="payment_retention_years" class="block mb-2 text-sm font-medium">{m.admin_accountSettings_paymentRetention()}</label>
-                <div class="flex gap-2 items-center">
-                    <input
-                        type="number"
-                        id="payment_retention_years"
-                        name="payment_retention_years"
-                        min={accountSettings.minimum_retention_years}
-                        max="20"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-20 p-2.5"
-                        bind:value={accountSettings.payment_retention_years}
-                    />
-                    <span class="text-sm text-gray-600">{m.admin_accountSettings_years()}</span>
-                </div>
-                <Helper class="mt-1">{m.admin_accountSettings_paymentRetentionHelp()}</Helper>
-            </div>
+            <Helper class="mt-1">{m.admin_accountSettings_paymentRetentionHelp()}</Helper>
         </div>
     </div>
 

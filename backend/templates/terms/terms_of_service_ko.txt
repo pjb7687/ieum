@@ -34,7 +34,6 @@
 <ul>
 <li><strong>휴면 계정:</strong> {{ account_deletion_years }}년({{ account_deletion_period }}일) 동안 미로그인 시 계정이 자동으로 삭제됩니다.</li>
 <li><strong>삭제 사전 안내:</strong> 자동 삭제 {{ account_warning_period }}일 전에 경고 이메일이 발송됩니다.</li>
-<li><strong>행사 기록:</strong> 관련 법령에 따라 등록 후 {{ attendee_retention_years }}년간 행사 참가 기록이 보관됩니다.</li>
 <li><strong>자발적 탈퇴:</strong> 언제든지 연락을 통해 계정 삭제를 요청할 수 있습니다.</li>
 </ul>
 
