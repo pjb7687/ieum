@@ -288,7 +288,7 @@
                                 <!-- Main Content -->
                                 <div class="flex-1 min-w-0">
                                     <!-- Event Title -->
-                                    <span class="text-lg sm:text-xl font-bold text-gray-900 line-clamp-2">
+                                    <span class="text-lg sm:text-xl font-bold text-gray-900">
                                         {@html highlightText(event.name, searchKeyword)}
                                     </span>
 
