@@ -249,7 +249,7 @@ class StatsSchema(Schema):
 
 class AttendeeSchema(Schema):
     id: int
-    user: UserSchema
+    user: Optional[UserSchema] = None
     first_name: str
     middle_initial: str
     last_name: str
