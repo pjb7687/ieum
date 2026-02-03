@@ -14,18 +14,15 @@
         email: ''
     };
 
-    let businessSettings = $state({ ...defaultSettings });
+    // Extract initial value to avoid reactive warning (we intentionally want initial value only)
+    const initialSettings = data.admin.businessSettings;
+    let businessSettings = $state({ ...defaultSettings, ...initialSettings });
     let business_settings_success = $state(false);
     let business_settings_error = $state('');
 
-    $effect(() => {
-        businessSettings = data.admin.businessSettings || { ...defaultSettings };
-    });
-
     const afterBusinessSettingsUpdate = () => {
-        return async ({ result, update }) => {
+        return async ({ result }) => {
             if (result.type === "success") {
-                await update();
                 business_settings_success = true;
                 business_settings_error = '';
                 setTimeout(() => { business_settings_success = false; }, 3000);
