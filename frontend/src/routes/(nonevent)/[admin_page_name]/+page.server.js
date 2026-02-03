@@ -55,10 +55,10 @@ export const actions = {
             throw error(response.status, response.data);
         }
     },
-    'delete_event': async ({ cookies, request }) => {
+    'archive_event': async ({ cookies, request }) => {
         let formdata = await request.formData();
         let id = formdata.get('id');
-        const response = await post(`api/admin/event/${id}/delete`, {}, cookies);
+        const response = await post(`api/admin/event/${id}/archive`, {}, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
         } else {

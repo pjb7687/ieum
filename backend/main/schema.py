@@ -224,6 +224,7 @@ class EventAdminSchema(Schema):
     email_template_certificate: Union[EmailTemplateSchema, None]
     invitation_code: str
     published: bool
+    is_archived: bool
 
 class RegistrationStatusSchema(Schema):
     registered: bool

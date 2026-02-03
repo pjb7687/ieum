@@ -386,6 +386,9 @@ def get_events(request, offset: int = 0, limit: int = 20, year: str = None, sear
 
     events = Event.objects.all()
 
+    # Exclude archived events from public listing
+    events = events.filter(is_archived=False)
+
     # Apply visibility filters
     if request.user.is_authenticated:
         if not request.user.is_superuser:
@@ -527,6 +530,16 @@ def get_event(request, event_id: int):
             status=404,
         )
 
+    # Archived events are not accessible (except to global admins)
+    if event.is_archived:
+        user = request.user
+        if not user.is_authenticated or not (user.is_superuser or user.is_staff):
+            return api.create_response(
+                request,
+                {"code": "not_found", "message": "Event not found."},
+                status=404,
+            )
+
     # Draft events are only accessible to event admins
     if not event.published:
         user = request.user
@@ -610,18 +623,20 @@ def toggle_published(request, event_id: int):
     event.save()
     return {"code": "success", "message": "Event published status updated."}
 
-@api.post("/admin/event/{event_id}/delete", response=MessageSchema)
+@api.post("/admin/event/{event_id}/archive", response=MessageSchema)
 @ensure_staff
-def delete_event(request, event_id: int):
+def archive_event(request, event_id: int):
     try:
-        Event.objects.get(id=event_id).delete()
+        event = Event.objects.get(id=event_id)
+        event.is_archived = not event.is_archived
+        event.save()
     except Event.DoesNotExist:
         return api.create_response(
             request,
             {"code": "not_found", "message": "Event not found."},
             status=404,
         )
-    return {"code": "success", "message": "Event deleted."}
+    return {"code": "success", "message": "Event archived." if event.is_archived else "Event unarchived."}
 
 @api.post("/event/{event_id}/emailtemplates", response=MessageSchema)
 @ensure_event_staff

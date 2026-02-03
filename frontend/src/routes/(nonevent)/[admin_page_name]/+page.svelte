@@ -1,526 +1,152 @@
 <script>
-    import { TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell} from 'flowbite-svelte';
-    import { Modal, Heading, Button, Alert } from 'flowbite-svelte';
-    import { CogSolid, TrashBinSolid, UserEditSolid } from 'flowbite-svelte-icons';
-    import { enhance } from '$app/forms';
+    import { Card, Button } from 'flowbite-svelte';
+    import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper } from 'flowbite-svelte';
+    import { CalendarMonthSolid, UsersGroupSolid, BuildingSolid, CogSolid } from 'flowbite-svelte-icons';
+    import { onMount } from 'svelte';
+    import { fly } from 'svelte/transition';
     import * as m from '$lib/paraglide/messages.js';
-    import { getDisplayInstitute, getDisplayName, getDisplayVenue, getDisplayVenueAddress } from '$lib/utils.js';
 
-    import EventAdminForm from '$lib/components/admin/EventAdminForm.svelte';
-    import RegistrationForm from '$lib/components/RegistrationForm.svelte';
+    import Events from '$lib/components/admin/Events.svelte';
+    import Users from '$lib/components/admin/Users.svelte';
+    import Institutions from '$lib/components/admin/Institutions.svelte';
+    import BusinessSettings from '$lib/components/admin/BusinessSettings.svelte';
 
     let { data } = $props();
 
-    let selected_event = $state(null);
-    let delete_error = $state('');
-    let delete_modal = $state(false);
-
-    let search_term = $state('');
-    let filtered_events = $state([]);
-    $effect(() => {
-        filtered_events = data.admin.events.filter((item) => item.name.toLowerCase().indexOf(search_term.toLowerCase()) !== -1);
-    });
-
-    let user_search_term = $state('');
-    let filtered_users = $state([]);
-    $effect(() => {
-        filtered_users = data.admin.users.filter((user) => {
-            const searchLower = user_search_term.toLowerCase();
-            return user.name.toLowerCase().includes(searchLower) ||
-                   (user.korean_name && user.korean_name.toLowerCase().includes(searchLower)) ||
-                   user.email.toLowerCase().includes(searchLower) ||
-                   (user.institute_en && user.institute_en.toLowerCase().includes(searchLower)) ||
-                   (user.institute_ko && user.institute_ko.toLowerCase().includes(searchLower));
-        });
-    });
-
-    let institution_search_term = $state('');
-    let filtered_institutions = $state([]);
-    $effect(() => {
-        filtered_institutions = data.admin.institutions.filter((inst) =>
-            inst.name_en.toLowerCase().indexOf(institution_search_term.toLowerCase()) !== -1 ||
-            inst.name_ko.toLowerCase().indexOf(institution_search_term.toLowerCase()) !== -1
-        );
-    });
-
-    const afterDelete = () => {
-        return async ({ result, action, update }) => {
-            if (result.type === "success") {
-                await update();
-                delete_modal = false;
-                delete_error = '';
-            } else {
-                delete_error = result.error.message;
-            }
+    let sidebar_selected = $state('events');
+    const setAdminPage = () => {
+        if (!location.hash) {
+            sidebar_selected = 'events';
+            return;
         }
-    };
-    const deleteEvent = (event) => {
-        selected_event = event;
-        delete_modal = true;
-    };
-    
-    let create_modal = $state(false);
-    let create_error = $state('');
-    let newEventData = $state({
-        name: '',
-        description: '',
-        category: 'conference',
-        organizers: '',
-        venue: '',
-        venue_address: '',
-        venue_address_ko: '',
-        venue_latitude: null,
-        venue_longitude: null,
-        main_languages: ['en'],
-        start_date: '',
-        end_date: '',
-        registration_deadline: '',
-        capacity: 0,
-        accepts_abstract: false,
-        abstract_deadline: '',
-        capacity_abstract: 0,
-        max_votes: 2,
-    });
-
-    const afterCreate = () => {
-        return async ({ result, action, update }) => {
-            if (result.type === "success") {
-                await update();
-                create_modal = false;
-                create_error = '';
-                // Reset form data
-                newEventData = {
-                    name: '',
-                    description: '',
-                    category: 'conference',
-                    organizers: '',
-                    venue: '',
-                    venue_address: '',
-                    venue_address_ko: '',
-                    venue_latitude: null,
-                    venue_longitude: null,
-                    main_languages: ['en'],
-                    start_date: '',
-                    end_date: '',
-                    registration_deadline: '',
-                    capacity: 0,
-                    accepts_abstract: false,
-                    abstract_deadline: '',
-                    capacity_abstract: 0,
-                    max_votes: 2,
-                };
-            } else {
-                create_error = result.error.message;
-            }
+        if (location.hash !== '#events' &&
+            location.hash !== '#users' &&
+            location.hash !== '#institutions' &&
+            location.hash !== '#business_settings'
+        ) {
+            location.hash = '#events';
+            return;
+        }
+        sidebar_selected = location.hash.slice(1);
+        const el = document.getElementById('scroll_here');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
         }
     };
 
-    function handleCreateSubmit(event) {
-        // Validate main_languages before submission
-        if (!newEventData.main_languages || newEventData.main_languages.length === 0) {
-            event.preventDefault();
-            create_error = m.eventForm_mainLanguagesRequired();
-            // Scroll to the error message
-            const errorElement = document.querySelector('#create_modal .text-red-600');
-            if (errorElement) {
-                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            return false;
-        }
-        // Clear any previous error messages
-        create_error = '';
+    // Initialize sidebar state based on screen size
+    let isSidebarOpen = $state(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
+    let wasLargeScreen = $state(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
+
+    function toggleSidebar() {
+        isSidebarOpen = !isSidebarOpen;
     }
 
-    // User management
-    let selected_user = $state(null);
-    let user_edit_modal = $state(false);
-    let user_edit_error = $state('');
+    function handleResize() {
+        if (typeof window === 'undefined') return;
 
-    const openUserEditModal = (user) => {
-        selected_user = user;
-        user_edit_modal = true;
-        user_edit_error = '';
-    };
+        const isLargeScreen = window.innerWidth >= 768;
 
-    const afterUserEdit = () => {
-        return async ({ result, update }) => {
-            if (result.type === "success") {
-                await update();
-                user_edit_modal = false;
-                user_edit_error = '';
-                selected_user = null;
-            } else {
-                user_edit_error = result.error?.message || 'An error occurred';
-            }
+        // Only auto-hide/show when crossing the breakpoint
+        if (wasLargeScreen !== isLargeScreen) {
+            isSidebarOpen = isLargeScreen;
+            wasLargeScreen = isLargeScreen;
         }
-    };
+    }
 
-    // Institution management
-    let selected_institution = $state(null);
-    let institution_modal = $state(false);
-    let institution_delete_modal = $state(false);
-    let institution_error = $state('');
+    onMount(() => {
+        // Set initial state based on screen size
+        const isLargeScreen = window.innerWidth >= 768;
+        isSidebarOpen = isLargeScreen;
+        wasLargeScreen = isLargeScreen;
 
-    const openInstitutionModal = (institution = null) => {
-        selected_institution = institution;
-        institution_modal = true;
-        institution_error = '';
-    };
+        // Add resize listener
+        window.addEventListener('resize', handleResize);
 
-    const deleteInstitution = (institution) => {
-        selected_institution = institution;
-        institution_delete_modal = true;
-        institution_error = '';
-    };
-
-    const afterInstitutionAction = () => {
-        return async ({ result, action, update }) => {
-            if (result.type === "success") {
-                await update();
-                institution_modal = false;
-                institution_delete_modal = false;
-                institution_error = '';
-                selected_institution = null;
-            } else {
-                institution_error = result.error?.message || 'An error occurred';
-            }
-        }
-    };
-
-    // Business settings management
-    let businessSettings = $state(data.admin.businessSettings || {
-        business_name: '',
-        business_registration_number: '',
-        address: '',
-        representative: '',
-        phone: '',
-        email: ''
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
     });
-    let business_settings_success = $state(false);
-    let business_settings_error = $state('');
 
-    const afterBusinessSettingsUpdate = () => {
-        return async ({ result, update }) => {
-            if (result.type === "success") {
-                await update();
-                business_settings_success = true;
-                business_settings_error = '';
-                setTimeout(() => { business_settings_success = false; }, 3000);
-            } else {
-                business_settings_error = result.error?.message || 'An error occurred';
-                business_settings_success = false;
-            }
-        }
-    };
+    $effect.pre(() => {
+        setAdminPage();
+    });
 </script>
 
-<!-- Page Header Card -->
-<div class="relative rounded-lg shadow-sm py-16 px-8 mb-8 overflow-hidden" style="background-image: url('/bg-events.webp'); background-size: cover; background-position: center;">
-    <div class="absolute inset-0 bg-slate-900 opacity-60"></div>
-    <div class="relative z-10">
-        <h1 class="text-3xl font-bold text-white">{m.admin_manageEvents_title()}</h1>
-        <p class="text-slate-200 mt-2">{m.admin_manageEvents_description()}</p>
-    </div>
-</div>
+<svelte:window onhashchange={setAdminPage}/>
 
-<!-- Content Card -->
-<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-    <div class="flex justify-end mb-6">
-        <Button color="primary" onclick={() => create_modal = true}>{m.admin_createEvent()}</Button>
+<div class="container mx-auto py-8 px-3 sm:px-7">
+    <!-- Page Header Card -->
+    <div class="relative rounded-lg shadow-sm py-16 px-8 mb-4 overflow-hidden" style="background-image: url('/bg-events.webp'); background-size: cover; background-position: center;">
+        <div class="absolute inset-0 bg-slate-900 opacity-60"></div>
+        <div class="relative z-10">
+            <h1 class="text-3xl font-bold text-white">{m.admin_title()}</h1>
+            <p class="text-slate-200 mt-2">{m.admin_description()}</p>
+        </div>
     </div>
 
-    <TableSearch placeholder={m.admin_searchEvents()} bind:inputValue={search_term} hoverable={true}>
-        <TableHead>
-            <TableHeadCell>{m.admin_tableId()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableName()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableVenue()}</TableHeadCell>
-            <TableHeadCell class="w-1">{m.admin_tableActions()}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-            {#each filtered_events as event}
-                <TableBodyRow>
-                    <TableBodyCell>{event.id}</TableBodyCell>
-                    <TableBodyCell>
-                        <a href={`/event/${event.id}`}>{event.name}</a>
-                    </TableBodyCell>
-                    <TableBodyCell>
-                        <div>
-                            <div class="font-medium">{getDisplayVenue(event)}</div>
-                            {#if getDisplayVenueAddress(event)}
-                                <div class="text-sm text-gray-600">{getDisplayVenueAddress(event)}</div>
-                            {/if}
+    <div id="scroll_here">&nbsp;</div>
+
+    <Card size="xl" class="!p-0">
+        <div class="flex flex-row items-stretch relative">
+            {#if isSidebarOpen}
+                <div class="relative -mr-70 md:mr-0 border-r border-gray-300 bg-gray-50 z-40 md:z-auto" transition:fly={{ x: -100, duration: 300 }}>
+                    <Sidebar alwaysOpen={true} backdrop={false} class="sticky top-0 py-2 w-70 max-h-screen" activeClass="bg-primary-100 text-primary-900 hover:bg-primary-200" nonActiveClass="hover:bg-gray-100">
+                        <Button class="text-md absolute top-32 right-0 translate-x-1/2 bg-gray-50 border border-gray-300 z-50" size="xs" color="none" onclick={toggleSidebar}>
+                            &lsaquo;
+                        </Button>
+                        <div class="overflow-y-auto max-h-screen">
+                        <SidebarGroup>
+                            <SidebarItem label={m.admin_sidebar_events()} active={sidebar_selected === 'events'} href="#events">
+                                {#snippet icon()}
+                                    <CalendarMonthSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.admin_sidebar_users()} active={sidebar_selected === 'users'} href="#users">
+                                {#snippet icon()}
+                                    <UsersGroupSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.admin_sidebar_institutions()} active={sidebar_selected === 'institutions'} href="#institutions">
+                                {#snippet icon()}
+                                    <BuildingSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                            <SidebarItem label={m.admin_sidebar_businessSettings()} active={sidebar_selected === 'business_settings'} href="#business_settings">
+                                {#snippet icon()}
+                                    <CogSolid class="w-6 h-6" />
+                                {/snippet}
+                            </SidebarItem>
+                        </SidebarGroup>
                         </div>
-                    </TableBodyCell>
-                    <TableBodyCell>
-                        <div class="flex justify-center gap-2">
-                            <Button color="none" size="none" href={`/event/${event.id}/admin`}>
-                                <CogSolid class="w-5 h-5" />
-                            </Button>
-                            <Button color="none" size="none" onclick={() => deleteEvent(event)}>
-                                <TrashBinSolid class="w-5 h-5" />
-                            </Button>
-                        </div>
-                    </TableBodyCell>
-                </TableBodyRow>
-            {/each}
-            {#if filtered_events.length === 0}
-                <TableBodyRow>
-                    <TableBodyCell colspan="4" class="text-center">{m.admin_noEventsFound()}</TableBodyCell>
-                </TableBodyRow>
+                    </Sidebar>
+                </div>
+            {:else}
+                <div class="relative">
+                    <div class="sticky top-0">
+                        <Button class="text-md absolute top-32 left-0 -translate-x-1/2 bg-gray-50 border border-gray-300 z-50" size="xs" color="none" onclick={toggleSidebar}>
+                            &rsaquo;
+                        </Button>
+                    </div>
+                </div>
             {/if}
-        </TableBody>
-    </TableSearch>
+            <div class="p-6 sm:p-8 overflow-auto w-full">
+                {#if sidebar_selected === 'events'}
+                <Events {data} />
+                {/if}
+
+                {#if sidebar_selected === 'users'}
+                <Users {data} />
+                {/if}
+
+                {#if sidebar_selected === 'institutions'}
+                <Institutions {data} />
+                {/if}
+
+                {#if sidebar_selected === 'business_settings'}
+                <BusinessSettings {data} />
+                {/if}
+            </div>
+        </div>
+    </Card>
 </div>
-
-<Modal id="delete_modal" size="sm" title={m.admin_removeEventTitle()} bind:open={delete_modal} outsideclose>
-    <form method="post" action="?/delete_event" use:enhance={afterDelete}>
-        <input type="hidden" name="id" value={selected_event?selected_event.id:''} />
-        <p class="mb-6">{m.admin_removeEventConfirm()}</p>
-        {#if delete_error}
-            <Alert color="red" class="mb-6">{delete_error}</Alert>
-        {/if}
-        <div class="flex justify-center gap-2">
-            <Button color="red" type="submit">{m.admin_remove()}</Button>
-            <Button color="dark" type="button" onclick={() => delete_modal = false}>{m.common_cancel()}</Button>
-        </div>
-    </form>
-</Modal>
-
-<Modal id="create_modal" size="xl" title={m.admin_createEventTitle()} bind:open={create_modal} outsideclose>
-    <form method="post" action="?/create_event" use:enhance={afterCreate} on:submit={handleCreateSubmit}>
-        <EventAdminForm bind:data={newEventData} />
-        {#if create_error}
-            <Alert color="red" class="mb-6">{create_error}</Alert>
-        {/if}
-        <div class="flex justify-center gap-2">
-            <Button color="primary" type="submit">{m.admin_create()}</Button>
-            <Button color="alternative" type="button" onclick={() => create_modal = false}>{m.common_cancel()}</Button>
-        </div>
-    </form>
-</Modal>
-
-<!-- User Management Section -->
-<div class="mt-8 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-    <h2 class="text-2xl font-bold mb-6">{m.admin_manageUsers_title()}</h2>
-
-    <TableSearch placeholder={m.admin_searchUsers()} bind:inputValue={user_search_term} hoverable={true}>
-        <TableHead>
-            <TableHeadCell>{m.admin_tableId()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableUserName()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableEmail()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableInstitute()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableJoinDate()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableActiveStatus()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableVerifiedStatus()}</TableHeadCell>
-            <TableHeadCell class="w-1">{m.admin_tableActions()}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-            {#each filtered_users as user}
-                <TableBodyRow>
-                    <TableBodyCell>{user.id}</TableBodyCell>
-                    <TableBodyCell>{getDisplayName(user)}</TableBodyCell>
-                    <TableBodyCell>{user.email}</TableBodyCell>
-                    <TableBodyCell>{getDisplayInstitute(user)}</TableBodyCell>
-                    <TableBodyCell>{new Date(user.date_joined).toLocaleDateString()}</TableBodyCell>
-                    <TableBodyCell>
-                        <form method="post" action="?/toggle_user_active" use:enhance>
-                            <input type="hidden" name="user_id" value={user.id} />
-                            <Button size="xs" color={user.is_active ? 'green' : 'red'} type="submit" disabled={user.id === data.user.id}>
-                                {user.is_active ? m.admin_userActive() : m.admin_userInactive()}
-                            </Button>
-                        </form>
-                    </TableBodyCell>
-                    <TableBodyCell>
-                        <form method="post" action="?/toggle_user_verified" use:enhance>
-                            <input type="hidden" name="user_id" value={user.id} />
-                            <Button size="xs" color={user.email_verified ? 'green' : 'red'} type="submit">
-                                {user.email_verified ? m.admin_userVerified() : m.admin_userUnverified()}
-                            </Button>
-                        </form>
-                    </TableBodyCell>
-                    <TableBodyCell>
-                        <div class="flex justify-center">
-                            <Button color="none" size="none" onclick={() => openUserEditModal(user)}>
-                                <UserEditSolid class="w-5 h-5" />
-                            </Button>
-                        </div>
-                    </TableBodyCell>
-                </TableBodyRow>
-            {/each}
-            {#if filtered_users.length === 0}
-                <TableBodyRow>
-                    <TableBodyCell colspan="8" class="text-center">{m.admin_noUsersFound()}</TableBodyCell>
-                </TableBodyRow>
-            {/if}
-        </TableBody>
-    </TableSearch>
-</div>
-
-<!-- Institution Management Section -->
-<div class="mt-8 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold">{m.admin_manageInstitutions_title()}</h2>
-        <Button color="primary" onclick={() => openInstitutionModal(null)}>{m.admin_addInstitution()}</Button>
-    </div>
-
-    <TableSearch placeholder={m.admin_searchInstitutions()} bind:inputValue={institution_search_term} hoverable={true}>
-        <TableHead>
-            <TableHeadCell>{m.admin_tableId()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableInstitutionNameEn()}</TableHeadCell>
-            <TableHeadCell>{m.admin_tableInstitutionNameKo()}</TableHeadCell>
-            <TableHeadCell class="w-1">{m.admin_tableActions()}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-            {#each filtered_institutions as institution}
-                <TableBodyRow>
-                    <TableBodyCell>{institution.id}</TableBodyCell>
-                    <TableBodyCell>{institution.name_en}</TableBodyCell>
-                    <TableBodyCell>{institution.name_ko || '-'}</TableBodyCell>
-                    <TableBodyCell>
-                        <div class="flex justify-center gap-2">
-                            <Button color="none" size="none" onclick={() => openInstitutionModal(institution)}>
-                                <CogSolid class="w-5 h-5" />
-                            </Button>
-                            <Button color="none" size="none" onclick={() => deleteInstitution(institution)}>
-                                <TrashBinSolid class="w-5 h-5" />
-                            </Button>
-                        </div>
-                    </TableBodyCell>
-                </TableBodyRow>
-            {/each}
-            {#if filtered_institutions.length === 0}
-                <TableBodyRow>
-                    <TableBodyCell colspan="4" class="text-center">{m.admin_noInstitutionsFound()}</TableBodyCell>
-                </TableBodyRow>
-            {/if}
-        </TableBody>
-    </TableSearch>
-</div>
-
-<!-- Business Settings Section -->
-<div class="mt-8 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-    <h2 class="text-2xl font-bold mb-2">{m.admin_businessSettings_title()}</h2>
-    <p class="text-gray-600 mb-6">{m.admin_businessSettings_description()}</p>
-
-    <form method="post" action="?/update_business_settings" use:enhance={afterBusinessSettingsUpdate}>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label for="business_name" class="block mb-2 text-sm font-medium">{m.admin_businessSettings_businessName()}</label>
-                <input type="text" id="business_name" name="business_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" bind:value={businessSettings.business_name} />
-            </div>
-            <div>
-                <label for="business_registration_number" class="block mb-2 text-sm font-medium">{m.admin_businessSettings_businessRegistrationNumber()}</label>
-                <input type="text" id="business_registration_number" name="business_registration_number" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" bind:value={businessSettings.business_registration_number} />
-            </div>
-            <div>
-                <label for="representative" class="block mb-2 text-sm font-medium">{m.admin_businessSettings_representative()}</label>
-                <input type="text" id="representative" name="representative" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" bind:value={businessSettings.representative} />
-            </div>
-            <div>
-                <label for="phone" class="block mb-2 text-sm font-medium">{m.admin_businessSettings_phone()}</label>
-                <input type="text" id="phone" name="phone" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" bind:value={businessSettings.phone} />
-            </div>
-            <div>
-                <label for="email" class="block mb-2 text-sm font-medium">{m.admin_businessSettings_email()}</label>
-                <input type="email" id="email" name="email" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" bind:value={businessSettings.email} />
-            </div>
-            <div class="md:col-span-2">
-                <label for="address" class="block mb-2 text-sm font-medium">{m.admin_businessSettings_address()}</label>
-                <input type="text" id="address" name="address" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" bind:value={businessSettings.address} />
-            </div>
-        </div>
-        {#if business_settings_success}
-            <Alert color="green" class="mt-4">{m.admin_businessSettings_success()}</Alert>
-        {/if}
-        {#if business_settings_error}
-            <Alert color="red" class="mt-4">{business_settings_error}</Alert>
-        {/if}
-        <div class="flex justify-end mt-6">
-            <Button color="primary" type="submit">{m.admin_businessSettings_save()}</Button>
-        </div>
-    </form>
-</div>
-
-<!-- Institution Create/Edit Modal -->
-<Modal id="institution_modal" size="md" title={selected_institution ? m.admin_editInstitution() : m.admin_addInstitution()} bind:open={institution_modal} outsideclose>
-    <form method="post" action={selected_institution ? '?/update_institution' : '?/create_institution'} use:enhance={afterInstitutionAction}>
-        {#if selected_institution}
-            <input type="hidden" name="id" value={selected_institution.id} />
-        {/if}
-        <div class="mb-4">
-            <label for="name_en" class="block mb-2 text-sm font-medium">{m.admin_institutionNameEn()}*</label>
-            <input type="text" id="name_en" name="name_en" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" value={selected_institution?.name_en || ''} required />
-        </div>
-        <div class="mb-6">
-            <label for="name_ko" class="block mb-2 text-sm font-medium">{m.admin_institutionNameKo()}</label>
-            <input type="text" id="name_ko" name="name_ko" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" value={selected_institution?.name_ko || ''} />
-        </div>
-        {#if institution_error}
-            <Alert color="red" class="mb-6">{institution_error}</Alert>
-        {/if}
-        <div class="flex justify-center gap-2">
-            <Button color="primary" type="submit">{selected_institution ? m.admin_update() : m.admin_create()}</Button>
-            <Button color="alternative" type="button" onclick={() => institution_modal = false}>{m.common_cancel()}</Button>
-        </div>
-    </form>
-</Modal>
-
-<!-- Institution Delete Modal -->
-<Modal id="institution_delete_modal" size="sm" title={m.admin_removeInstitutionTitle()} bind:open={institution_delete_modal} outsideclose>
-    <form method="post" action="?/delete_institution" use:enhance={afterInstitutionAction}>
-        <input type="hidden" name="id" value={selected_institution?.id || ''} />
-        <p class="mb-6">{m.admin_removeInstitutionConfirm()}</p>
-        {#if institution_error}
-            <Alert color="red" class="mb-6">{institution_error}</Alert>
-        {/if}
-        <div class="flex justify-center gap-2">
-            <Button color="red" type="submit">{m.admin_remove()}</Button>
-            <Button color="dark" type="button" onclick={() => institution_delete_modal = false}>{m.common_cancel()}</Button>
-        </div>
-    </form>
-</Modal>
-
-<!-- User Edit Modal -->
-<Modal id="user_edit_modal" size="xl" title={m.admin_editUser()} bind:open={user_edit_modal} outsideclose>
-    {#if selected_user}
-    <form method="post" action="?/update_user" use:enhance={afterUserEdit}>
-        <input type="hidden" name="user_id" value={selected_user.id} />
-        <RegistrationForm
-            data={{
-                email: selected_user.email,
-                first_name: selected_user.first_name,
-                middle_initial: selected_user.middle_initial,
-                korean_name: selected_user.korean_name || '',
-                last_name: selected_user.last_name,
-                nationality: selected_user.nationality ? selected_user.nationality.toString() : '',
-                institute: selected_user.institute,
-                department: selected_user.department || '',
-                job_title: selected_user.job_title || '',
-                disability: selected_user.disability || '',
-                dietary: selected_user.dietary || '',
-                orcid: selected_user.orcid || ''
-            }}
-            errors={{}}
-            config={{
-                hide_login_info: true,
-                hide_password: true,
-                show_english_name: true,
-                show_korean_name: true,
-                csrf_token: data.csrf_token
-            }}
-            institution_resolved={selected_user.institute ? {
-                id: selected_user.institute,
-                name_en: selected_user.institute_en,
-                name_ko: selected_user.institute_ko
-            } : null}
-        />
-        {#if user_edit_error}
-            <Alert color="red" class="mb-6">{user_edit_error}</Alert>
-        {/if}
-        <div class="flex justify-center gap-2 mt-6">
-            <Button color="primary" type="submit">{m.admin_update()}</Button>
-            <Button color="alternative" type="button" onclick={() => user_edit_modal = false}>{m.common_cancel()}</Button>
-        </div>
-    </form>
-    {/if}
-</Modal>

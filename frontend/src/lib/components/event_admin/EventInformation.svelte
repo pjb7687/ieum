@@ -3,7 +3,7 @@
     import { enhance } from '$app/forms';
     import * as m from '$lib/paraglide/messages.js';
 
-    import EventAdminForm from '$lib/components/admin/EventAdminForm.svelte';
+    import EventAdminForm from '$lib/components/event_admin/EventAdminForm.svelte';
 
     let { data = {} } = $props();
 

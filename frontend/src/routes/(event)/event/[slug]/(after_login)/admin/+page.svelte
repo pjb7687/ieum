@@ -11,17 +11,17 @@
     import * as m from '$lib/paraglide/messages.js';
 
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
-    import EventAdminForm from '$lib/components/admin/EventAdminForm.svelte';
-    import EventInformation from '$lib/components/admin/EventInformation.svelte';
-    import EmailTemplates from '$lib/components/admin/EmailTemplates.svelte';
-    import EventSpecificQuestions from '$lib/components/admin/EventSpecificQuestions.svelte';
-    import Speakers from '$lib/components/admin/Speakers.svelte';
-    import Attendees from '$lib/components/admin/Attendees.svelte';
-    import OnSiteAttendees from '$lib/components/admin/OnSiteAttendees.svelte';
-    import Abstracts from '$lib/components/admin/Abstracts.svelte';
-    import EventAdmins from '$lib/components/admin/EventAdmins.svelte';
-    import Organizers from '$lib/components/admin/Organizers.svelte';
-    import Transactions from '$lib/components/admin/Transactions.svelte';
+    import EventAdminForm from '$lib/components/event_admin/EventAdminForm.svelte';
+    import EventInformation from '$lib/components/event_admin/EventInformation.svelte';
+    import EmailTemplates from '$lib/components/event_admin/EmailTemplates.svelte';
+    import EventSpecificQuestions from '$lib/components/event_admin/EventSpecificQuestions.svelte';
+    import Speakers from '$lib/components/event_admin/Speakers.svelte';
+    import Attendees from '$lib/components/event_admin/Attendees.svelte';
+    import OnSiteAttendees from '$lib/components/event_admin/OnSiteAttendees.svelte';
+    import Abstracts from '$lib/components/event_admin/Abstracts.svelte';
+    import EventAdmins from '$lib/components/event_admin/EventAdmins.svelte';
+    import Organizers from '$lib/components/event_admin/Organizers.svelte';
+    import Transactions from '$lib/components/event_admin/Transactions.svelte';
 
     let { data } = $props();
 
