@@ -1,8 +1,9 @@
 <script>
     import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Card } from 'flowbite-svelte';
     import { Button, Modal, Label, Select, Alert } from 'flowbite-svelte';
-    import { UserRemoveSolid } from 'flowbite-svelte-icons';
+    import { UserRemoveSolid, ChevronUpOutline, ChevronDownOutline } from 'flowbite-svelte-icons';
     import { enhance } from '$app/forms';
+    import { invalidateAll } from '$app/navigation';
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
     import MultiUserSelector from '$lib/components/MultiUserSelector.svelte';
@@ -49,6 +50,7 @@
     let delete_organizer_modal = $state(false);
     let selected_organizer = $state(null);
     let selectedOrganizerIds = $state([]);
+    let reordering = $state(false);
 
     const addOrganizerModal = () => {
         selectedOrganizerIds = [];
@@ -58,6 +60,36 @@
         selected_organizer = data.organizers.find((item) => item.id === id);
         delete_organizer_modal = true;
     };
+
+    // Reorder functions
+    async function moveOrganizer(index, direction) {
+        if (reordering) return;
+
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= data.organizers.length) return;
+
+        reordering = true;
+
+        // Create new order
+        const newOrder = [...data.organizers.map(o => o.id)];
+        [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
+
+        try {
+            const response = await fetch(`/api/event/${data.event.id}/organizers/reorder`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order: newOrder })
+            });
+
+            if (response.ok) {
+                await invalidateAll();
+            }
+        } catch (error) {
+            console.error('Failed to reorder organizers:', error);
+        } finally {
+            reordering = false;
+        }
+    }
 
     let add_organizer_error = $state('');
     const afterAddOrganizer = () => {
@@ -94,14 +126,34 @@
 </div>
 <TableSearch placeholder={m.organizers_searchPlaceholder()} hoverable={true} bind:inputValue={searchTermOrganizer}>
     <TableHead>
+        <TableHeadCell class="w-1">{m.organizers_order()}</TableHeadCell>
         <TableHeadCell>{m.organizers_name()}</TableHeadCell>
         <TableHeadCell>{m.organizers_email()}</TableHeadCell>
         <TableHeadCell>{m.organizers_institute()}</TableHeadCell>
         <TableHeadCell class="w-1">{m.organizers_actions()}</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass="divide-y">
-        {#each paginatedOrganizers as row}
+        {#each paginatedOrganizers as row, localIndex}
+            {@const globalIndex = (currentPage - 1) * itemsPerPage + localIndex}
             <TableBodyRow>
+                <TableBodyCell>
+                    <div class="flex flex-col gap-0.5">
+                        <button
+                            onclick={() => moveOrganizer(globalIndex, -1)}
+                            disabled={globalIndex === 0 || reordering || searchTermOrganizer}
+                            class="p-0.5 rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <ChevronUpOutline class="w-4 h-4" />
+                        </button>
+                        <button
+                            onclick={() => moveOrganizer(globalIndex, 1)}
+                            disabled={globalIndex === data.organizers.length - 1 || reordering || searchTermOrganizer}
+                            class="p-0.5 rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <ChevronDownOutline class="w-4 h-4" />
+                        </button>
+                    </div>
+                </TableBodyCell>
                 <TableBodyCell>{getDisplayName(row)}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
                 <TableBodyCell>{getDisplayInstitute(row)}</TableBodyCell>
@@ -116,7 +168,7 @@
         {/each}
         {#if filteredOrganizers.length === 0}
             <TableBodyRow>
-                <TableBodyCell colspan="4" class="text-center">{m.organizers_noRecords()}</TableBodyCell>
+                <TableBodyCell colspan="5" class="text-center">{m.organizers_noRecords()}</TableBodyCell>
             </TableBodyRow>
         {/if}
     </TableBody>

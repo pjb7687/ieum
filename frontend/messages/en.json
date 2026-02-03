@@ -597,6 +597,7 @@
 	"organizers_description": "Add or delete organizers for this event below.",
 	"organizers_addOrganizer": "Add Organizer",
 	"organizers_searchPlaceholder": "Search by First Name",
+	"organizers_order": "Order",
 	"organizers_name": "Name",
 	"organizers_email": "Email",
 	"organizers_institute": "Institute",

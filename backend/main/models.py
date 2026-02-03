@@ -139,6 +139,7 @@ class Event(models.Model):
     venue_latitude = models.FloatField(blank=True, null=True)  # Latitude for map
     venue_longitude = models.FloatField(blank=True, null=True)  # Longitude for map
     organizers = models.ManyToManyField('User', related_name='organized_events', blank=True)
+    organizers_order = models.JSONField(default=list, blank=True)  # List of user IDs in display order
     main_languages = models.JSONField(default=default_main_languages)  # Array of language codes: ['ko', 'en']
     registration_deadline = models.DateField(blank=True, null=True)
     capacity = models.IntegerField()
@@ -165,11 +166,19 @@ class Event(models.Model):
     def __str__(self):
         return self.name
 
+    def _get_ordered_organizers(self):
+        """Return organizers in saved order"""
+        organizers = list(self.organizers.all())
+        if self.organizers_order:
+            order_map = {uid: idx for idx, uid in enumerate(self.organizers_order)}
+            organizers.sort(key=lambda o: order_map.get(o.id, len(order_map)))
+        return organizers
+
     @property
     def organizers_en(self):
         """Return formatted organizers in English: First Last (Institution)"""
         organizer_list = []
-        for org in self.organizers.all():
+        for org in self._get_ordered_organizers():
             name = f"{org.first_name} {org.last_name}"
             # Get institution English name
             institute = org.institute.name_en if org.institute else ""
@@ -183,7 +192,7 @@ class Event(models.Model):
     def organizers_ko(self):
         """Return formatted organizers in Korean: 한글이름 (기관명)"""
         organizer_list = []
-        for org in self.organizers.all():
+        for org in self._get_ordered_organizers():
             # Use Korean name if available, otherwise fall back to English name
             name = org.korean_name if org.korean_name else f"{org.first_name} {org.last_name}"
             # Get institution Korean name, fall back to English if not available

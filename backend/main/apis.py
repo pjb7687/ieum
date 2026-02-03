@@ -484,6 +484,13 @@ def add_event(request):
     # Use provided link_info or default to empty (will be set after event creation)
     link_info = data.get("link_info", "").strip()
 
+        # Default registration_deadline to day before start_date if not provided
+    registration_deadline = data.get("registration_deadline")
+    if not registration_deadline:
+        from datetime import timedelta
+        start_date = datetime.strptime(data["start_date"], "%Y-%m-%d").date()
+        registration_deadline = start_date - timedelta(days=1)
+
     event = Event.objects.create(
         name=data["name"],
         description=data.get("description", ""),
@@ -492,12 +499,13 @@ def add_event(request):
         start_date=data["start_date"],
         end_date=data["end_date"],
         venue=data["venue"],
+        venue_ko=data.get("venue_ko", ""),
         venue_address=data.get("venue_address", ""),
         venue_address_ko=data.get("venue_address_ko", ""),
         venue_latitude=float(data["venue_latitude"]) if data.get("venue_latitude") else None,
         venue_longitude=float(data["venue_longitude"]) if data.get("venue_longitude") else None,
         main_languages=main_languages,
-        registration_deadline=data["registration_deadline"] if data["registration_deadline"] else None,
+        registration_deadline=registration_deadline,
         capacity=data["capacity"],
         accepts_abstract=data["accepts_abstract"] == "true",
         email_template_registration=email_template_registration,
@@ -607,7 +615,13 @@ def update_event(request, event_id: int):
         main_languages = main_languages_value
     # Set default to English if empty
     event.main_languages = main_languages if main_languages else ['en']
-    event.registration_deadline = data["registration_deadline"] if data["registration_deadline"] else None
+        # Default registration_deadline to day before start_date if not provided
+    if data.get("registration_deadline"):
+        event.registration_deadline = data["registration_deadline"]
+    else:
+        from datetime import timedelta
+        start_date = datetime.strptime(data["start_date"], "%Y-%m-%d").date()
+        event.registration_deadline = start_date - timedelta(days=1)
     event.capacity = data["capacity"]
     event.registration_fee = int(data["registration_fee"]) if data.get("registration_fee") not in [None, ""] else None
     event.accepts_abstract = data["accepts_abstract"] == "true"
@@ -1680,7 +1694,12 @@ def delete_event_admin(request, event_id: int, admin_id: int):
 @ensure_event_staff
 def get_organizers(request, event_id: int):
     event = Event.objects.get(id=event_id)
-    return event.organizers.all()
+    organizers = list(event.organizers.all())
+    # Sort by saved order if exists
+    if event.organizers_order:
+        order_map = {uid: idx for idx, uid in enumerate(event.organizers_order)}
+        organizers.sort(key=lambda u: order_map.get(u.id, len(order_map)))
+    return organizers
 
 @api.post("/event/{event_id}/organizer/add", response=MessageSchema)
 @ensure_event_staff
@@ -1703,7 +1722,21 @@ def delete_organizer(request, event_id: int, organizer_id: int):
     event = Event.objects.get(id=event_id)
     user = User.objects.get(id=organizer_id)
     event.organizers.remove(user)
+    # Remove from order list
+    if event.organizers_order and organizer_id in event.organizers_order:
+        event.organizers_order = [uid for uid in event.organizers_order if uid != organizer_id]
+        event.save()
     return {"code": "success", "message": "Organizer deleted."}
+
+@api.post("/event/{event_id}/organizers/reorder", response=MessageSchema)
+@ensure_event_staff
+def reorder_organizers(request, event_id: int):
+    data = json.loads(request.body)
+    event = Event.objects.get(id=event_id)
+    order = data.get("order", [])
+    event.organizers_order = order
+    event.save()
+    return {"code": "success", "message": "Organizers order updated."}
 
 @api.get("/event/{event_id}/email_templates", response=dict[str, EmailTemplateSchema | None])
 @ensure_event_staff
