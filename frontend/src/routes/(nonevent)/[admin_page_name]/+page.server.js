@@ -82,6 +82,17 @@ export async function load({ parent, params, cookies }) {
 
 /** @type {import('./$types').PageServerActions} */
 export const actions = {
+    'search_institutions': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const search = formdata.get('search') || '';
+
+        const response = await get(`api/institutions?search=${encodeURIComponent(search)}`, cookies);
+        if (response.ok) {
+            return { success: true, institutions: response.data };
+        } else {
+            return { success: false, institutions: [] };
+        }
+    },
     'create_event': async ({ cookies, request }) => {
         let formdata = await request.formData();
         const response = await post('api/admin/event/add', formdata, cookies);
@@ -129,9 +140,9 @@ export const actions = {
         };
         const response = await post('api/institutions', data, cookies);
         if (response.ok && response.status === 200) {
-            return response.data;
+            return { success: true, institution: response.data };
         } else {
-            throw error(response.status, response.data);
+            return { success: false, error: response.data?.error || 'Failed to create institution' };
         }
     },
     'update_institution': async ({ cookies, request }) => {
@@ -143,9 +154,9 @@ export const actions = {
         };
         const response = await post(`api/admin/institution/${id}/update`, data, cookies);
         if (response.ok && response.status === 200) {
-            return response.data;
+            return { success: true, ...response.data };
         } else {
-            throw error(response.status, response.data);
+            return { success: false, error: response.data?.message || 'Failed to update institution' };
         }
     },
     'delete_institution': async ({ cookies, request }) => {
@@ -153,9 +164,9 @@ export const actions = {
         let id = formdata.get('id');
         const response = await post(`api/admin/institution/${id}/delete`, {}, cookies);
         if (response.ok && response.status === 200) {
-            return response.data;
+            return { success: true, ...response.data };
         } else {
-            throw error(response.status, response.data);
+            return { success: false, error: response.data?.message || 'Failed to delete institution' };
         }
     },
     'update_user': async ({ cookies, request }) => {

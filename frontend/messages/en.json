@@ -282,6 +282,7 @@
 	"admin_removeInstitutionTitle": "Remove Institution",
 	"admin_removeInstitutionConfirm": "Are you sure you want to remove this institution?",
 	"admin_update": "Update",
+	"admin_remove": "Remove",
 
 	"eventForm_eventName": "Event Name",
 	"eventForm_eventPageUrl": "Event Page URL",

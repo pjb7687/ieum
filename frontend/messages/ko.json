@@ -282,6 +282,7 @@
 	"admin_removeInstitutionTitle": "기관 삭제",
 	"admin_removeInstitutionConfirm": "정말로 이 기관을 삭제하시겠습니까?",
 	"admin_update": "수정",
+	"admin_remove": "삭제",
 
 	"eventForm_eventName": "행사명",
 	"eventForm_eventPageUrl": "행사 페이지 URL",

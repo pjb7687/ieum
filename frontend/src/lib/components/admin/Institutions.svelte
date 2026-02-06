@@ -33,15 +33,15 @@
     };
 
     const afterInstitutionAction = () => {
-        return async ({ result, action, update }) => {
-            if (result.type === "success") {
+        return async ({ result, update }) => {
+            if (result.type === "success" && result.data?.success !== false) {
                 await update();
                 institution_modal = false;
                 institution_delete_modal = false;
                 institution_error = '';
                 selected_institution = null;
             } else {
-                institution_error = result.error?.message || 'An error occurred';
+                institution_error = result.data?.error || result.error?.message || 'An error occurred';
             }
         }
     };

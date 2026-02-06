@@ -15,6 +15,7 @@ from django.middleware.csrf import get_token
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.template import Template, Context
+from django.db import IntegrityError
 
 from django.conf import settings
 import logging
@@ -357,6 +358,12 @@ def update_institution(request, institution_id: int, data: InstitutionCreateSche
             request,
             {"code": "not_found", "message": "Institution not found"},
             status=404,
+        )
+    except IntegrityError:
+        return api.create_response(
+            request,
+            {"code": "duplicate", "message": "An institution with this name already exists"},
+            status=400,
         )
 
 @api.post("/admin/institution/{institution_id}/delete", response=MessageSchema)
