@@ -326,6 +326,16 @@ export const actions = {
         }
         return;
     },
+    reorder_organizers: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const order = JSON.parse(formdata.get('order') || '[]');
+        const response = await post(`api/event/${params.slug}/organizers/reorder`, { order }, cookies);
+        if (response.ok && response.status === 200) {
+            return { success: true, ...response.data };
+        } else {
+            return { success: false, error: response.data?.message || 'Failed to reorder organizers' };
+        }
+    },
     update_onsite_attendee: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
         const response = await post(`api/event/${params.slug}/onsite/${formdata.get('id')}/update`, {

@@ -2,7 +2,7 @@
     import { Heading, TableSearch, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Card } from 'flowbite-svelte';
     import { Button, Modal, Label, Select, Alert } from 'flowbite-svelte';
     import { UserRemoveSolid, ChevronUpOutline, ChevronDownOutline } from 'flowbite-svelte-icons';
-    import { enhance } from '$app/forms';
+    import { enhance, deserialize } from '$app/forms';
     import { invalidateAll } from '$app/navigation';
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
@@ -75,13 +75,16 @@
         [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
 
         try {
-            const response = await fetch(`/api/event/${data.event.id}/organizers/reorder`, {
+            const formData = new FormData();
+            formData.append('order', JSON.stringify(newOrder));
+
+            const response = await fetch('?/reorder_organizers', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ order: newOrder })
+                body: formData
             });
 
-            if (response.ok) {
+            const result = deserialize(await response.text());
+            if (result.type === 'success' && result.data?.success !== false) {
                 await invalidateAll();
             }
         } catch (error) {
