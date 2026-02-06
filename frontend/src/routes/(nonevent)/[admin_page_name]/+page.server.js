@@ -234,5 +234,18 @@ export const actions = {
         } else {
             throw error(response.status, response.data);
         }
+    },
+    'upload_editor_file': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const response = await post('api/upload/editor-file', {
+            file_name: formdata.get('file_name'),
+            file_content: formdata.get('file_content'),
+            file_type: formdata.get('file_type') || 'image',
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
     }
 };

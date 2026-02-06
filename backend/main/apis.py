@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate, ManualTransaction, AccountSettings, PrivacyPolicy, TermsOfService
 from main.schema import *
-from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format
+from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format, validate_editor_file
 
 from .tasks import send_mail, send_mail_with_attachment
 
@@ -2736,4 +2736,68 @@ def update_terms_of_service(request, data: TermsOfServiceUpdateSchema):
         'content_en': terms.content_en,
         'content_ko': terms.content_ko,
         'updated_at': terms.updated_at.isoformat() if terms.updated_at else '',
+    }
+
+
+# ===== Editor File Upload =====
+
+@api.post("/upload/editor-file")
+@ensure_staff
+def upload_editor_file(request):
+    """
+    Upload a file for the rich text editor (staff only).
+    Accepts images and attachments via base64 encoding.
+    Returns the URL of the uploaded file.
+    """
+    data = json.loads(request.body)
+    file_name = data.get("file_name", "")
+    file_content_b64 = data.get("file_content", "")
+    file_type = data.get("file_type", "image")  # 'image' or 'attachment'
+
+    if not file_name or not file_content_b64:
+        return api.create_response(
+            request,
+            {"code": "missing_fields", "message": "File name and content are required."},
+            status=400,
+        )
+
+    # Decode base64 content
+    try:
+        # Handle data URL format (e.g., "data:image/png;base64,...")
+        if "," in file_content_b64:
+            file_content = base64.b64decode(file_content_b64.split(",")[1])
+        else:
+            file_content = base64.b64decode(file_content_b64)
+    except (ValueError, IndexError):
+        return api.create_response(
+            request,
+            {"code": "invalid_file", "message": "Invalid file content encoding."},
+            status=400,
+        )
+
+    # Validate file
+    is_valid, error_message = validate_editor_file(file_name, file_content, file_type)
+    if not is_valid:
+        return api.create_response(
+            request,
+            {"code": "invalid_file", "message": error_message},
+            status=400,
+        )
+
+    # Sanitize filename and create unique path
+    safe_filename = sanitize_filename(file_name)
+    folder = "editor/images" if file_type == "image" else "editor/attachments"
+    file_path = f"{folder}/{uuid.uuid4()}/{safe_filename}"
+
+    # Save file
+    file = ContentFile(file_content)
+    saved_path = default_storage.save(file_path, file)
+
+    # Return the URL
+    file_url = f"/media/{saved_path}"
+
+    return {
+        "code": "success",
+        "url": file_url,
+        "filename": safe_filename,
     }

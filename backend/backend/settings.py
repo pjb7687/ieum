@@ -212,6 +212,11 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'main.tasks.cleanup_old_data',
         'schedule': crontab(hour=3, minute=0),  # Run daily at 3:00 AM UTC
     },
+    'cleanup-media-files-daily': {
+        'task': 'main.tasks.cleanup_media_files',
+        'schedule': crontab(hour=4, minute=0),  # Run daily at 4:00 AM UTC
+        'kwargs': {'min_age_hours': 24},  # Only delete files older than 24 hours
+    },
 }
 
 # Toss Payments Configuration

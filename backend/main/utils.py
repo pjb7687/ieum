@@ -84,6 +84,61 @@ def rate_limit(max_requests: int = 10, window_seconds: int = 60):
 ALLOWED_EXTENSIONS = {'.docx', '.odt'}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
+# Editor file upload validation constants
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'}
+ALLOWED_ATTACHMENT_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.zip'}
+MAX_EDITOR_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+# Image magic bytes
+IMAGE_MAGIC_BYTES = {
+    '.jpg': [b'\xff\xd8\xff'],
+    '.jpeg': [b'\xff\xd8\xff'],
+    '.png': [b'\x89PNG\r\n\x1a\n'],
+    '.gif': [b'GIF87a', b'GIF89a'],
+    '.webp': [b'RIFF'],  # WebP starts with RIFF
+    '.svg': [b'<?xml', b'<svg'],  # SVG is XML-based
+}
+
+
+def validate_editor_file(file_name: str, file_content: bytes, file_type: str = 'image') -> tuple[bool, str]:
+    """
+    Validate editor file uploads (images and attachments) for security.
+    Returns (is_valid, error_message).
+    """
+    # 1. Validate file size
+    if len(file_content) > MAX_EDITOR_FILE_SIZE:
+        return False, "File size exceeds maximum allowed (5MB)."
+
+    if len(file_content) == 0:
+        return False, "File is empty."
+
+    # 2. Sanitize and validate filename
+    safe_name = os.path.basename(file_name)
+    if not safe_name or safe_name.startswith('.'):
+        return False, "Invalid filename."
+
+    # Validate extension based on file type
+    _, ext = os.path.splitext(safe_name.lower())
+
+    if file_type == 'image':
+        if ext not in ALLOWED_IMAGE_EXTENSIONS:
+            return False, f"Invalid image type. Allowed: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+
+        # Validate magic bytes for images (except SVG which is text-based)
+        if ext in IMAGE_MAGIC_BYTES:
+            valid_magic = False
+            for magic in IMAGE_MAGIC_BYTES[ext]:
+                if file_content[:len(magic)] == magic:
+                    valid_magic = True
+                    break
+            if not valid_magic and ext != '.svg':
+                return False, "Invalid image file. File content does not match the declared type."
+    else:
+        if ext not in ALLOWED_ATTACHMENT_EXTENSIONS:
+            return False, f"Invalid file type. Allowed: {', '.join(ALLOWED_ATTACHMENT_EXTENSIONS)}"
+
+    return True, ""
+
 
 def validate_abstract_file(file_name: str, file_content: bytes) -> tuple[bool, str]:
     """

@@ -153,3 +153,141 @@ def cleanup_old_data():
     return {
         'payments_deleted': payment_count,
     }
+
+
+@shared_task
+def cleanup_media_files(min_age_hours=24):
+    """
+    Clean up orphaned media files (editor uploads and abstract files).
+
+    - Editor files: Files in media/editor/ not referenced in Event descriptions,
+      PrivacyPolicy, or TermsOfService content
+    - Abstract files: Folders in media/abstracts/ not referenced in Abstract records
+    """
+    import os
+    import re
+    import shutil
+    from django.conf import settings
+    from main.models import Event, PrivacyPolicy, TermsOfService, Abstract
+
+    min_age = timezone.now() - timedelta(hours=min_age_hours)
+    media_root = settings.MEDIA_ROOT
+    total_deleted = 0
+    total_size = 0
+
+    # === Editor Files Cleanup ===
+    editor_dirs = [
+        os.path.join(media_root, 'editor', 'images'),
+        os.path.join(media_root, 'editor', 'attachments'),
+    ]
+
+    # Collect all referenced files from content
+    referenced_files = set()
+    file_pattern = re.compile(r'/media/(editor/(?:images|attachments)/[^"\'\s\)]+)')
+
+    # Check Event descriptions
+    for event in Event.objects.exclude(description=''):
+        matches = file_pattern.findall(event.description)
+        referenced_files.update(matches)
+
+    # Check PrivacyPolicy
+    try:
+        policy = PrivacyPolicy.objects.get(pk=1)
+        for content in [policy.content_en, policy.content_ko]:
+            if content:
+                matches = file_pattern.findall(content)
+                referenced_files.update(matches)
+    except PrivacyPolicy.DoesNotExist:
+        pass
+
+    # Check TermsOfService
+    try:
+        terms = TermsOfService.objects.get(pk=1)
+        for content in [terms.content_en, terms.content_ko]:
+            if content:
+                matches = file_pattern.findall(content)
+                referenced_files.update(matches)
+    except TermsOfService.DoesNotExist:
+        pass
+
+    # Find and delete orphaned editor files
+    editor_deleted = 0
+    editor_size = 0
+    for editor_dir in editor_dirs:
+        if not os.path.exists(editor_dir):
+            continue
+        for uuid_folder in os.listdir(editor_dir):
+            folder_path = os.path.join(editor_dir, uuid_folder)
+            if os.path.isdir(folder_path):
+                for filename in os.listdir(folder_path):
+                    file_path = os.path.join(folder_path, filename)
+                    if os.path.isfile(file_path):
+                        rel_path = os.path.relpath(file_path, media_root)
+                        mtime = os.path.getmtime(file_path)
+                        file_time = timezone.datetime.fromtimestamp(
+                            mtime, tz=timezone.get_current_timezone()
+                        )
+                        if rel_path not in referenced_files and file_time < min_age:
+                            try:
+                                file_size = os.path.getsize(file_path)
+                                os.remove(file_path)
+                                try:
+                                    os.rmdir(folder_path)
+                                except OSError:
+                                    pass
+                                editor_deleted += 1
+                                editor_size += file_size
+                                logger.info(f"Deleted orphaned editor file: {rel_path}")
+                            except Exception as e:
+                                logger.error(f"Failed to delete {rel_path}: {e}")
+
+    # === Abstract Files Cleanup ===
+    abstracts_dir = os.path.join(media_root, 'abstracts')
+    abstract_deleted = 0
+    abstract_size = 0
+
+    if os.path.exists(abstracts_dir):
+        db_abstract_paths = set(Abstract.objects.values_list('file_path', flat=True))
+
+        for uuid_folder in os.listdir(abstracts_dir):
+            folder_path = os.path.join(abstracts_dir, uuid_folder)
+            if not os.path.isdir(folder_path):
+                continue
+
+            is_referenced = False
+            folder_size = 0
+            for filename in os.listdir(folder_path):
+                file_path = os.path.join(folder_path, filename)
+                if os.path.isfile(file_path):
+                    rel_path = os.path.relpath(file_path, media_root)
+                    folder_size += os.path.getsize(file_path)
+                    if rel_path in db_abstract_paths:
+                        is_referenced = True
+                        break
+
+            if not is_referenced:
+                mtime = os.path.getmtime(folder_path)
+                folder_time = timezone.datetime.fromtimestamp(
+                    mtime, tz=timezone.get_current_timezone()
+                )
+                if folder_time < min_age:
+                    try:
+                        shutil.rmtree(folder_path)
+                        abstract_deleted += 1
+                        abstract_size += folder_size
+                        logger.info(f"Deleted orphaned abstract folder: {uuid_folder}")
+                    except Exception as e:
+                        logger.error(f"Failed to delete abstract folder {uuid_folder}: {e}")
+
+    total_deleted = editor_deleted + abstract_deleted
+    total_size = editor_size + abstract_size
+
+    if total_deleted > 0:
+        logger.info(f"Media cleanup complete: deleted {total_deleted} items ({total_size} bytes)")
+
+    return {
+        'editor_files_deleted': editor_deleted,
+        'editor_size': editor_size,
+        'abstract_folders_deleted': abstract_deleted,
+        'abstract_size': abstract_size,
+    }
