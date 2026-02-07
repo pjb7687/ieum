@@ -4,12 +4,13 @@ import { error } from '@sveltejs/kit';
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ parent, request, cookies }) {
     const data = await parent();
+
     const url = new URL(request.url);
     const next = url.searchParams.get('next') || '/';
     data.next = next;
 
     // Resolve user's current institution by ID
-    if (data.user && data.user.institute) {
+    if (data.user.institute) {
         const institutionResponse = await get(`api/institutions/${data.user.institute}`, cookies);
         if (institutionResponse.ok) {
             data.user.institution_resolved = institutionResponse.data;

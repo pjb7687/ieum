@@ -9,18 +9,13 @@ export async function load({ parent, request, cookies }) {
     const next = sanitizeRedirectUrl(url.searchParams.get('next'));
     data.next = next;
 
-    // Require login
-    if (!data.user) {
-        return redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
-    }
-
     // If profile is already complete, redirect to next
     if (isProfileComplete(data.user)) {
         return redirect(303, next);
     }
 
     // Resolve user's current institution by ID
-    if (data.user && data.user.institute) {
+    if (data.user.institute) {
         const institutionResponse = await get(`api/institutions/${data.user.institute}`, cookies);
         if (institutionResponse.ok) {
             data.user.institution_resolved = institutionResponse.data;

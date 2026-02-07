@@ -5,11 +5,6 @@ import { redirect, error } from '@sveltejs/kit';
 export async function load({ parent, params, cookies }) {
     const data = await parent();
 
-    // Redirect to login if not authenticated
-    if (!data.user) {
-        throw redirect(302, `/login?redirect=/card-receipt/${params.id}`);
-    }
-
     const response = await get(`api/payment/${params.id}/card-receipt`, cookies);
     if (response.ok && response.data?.receipt_url) {
         // Redirect to Toss receipt page
