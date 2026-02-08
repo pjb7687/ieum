@@ -108,6 +108,11 @@
 
     let me = page_data.user;
 
+    function handlePrimaryEmailChanged(newPrimaryEmail) {
+        $data.email = newPrimaryEmail;
+        me.email = newPrimaryEmail;
+    }
+
     const { form: felteForm, data, errors, isSubmitting } = createForm({
         initialValues: {
             email: me.email,
@@ -176,7 +181,7 @@
 <!-- Form Card -->
 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8 mb-8">
     <form use:felteForm method="post">
-        <RegistrationForm data={$data} errors={$errors} config={form_config} institution_resolved={page_data.user?.institution_resolved} />
+        <RegistrationForm data={$data} errors={$errors} config={form_config} institution_resolved={page_data.user?.institution_resolved} emails={page_data.emails} onPrimaryChanged={handlePrimaryEmailChanged} />
         {#if success}
         <Alert color="blue" class="mb-4" dismissable>{m.profile_updateSuccess()}</Alert>
         {/if}

@@ -2,6 +2,7 @@
   import { Heading, Input, ButtonGroup, InputAddon, Button, Textarea, Select, Label, Alert } from 'flowbite-svelte';
   import * as m from '$lib/paraglide/messages.js';
   import InstitutionLookup from '$lib/components/InstitutionLookup.svelte';
+  import EmailManagement from '$lib/components/EmailManagement.svelte';
 
   // Props to accept form data and errors from parent
   export let data = {
@@ -25,6 +26,8 @@
   export let config = {};
   export let institution_resolved = null;
   export let instituteDisplayName = '';
+  export let emails = [];
+  export let onPrimaryChanged = () => {};
 
   function linkProvider(provider) {
     let formData = {
@@ -83,6 +86,15 @@
 {#if !config.hide_login_info}
 <!-- Login Information -->
 <Heading tag="h2" class="text-lg font-bold mb-6">{m.form_personalInfo()}</Heading>
+{#if config.hide_password && emails.length > 0}
+<div class="mb-6">
+  <EmailManagement
+    {emails}
+    csrf_token={config.csrf_token}
+    {onPrimaryChanged}
+  />
+</div>
+{:else}
 <div class="mb-6">
   <Label for="email" class="block mb-2 text-dark">{m.form_email()} <span class="text-red-500">*</span></Label>
   <Input type="email" id="email" name="email" bind:value={data.email} disabled={config.hide_password} />
@@ -92,6 +104,7 @@
     </Alert>
   {/if}
 </div>
+{/if}
 {#if config.hide_password}
 <div class="mb-6">
   <Label for="orcid" class="block mb-2 text-dark">{m.form_orcid()}</Label>

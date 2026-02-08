@@ -18,6 +18,7 @@
     reverse_proxy /accounts/* backend:8080
     reverse_proxy /_allauth/browser/v1/auth/provider/redirect backend:8080
     reverse_proxy /_allauth/browser/v1/account/providers backend:8080
+    reverse_proxy /_allauth/browser/v1/account/email backend:8080
     handle_path /static/* {
         root * /www/static
         file_server

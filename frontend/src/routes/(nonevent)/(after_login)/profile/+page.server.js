@@ -23,6 +23,14 @@ export async function load({ parent, request, cookies }) {
         }
     }
 
+    // Load user's email addresses from allauth
+    const emailResponse = await get('_allauth/browser/v1/account/email', cookies);
+    if (emailResponse.ok && emailResponse.data?.data) {
+        data.emails = emailResponse.data.data;
+    } else {
+        data.emails = [];
+    }
+
     return data;
 }
 

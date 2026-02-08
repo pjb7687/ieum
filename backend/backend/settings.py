@@ -179,9 +179,12 @@ HEADLESS_FRONTEND_URLS = {
     "socialaccount_login_error": HEADLESS_URL_ROOT + "/profile",
 }
 
+ACCOUNT_ADAPTER = 'main.adapter.CeleryEmailAdapter'
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_SUBJECT_PREFIX = os.environ.get('EMAIL_PREFIX', '')
+ACCOUNT_MAX_EMAIL_ADDRESSES = 5
 
 EMAIL_FROM = os.environ.get('EMAIL_FROM', None)
 DEFAULT_FROM_EMAIL = EMAIL_FROM  # Django uses DEFAULT_FROM_EMAIL for sending emails

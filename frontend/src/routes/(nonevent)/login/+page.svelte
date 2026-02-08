@@ -94,7 +94,7 @@
                 <input type="hidden" name="next" value={data.next || '/'} />
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">{m.form_email()}*</label>
-                    <Input id="email" name="username" type="email" required class="mt-1" />
+                    <Input id="email" name="email" type="email" required class="mt-1" />
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700">{m.form_password()}*</label>

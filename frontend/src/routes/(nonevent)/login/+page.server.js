@@ -23,7 +23,7 @@ export const actions = {
 	login: async ({ cookies, request }) => {
         let formdata = await request.formData()
         const next = sanitizeRedirectUrl(formdata.get('next'));
-        const email = formdata.get('username');
+        const email = formdata.get('email');
 
         const response = await post('_allauth/browser/v1/auth/login', formdata, cookies);
 
