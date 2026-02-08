@@ -60,6 +60,7 @@ class Attendee(models.Model):
     """
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     event = models.ForeignKey('Event', on_delete=models.CASCADE)
+    attendee_nametag_id = models.PositiveIntegerField(default=0)
     first_name = models.CharField(max_length=1000)
     middle_initial = models.CharField(max_length=1, blank=True)
     last_name = models.CharField(max_length=1000)
@@ -74,6 +75,17 @@ class Attendee(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)  # When the registration was created
     user_deleted_at = models.DateTimeField(null=True, blank=True)  # When the associated user was deleted
     user_email = models.EmailField(blank=True)  # Preserved email after user deletion
+
+    class Meta:
+        unique_together = [['event', 'attendee_nametag_id']]
+
+    def save(self, *args, **kwargs):
+        if not self.attendee_nametag_id:
+            max_id = Attendee.objects.filter(event=self.event).aggregate(
+                models.Max('attendee_nametag_id')
+            )['attendee_nametag_id__max'] or 0
+            self.attendee_nametag_id = max_id + 1
+        super().save(*args, **kwargs)
 
     @property
     def name(self):
@@ -138,8 +150,7 @@ class Event(models.Model):
     venue_address_ko = models.CharField(max_length=1000, blank=True)  # Full address (Korean)
     venue_latitude = models.FloatField(blank=True, null=True)  # Latitude for map
     venue_longitude = models.FloatField(blank=True, null=True)  # Longitude for map
-    organizers = models.ManyToManyField('User', related_name='organized_events', blank=True)
-    organizers_order = models.JSONField(default=list, blank=True)  # List of user IDs in display order
+    # Organizers are stored in the Organizer model (organizer_set)
     main_languages = models.JSONField(default=default_main_languages)  # Array of language codes: ['ko', 'en']
     registration_deadline = models.DateField(blank=True, null=True)
     capacity = models.IntegerField()
@@ -166,24 +177,14 @@ class Event(models.Model):
     def __str__(self):
         return self.name
 
-    def _get_ordered_organizers(self):
-        """Return organizers in saved order"""
-        organizers = list(self.organizers.all())
-        if self.organizers_order:
-            order_map = {uid: idx for idx, uid in enumerate(self.organizers_order)}
-            organizers.sort(key=lambda o: order_map.get(o.id, len(order_map)))
-        return organizers
-
     @property
     def organizers_en(self):
-        """Return formatted organizers in English: First Last (Institution)"""
+        """Return formatted organizers in English: Name (Affiliation)"""
         organizer_list = []
-        for org in self._get_ordered_organizers():
-            name = f"{org.first_name} {org.last_name}"
-            # Get institution English name
-            institute = org.institute.name_en if org.institute else ""
-            if institute:
-                organizer_list.append(f"{name} ({institute})")
+        for org in self.organizer_set.all():
+            name = org.name
+            if org.affiliation:
+                organizer_list.append(f"{name} ({org.affiliation})")
             else:
                 organizer_list.append(name)
         return ", ".join(organizer_list)
@@ -192,13 +193,11 @@ class Event(models.Model):
     def organizers_ko(self):
         """Return formatted organizers in Korean: 한글이름 (기관명)"""
         organizer_list = []
-        for org in self._get_ordered_organizers():
-            # Use Korean name if available, otherwise fall back to English name
-            name = org.korean_name if org.korean_name else f"{org.first_name} {org.last_name}"
-            # Get institution Korean name, fall back to English if not available
-            institute = (org.institute.name_ko or org.institute.name_en) if org.institute else ""
-            if institute:
-                organizer_list.append(f"{name} ({institute})")
+        for org in self.organizer_set.all():
+            name = org.korean_name if org.korean_name else org.name
+            affiliation = org.affiliation_ko if org.affiliation_ko else org.affiliation
+            if affiliation:
+                organizer_list.append(f"{name} ({affiliation})")
             else:
                 organizer_list.append(name)
         return ", ".join(organizer_list)
@@ -212,14 +211,34 @@ class Event(models.Model):
             self.email_template_certificate.delete()
         super().delete(*args, **kwargs)
 
+class Organizer(models.Model):
+    """
+    Organizer model - stores copied organizer info (not FK to User)
+    """
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='organizer_set')
+    name = models.CharField(max_length=1000)
+    korean_name = models.CharField(max_length=1000, blank=True, default='')
+    email = models.EmailField(max_length=254, blank=True)
+    affiliation = models.CharField(max_length=1000, blank=True)
+    affiliation_ko = models.CharField(max_length=1000, blank=True, default='')
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.name} ({self.event.name})"
+
 class Speaker(models.Model):
     """
     Speaker model
     """
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='speakers')
     name = models.CharField(max_length=1000)
+    korean_name = models.CharField(max_length=1000, blank=True, default='')
     email = models.EmailField(max_length=254)
     affiliation = models.CharField(max_length=1000, blank=True)
+    affiliation_ko = models.CharField(max_length=1000, blank=True, default='')
     is_domestic = models.BooleanField(default=False)
     type = models.CharField(max_length=1000, choices=[
         ('keynote', 'Keynote Talk'),

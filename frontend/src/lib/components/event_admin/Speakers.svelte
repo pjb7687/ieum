@@ -7,6 +7,7 @@
     import { error } from '@sveltejs/kit';
     import * as m from '$lib/paraglide/messages.js';
     import { getDisplayInstitute, getDisplayName } from '$lib/utils.js';
+    import { languageTag } from '$lib/paraglide/runtime.js';
     import TablePagination from '$lib/components/TablePagination.svelte';
     import SearchableUserList from '$lib/components/SearchableUserList.svelte';
 
@@ -18,7 +19,11 @@
     const itemsPerPage = 10;
 
     let filteredSpeakers = $derived(
-        data.speakers.filter((item) => item.name.toLowerCase().includes(searchTermSpeaker.toLowerCase()))
+        data.speakers.filter((item) => {
+            const searchLower = searchTermSpeaker.toLowerCase();
+            return item.name.toLowerCase().includes(searchLower) ||
+                   (item.korean_name && item.korean_name.toLowerCase().includes(searchLower));
+        })
     );
 
     // Reset to page 1 when search changes
@@ -43,8 +48,10 @@
 
     // Form field state for speaker modal
     let speakerName = $state('');
+    let speakerKoreanName = $state('');
     let speakerEmail = $state('');
     let speakerAffiliation = $state('');
+    let speakerAffiliationKo = $state('');
     let speakerIsDomestic = $state(false);
     let speakerType = $state('invited'); // Default to 'invited' speaker type
 
@@ -53,17 +60,29 @@
         return attendee.user?.email || attendee.user_email || '';
     }
 
+    function getAttendeeSecondaryName(attendee) {
+        const lang = languageTag();
+        if (lang === 'ko') {
+            return attendee.name || '';
+        }
+        return attendee.korean_name || '';
+    }
+
     function selectAttendeeForSpeaker(attendee) {
-        speakerName = getDisplayName(attendee);
+        speakerName = attendee.name || '';
+        speakerKoreanName = attendee.korean_name || '';
         speakerEmail = attendee.user?.email || attendee.user_email || '';
-        speakerAffiliation = getDisplayInstitute(attendee);
+        speakerAffiliation = attendee.institute || '';
+        speakerAffiliationKo = attendee.institute_ko || '';
     }
 
     const addSpeakerModal = () => {
         selected_speaker = null;
         speakerName = '';
+        speakerKoreanName = '';
         speakerEmail = '';
         speakerAffiliation = '';
+        speakerAffiliationKo = '';
         speakerIsDomestic = false;
         speakerType = 'invited';
         speaker_modal = true;
@@ -71,8 +90,10 @@
     const modifySpeakerModal = (id) => {
         selected_speaker = data.speakers.find((item) => item.id === id);
         speakerName = selected_speaker.name;
+        speakerKoreanName = selected_speaker.korean_name || '';
         speakerEmail = selected_speaker.email;
         speakerAffiliation = selected_speaker.affiliation;
+        speakerAffiliationKo = selected_speaker.affiliation_ko || '';
         speakerIsDomestic = selected_speaker.is_domestic || false;
         speakerType = selected_speaker.type;
         speaker_modal = true;
@@ -183,9 +204,15 @@
                         selectedSpeakers = selectedSpeakers.filter(a => a !== row.id);
                     }
                 }} /></TableBodyCell>
-                <TableBodyCell>{row.name}</TableBodyCell>
+                <TableBodyCell>
+                    <div>{row.name}</div>
+                    {#if row.korean_name}<div class="text-sm text-gray-500">{row.korean_name}</div>{/if}
+                </TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
-                <TableBodyCell>{row.affiliation}</TableBodyCell>
+                <TableBodyCell>
+                    <div>{row.affiliation}</div>
+                    {#if row.affiliation_ko}<div class="text-sm text-gray-500">{row.affiliation_ko}</div>{/if}
+                </TableBodyCell>
                 <TableBodyCell>{#if row.is_domestic}<CheckOutline class="w-4 h-4 text-green-500 inline mr-2" />{/if}</TableBodyCell>
                 <TableBodyCell>{format_type(row.type)}</TableBodyCell>
                 <TableBodyCell>
@@ -221,25 +248,36 @@
                     items={data.attendees}
                     maxHeight="max-h-60"
                     showChangeButton={false}
-                    getItemName={getDisplayName}
-                    getItemInstitute={getDisplayInstitute}
+                    getItemSecondaryName={getAttendeeSecondaryName}
                     getItemEmail={getAttendeeEmail}
                     onSelect={selectAttendeeForSpeaker}
                 />
             </div>
             <hr class="mb-6 border-gray-200" />
         {/if}
-        <div class="mb-6">
-            <Label for="name" class="block mb-2">{m.speakers_name()} <span class="text-red-500">*</span></Label>
-            <Input id="name" name="name" type="text" bind:value={speakerName} required />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <Label for="name" class="block mb-2">{m.speakers_name()} ({m.language_english()}) <span class="text-red-500">*</span></Label>
+                <Input id="name" name="name" type="text" bind:value={speakerName} required />
+            </div>
+            <div>
+                <Label for="korean_name" class="block mb-2">{m.speakers_name()} ({m.language_korean()})</Label>
+                <Input id="korean_name" name="korean_name" type="text" bind:value={speakerKoreanName} />
+            </div>
         </div>
         <div class="mb-6">
             <Label for="email" class="block mb-2">{m.speakers_email()} <span class="text-red-500">*</span></Label>
             <Input id="email" name="email" type="email" bind:value={speakerEmail} required />
         </div>
-        <div class="mb-6">
-            <Label for="affiliation" class="block mb-2">{m.speakers_affiliation()} <span class="text-red-500">*</span></Label>
-            <Input id="affiliation" name="affiliation" type="text" bind:value={speakerAffiliation} required />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <Label for="affiliation" class="block mb-2">{m.speakers_affiliation()} ({m.language_english()}) <span class="text-red-500">*</span></Label>
+                <Input id="affiliation" name="affiliation" type="text" bind:value={speakerAffiliation} required />
+            </div>
+            <div>
+                <Label for="affiliation_ko" class="block mb-2">{m.speakers_affiliation()} ({m.language_korean()})</Label>
+                <Input id="affiliation_ko" name="affiliation_ko" type="text" bind:value={speakerAffiliationKo} />
+            </div>
         </div>
         <div class="mb-6">
             <Checkbox bind:checked={speakerIsDomestic}>

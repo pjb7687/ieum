@@ -62,6 +62,7 @@
             // Create a row with empty strings for each question
             const row = {
                 id: item.id,
+                attendee_nametag_id: item.attendee_nametag_id,
                 name: getDisplayName(item),
                 first_name: item.first_name,
                 middle_initial: item.middle_initial,
@@ -368,7 +369,7 @@
             name: p.name,
             institute: p.institute,
             role,
-            id: p.id,
+            id: p.attendee_nametag_id,
             paperWidth: nametag_paper_width,
             paperHeight: nametag_paper_height,
             orientation: nametag_orientation
@@ -600,7 +601,7 @@
                         selectedAttendees = selectedAttendees.filter(a => a !== row.id);
                     }
                 }} /></TableBodyCell>
-                <TableBodyCell>{row.id}</TableBodyCell>
+                <TableBodyCell>{row.attendee_nametag_id}</TableBodyCell>
                 <TableBodyCell>{row.name}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
                 <TableBodyCell>{stringify_nationality(row.nationality)}</TableBodyCell>

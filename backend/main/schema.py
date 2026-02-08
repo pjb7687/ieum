@@ -151,6 +151,16 @@ class PublicUserSchema(Schema):
         return name
 
 
+class OrganizerSchema(Schema):
+    id: int
+    name: str
+    korean_name: str
+    email: str
+    affiliation: str
+    affiliation_ko: str
+    order: int
+
+
 class EventSchema(Schema):
     id: int
     name: str
@@ -165,7 +175,7 @@ class EventSchema(Schema):
     venue_address_ko: str
     venue_latitude: Union[float, None]
     venue_longitude: Union[float, None]
-    organizers: List[PublicUserSchema]
+    organizers: List[OrganizerSchema]
     organizers_en: str
     organizers_ko: str
     main_languages: List[str]
@@ -179,6 +189,10 @@ class EventSchema(Schema):
     @staticmethod
     def resolve_is_invitation_only(obj):
         return bool(obj.invitation_code)
+
+    @staticmethod
+    def resolve_organizers(obj):
+        return obj.organizer_set.all()
 
 class PaginatedEventsSchema(Schema):
     events: List[EventSchema]
@@ -208,7 +222,7 @@ class EventAdminSchema(Schema):
     venue_address_ko: str
     venue_latitude: Union[float, None]
     venue_longitude: Union[float, None]
-    organizers: List[UserSchema]
+    organizers: List[OrganizerSchema]
     organizers_en: str
     organizers_ko: str
     main_languages: List[str]
@@ -228,6 +242,10 @@ class EventAdminSchema(Schema):
     nametag_paper_width: float
     nametag_paper_height: float
     nametag_orientation: str
+
+    @staticmethod
+    def resolve_organizers(obj):
+        return obj.organizer_set.all()
 
 class RegistrationStatusSchema(Schema):
     registered: bool
@@ -249,6 +267,7 @@ class StatsSchema(Schema):
 
 class AttendeeSchema(Schema):
     id: int
+    attendee_nametag_id: int
     user: Optional[UserSchema] = None
     first_name: str
     middle_initial: str
@@ -276,8 +295,10 @@ class AttendeeSchema(Schema):
 class SpeakerSchema(Schema):
     id: int
     name: str
+    korean_name: str
     email: str
     affiliation: str
+    affiliation_ko: str
     is_domestic: bool
     type: str
 

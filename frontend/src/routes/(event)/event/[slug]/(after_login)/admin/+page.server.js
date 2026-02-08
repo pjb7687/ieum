@@ -109,8 +109,10 @@ export const actions = {
         let formdata = await request.formData();
         const response = await post(`api/event/${params.slug}/speaker/add`, {
             name: formdata.get('name'),
+            korean_name: formdata.get('korean_name') || '',
             email: formdata.get('email'),
             affiliation: formdata.get('affiliation'),
+            affiliation_ko: formdata.get('affiliation_ko') || '',
             is_domestic: formdata.get('is_domestic') === 'true',
             type: formdata.get('type'),
         }, cookies);
@@ -125,8 +127,10 @@ export const actions = {
         let formdata = await request.formData();
         const response = await post(`api/event/${params.slug}/speaker/${formdata.get('id')}/update`, {
             name: formdata.get('name'),
+            korean_name: formdata.get('korean_name') || '',
             email: formdata.get('email'),
             affiliation: formdata.get('affiliation'),
+            affiliation_ko: formdata.get('affiliation_ko') || '',
             is_domestic: formdata.get('is_domestic') === 'true',
             type: formdata.get('type'),
         }, cookies);
@@ -296,25 +300,35 @@ export const actions = {
     },
     add_organizer: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
-        // Support both single ID and multiple IDs (JSON array)
-        const idsJson = formdata.get('ids');
-        const singleId = formdata.get('id');
-
-        let ids = [];
-        if (idsJson) {
-            ids = JSON.parse(idsJson);
-        } else if (singleId) {
-            ids = [parseInt(singleId)];
+        const response = await post(`api/event/${params.slug}/organizer/add`, {
+            name: formdata.get('name'),
+            korean_name: formdata.get('korean_name') || '',
+            email: formdata.get('email') || '',
+            affiliation: formdata.get('affiliation') || '',
+            affiliation_ko: formdata.get('affiliation_ko') || '',
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
         }
-
-        // Add each organizer
-        for (const id of ids) {
-            const response = await post(`api/event/${params.slug}/organizer/add`, { id }, cookies);
-            if (!response.ok || response.status !== 200) {
-                error(response.status, response.data);
-            }
+        return;
+    },
+    update_organizer: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/organizer/${formdata.get('id')}/update`, {
+            name: formdata.get('name'),
+            korean_name: formdata.get('korean_name') || '',
+            email: formdata.get('email') || '',
+            affiliation: formdata.get('affiliation') || '',
+            affiliation_ko: formdata.get('affiliation_ko') || '',
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
         }
-        return { code: 'success', message: 'Organizers added.' };
+        return;
     },
     delete_organizer: async ({ cookies, params, request }) => {
         let formdata = await request.formData();

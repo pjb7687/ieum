@@ -13,6 +13,7 @@
         showChangeButton = true,
         // Custom display functions (optional)
         getItemName = null,
+        getItemSecondaryName = null,
         getItemInstitute = null,
         getItemEmail = null,
         // Optional callback when an item is selected (receives the full item object)
@@ -43,6 +44,10 @@
         return getItemInstitute ? getItemInstitute(item) : defaultGetInstitute(item);
     }
 
+    function getSecondaryName(item) {
+        return getItemSecondaryName ? getItemSecondaryName(item) : '';
+    }
+
     function getEmail(item) {
         return getItemEmail ? getItemEmail(item) : defaultGetEmail(item);
     }
@@ -62,9 +67,11 @@
             if (!searchKeyword.trim()) return true;
             const searchLower = searchKeyword.toLowerCase();
             const name = getName(item).toLowerCase();
+            const secondaryName = getSecondaryName(item).toLowerCase();
             const institute = getInstitute(item).toLowerCase();
             const email = getEmail(item).toLowerCase();
             return name.includes(searchLower) ||
+                   secondaryName.includes(searchLower) ||
                    institute.includes(searchLower) ||
                    email.includes(searchLower);
         })
@@ -101,6 +108,7 @@
         <div class="flex justify-between items-center">
             <div>
                 <div class="font-medium text-gray-900">{getNameWithInstitute(selectedItem)}</div>
+                {#if getSecondaryName(selectedItem)}<div class="text-sm text-gray-500">{getSecondaryName(selectedItem)}</div>{/if}
                 <div class="text-sm text-gray-600">{getEmail(selectedItem)}</div>
             </div>
             <Button color="light" size="xs" onclick={clearSelection}>{m.common_change()}</Button>
@@ -130,6 +138,7 @@
                     class="w-full text-left px-4 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors {selectedId === item.id ? 'bg-blue-50 hover:bg-blue-100' : ''}"
                 >
                     <div class="font-medium text-gray-900">{getNameWithInstitute(item)}</div>
+                    {#if getSecondaryName(item)}<div class="text-sm text-gray-500">{getSecondaryName(item)}</div>{/if}
                     <div class="text-sm text-gray-500">{getEmail(item)}</div>
                 </button>
             {/each}

@@ -16,13 +16,14 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.template import Template, Context
 from django.db import IntegrityError
+from django.db.models import Max
 
 from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
-from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate, ManualTransaction, AccountSettings, PrivacyPolicy, TermsOfService
+from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate, ManualTransaction, AccountSettings, PrivacyPolicy, TermsOfService, Organizer
 from main.schema import *
 from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format, validate_editor_file
 
@@ -1187,8 +1188,10 @@ def add_speaker(request, event_id: int):
 
     speaker = event.speakers.create(
         name=data["name"],
+        korean_name=data.get("korean_name", ""),
         email=data["email"],
         affiliation=data["affiliation"],
+        affiliation_ko=data.get("affiliation_ko", ""),
         is_domestic=data["is_domestic"],
         type=data["type"],
     )
@@ -1201,8 +1204,10 @@ def update_speaker(request, event_id: int, speaker_id: int):
     speaker = event.speakers.get(id=speaker_id)
     data = json.loads(request.body)
     speaker.name = data["name"]
+    speaker.korean_name = data.get("korean_name", "")
     speaker.email = data["email"]
     speaker.affiliation = data["affiliation"]
+    speaker.affiliation_ko = data.get("affiliation_ko", "")
     speaker.is_domestic = data["is_domestic"]
     speaker.type = data["type"]
     speaker.save()
@@ -1697,42 +1702,57 @@ def delete_event_admin(request, event_id: int, admin_id: int):
     event.admins.remove(user)
     return {"code": "success", "message": "Admin deleted."}
 
-@api.get("/event/{event_id}/organizers", response=List[UserSchema])
+@api.get("/event/{event_id}/organizers", response=List[OrganizerSchema])
 @ensure_event_staff
 def get_organizers(request, event_id: int):
     event = Event.objects.get(id=event_id)
-    organizers = list(event.organizers.all())
-    # Sort by saved order if exists
-    if event.organizers_order:
-        order_map = {uid: idx for idx, uid in enumerate(event.organizers_order)}
-        organizers.sort(key=lambda u: order_map.get(u.id, len(order_map)))
-    return organizers
+    return event.organizer_set.all()
 
 @api.post("/event/{event_id}/organizer/add", response=MessageSchema)
 @ensure_event_staff
 def add_organizer(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
-    user = User.objects.get(id=data["id"])
-    if user in event.organizers.all():
+
+    if not data.get("name"):
         return api.create_response(
             request,
-            {"code": "already_organizer", "message": "User is already an organizer."},
+            {"code": "missing_fields", "message": "Name is required."},
             status=400,
         )
-    event.organizers.add(user)
+
+    max_order = event.organizer_set.aggregate(Max('order'))['order__max'] or -1
+    Organizer.objects.create(
+        event=event,
+        name=data["name"],
+        korean_name=data.get("korean_name", ""),
+        email=data.get("email", ""),
+        affiliation=data.get("affiliation", ""),
+        affiliation_ko=data.get("affiliation_ko", ""),
+        order=max_order + 1,
+    )
     return {"code": "success", "message": "Organizer added."}
+
+@api.post("/event/{event_id}/organizer/{organizer_id}/update", response=MessageSchema)
+@ensure_event_staff
+def update_organizer(request, event_id: int, organizer_id: int):
+    event = Event.objects.get(id=event_id)
+    organizer = event.organizer_set.get(id=organizer_id)
+    data = json.loads(request.body)
+    organizer.name = data["name"]
+    organizer.korean_name = data.get("korean_name", "")
+    organizer.email = data.get("email", "")
+    organizer.affiliation = data.get("affiliation", "")
+    organizer.affiliation_ko = data.get("affiliation_ko", "")
+    organizer.save()
+    return {"code": "success", "message": "Organizer updated."}
 
 @api.post("/event/{event_id}/organizer/{organizer_id}/delete", response=MessageSchema)
 @ensure_event_staff
 def delete_organizer(request, event_id: int, organizer_id: int):
     event = Event.objects.get(id=event_id)
-    user = User.objects.get(id=organizer_id)
-    event.organizers.remove(user)
-    # Remove from order list
-    if event.organizers_order and organizer_id in event.organizers_order:
-        event.organizers_order = [uid for uid in event.organizers_order if uid != organizer_id]
-        event.save()
+    organizer = event.organizer_set.get(id=organizer_id)
+    organizer.delete()
     return {"code": "success", "message": "Organizer deleted."}
 
 @api.post("/event/{event_id}/organizers/reorder", response=MessageSchema)
@@ -1741,8 +1761,8 @@ def reorder_organizers(request, event_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
     order = data.get("order", [])
-    event.organizers_order = order
-    event.save()
+    for idx, org_id in enumerate(order):
+        event.organizer_set.filter(id=org_id).update(order=idx)
     return {"code": "success", "message": "Organizers order updated."}
 
 @api.get("/event/{event_id}/email_templates", response=dict[str, EmailTemplateSchema | None])
