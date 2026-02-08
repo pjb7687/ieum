@@ -48,16 +48,14 @@
             const data = result.data ? JSON.parse(result.data) : result;
 
             if (data.success) {
-                // Redirect to home page after account deletion
                 window.location.href = '/';
-            } else {
-                deleteAccountError = data.error || m.profile_deleteAccountIncorrectPassword();
+                return;
             }
+            deleteAccountError = data.error || m.profile_deleteAccountIncorrectPassword();
         } catch (err) {
             deleteAccountError = err.message || m.profile_deleteAccountIncorrectPassword();
-        } finally {
-            deleteAccountLoading = false;
         }
+        deleteAccountLoading = false;
     }
 
     async function handleResetPassword() {
