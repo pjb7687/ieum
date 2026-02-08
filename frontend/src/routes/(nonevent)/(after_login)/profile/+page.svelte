@@ -104,6 +104,8 @@
         action: 'profile',
         hide_password: true,
         csrf_token: page_data.csrf_token,
+        show_english_name: true,
+        show_korean_name: true,
     }
 
     let me = page_data.user;
