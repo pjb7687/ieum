@@ -27,9 +27,13 @@
 		"tailwindcss": "^4.1.4",
 		"vite": "^6.0.0"
 	},
+	"pnpm": {
+		"onlyBuiltDependencies": ["sharp", "@resvg/resvg-js"]
+	},
 	"dependencies": {
 		"@felte/validator-yup": "^1.1.4",
 		"@inlang/paraglide-js-adapter-sveltekit": "^0.6.7",
+		"@resvg/resvg-js": "^2.6.2",
 		"@tiptap/core": "^3.19.0",
 		"@tiptap/extension-image": "^3.19.0",
 		"@tiptap/extension-link": "^3.19.0",
@@ -49,6 +53,8 @@
 		"jspdf": "^4.0.0",
 		"marked": "^17.0.1",
 		"qrcode": "^1.5.4",
+		"satori": "^0.19.1",
+		"sharp": "^0.34.5",
 		"svelte-tiptap": "^3.0.1",
 		"yup": "^1.6.1"
 	}

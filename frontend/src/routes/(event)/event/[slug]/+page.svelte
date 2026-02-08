@@ -119,6 +119,8 @@
 
 <svelte:head>
     <title>{event.name} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+    <meta property="og:title" content="{event.name} | {data.site_settings?.site_name ?? 'IEUM'}" />
+    <meta property="twitter:title" content="{event.name} | {data.site_settings?.site_name ?? 'IEUM'}" />
 </svelte:head>
 
 <div class="container mx-auto my-10 px-3 sm:px-7">
