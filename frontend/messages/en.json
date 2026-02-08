@@ -109,6 +109,7 @@
 	"profile_deleteAccountSuccess": "Your account has been deleted.",
 	"profile_deleteAccountIncorrectPassword": "Incorrect password. Please try again.",
 	"profile_accountManagement": "Account Management",
+	"profile_socialAccountAlreadyLinked": "This social account is already linked to another account.",
 
 	"form_personalInfo": "Personal Information",
 	"form_additionalInfo": "Additional Information",

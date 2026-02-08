@@ -9,6 +9,12 @@ export async function load({ parent, request, cookies }) {
     const next = url.searchParams.get('next') || '/';
     data.next = next;
 
+    // Pass social account linking error from allauth redirect
+    const socialError = url.searchParams.get('error');
+    if (socialError) {
+        data.social_error = socialError;
+    }
+
     // Resolve user's current institution by ID
     if (data.user.institute) {
         const institutionResponse = await get(`api/institutions/${data.user.institute}`, cookies);

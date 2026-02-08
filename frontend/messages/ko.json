@@ -109,6 +109,7 @@
 	"profile_deleteAccountSuccess": "계정이 삭제되었습니다.",
 	"profile_deleteAccountIncorrectPassword": "비밀번호가 올바르지 않습니다. 다시 시도해주세요.",
 	"profile_accountManagement": "계정 관리",
+	"profile_socialAccountAlreadyLinked": "이 소셜 계정은 이미 다른 계정에 연결되어 있습니다.",
 
 	"form_personalInfo": "개인 정보",
 	"form_additionalInfo": "추가 정보",

@@ -13,6 +13,8 @@
     import RegistrationForm from '$lib/components/RegistrationForm.svelte';
 
     let success = $state(false);
+    let socialErrorDismissed = $state(false);
+    let socialError = $derived(socialErrorDismissed ? null : (page_data.social_error || null));
     let showResetPasswordModal = $state(false);
     let resetPasswordSuccess = $state(false);
     let resetPasswordError = $state('');
@@ -162,6 +164,16 @@
         <p class="text-slate-200 mt-2">{m.profile_description()}</p>
     </div>
 </div>
+
+{#if socialError}
+<Alert color="red" class="mb-4" dismissable onclose={() => socialErrorDismissed = true}>
+    {#if socialError === 'connected_other'}
+        {m.profile_socialAccountAlreadyLinked()}
+    {:else}
+        {socialError}
+    {/if}
+</Alert>
+{/if}
 
 <!-- Form Card -->
 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8 mb-8">
