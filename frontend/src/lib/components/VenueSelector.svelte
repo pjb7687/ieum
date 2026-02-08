@@ -289,10 +289,6 @@
 
   function confirmVenue() {
     // Validate required fields
-    if (!tempLatitude || !tempLongitude) {
-      formError = m.form_pleaseSelectLocation();
-      return;
-    }
     if (!tempVenueName.trim() || !tempVenueNameKo.trim() || !tempVenueAddress.trim() || !tempVenueAddressKo.trim()) {
       formError = m.form_venueNameAddressRequired();
       return;

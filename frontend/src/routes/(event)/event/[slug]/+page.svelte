@@ -291,7 +291,8 @@
                 </div>
             </div>
 
-            <!-- Location Map (hidden on mobile) -->
+            <!-- Location Map (hidden on mobile, only shown if coordinates are provided) -->
+            {#if event.venue_latitude && event.venue_longitude}
             <div class="hidden lg:block">
             <VenueMapWidget
                 venueName={getDisplayVenue(event)}
@@ -300,6 +301,7 @@
                 venueLongitude={event.venue_longitude}
             />
             </div>
+            {/if}
         </div>
     </div>
 </div>
