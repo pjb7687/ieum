@@ -249,8 +249,8 @@
 
     let qr_modal = $state(false);
     let qr_code_url = $state('');
+    let registrationUrl = $derived(`${typeof window !== 'undefined' ? window.location.origin : ''}/event/${data.event.id}/onsite?code=${encodeURIComponent(data.event.onsite_code || '')}`);
     const showQRCodeModal = async () => {
-        const registrationUrl = `${window.location.origin}/event/${data.event.id}/onsite`;
         qr_code_url = await QRCode.toDataURL(registrationUrl, {
             width: 400,
             margin: 2
@@ -259,7 +259,6 @@
     };
 
     const printQRCode = () => {
-        const registrationUrl = `${window.location.origin}/event/${data.event.id}/onsite`;
         const printWindow = window.open('', '', 'width=600,height=600');
         printWindow.document.write(`
             <html>
@@ -568,7 +567,7 @@
         {#if qr_code_url}
             <img src={qr_code_url} alt="QR Code" class="w-full max-w-md" />
         {/if}
-        <p class="text-center text-xs text-gray-500 mt-4 break-all">{window.location.origin}/event/{data.event.id}/onsite</p>
+        <p class="text-center text-xs text-gray-500 mt-4 break-all">{registrationUrl}</p>
     </div>
     <div class="flex justify-center mt-6 gap-2">
         <Button color="primary" onclick={printQRCode}>{m.onsiteAttendees_print()}</Button>

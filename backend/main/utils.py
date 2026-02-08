@@ -19,6 +19,12 @@ from django.core.cache import cache
 from django.http import JsonResponse
 
 
+def generate_onsite_code(length=6):
+    """Generate a random alphanumeric code for onsite registration."""
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(random.choices(chars, k=length))
+
+
 def generate_order_id():
     """
     Generate a unique order ID for payments.

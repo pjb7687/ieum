@@ -27,9 +27,13 @@
         job_title: yup.string().required(m.onsiteRegistration_jobTitleRequired()),
     });
 
+    let onsite_code_valid = $derived(data.onsite_code_valid);
+    let onsite_code = $derived(data.onsite_code);
+
     let error_message = $state('');
     const { form: felteForm, data: formData, errors, isSubmitting } = createForm({
-        onSubmit: async (data) => {
+        onSubmit: async (formValues) => {
+            const submitData = { ...formValues, code: onsite_code };
             const response = await fetch('?/onsiteregister',
                 {
                     method: 'POST',
@@ -37,7 +41,7 @@
                         'Content-Type': 'application/x-www-form-urlencoded',
                         'Accept': 'application/json',
                     },
-                    body: new URLSearchParams(data),
+                    body: new URLSearchParams(submitData),
                 }
             );
             const rtn = await response.json();
@@ -78,15 +82,19 @@
     <!-- Main Content -->
     <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
         <Heading tag="h1" class="text-2xl font-bold mb-3">{m.onsiteRegistration_title()}</Heading>
-        <p class="mb-10 font-light">{m.onsiteRegistration_description()}</p>
-        <form use:felteForm method="post" class="space-y-5">
-            <OnSiteRegistrationForm errors={$errors} />
-            {#if error_message}
-                <Alert color="red" class="mb-4 error">{error_message}</Alert>
-            {/if}
-            <div class="flex flex-col md:flex-row justify-center gap-4">
-                <Button type="submit" color="blue" size="lg">{m.onsiteRegistration_register()}</Button>
-            </div>
-        </form>
+        {#if onsite_code_valid}
+            <p class="mb-10 font-light">{m.onsiteRegistration_description()}</p>
+            <form use:felteForm method="post" class="space-y-5">
+                <OnSiteRegistrationForm errors={$errors} />
+                {#if error_message}
+                    <Alert color="red" class="mb-4 error">{error_message}</Alert>
+                {/if}
+                <div class="flex flex-col md:flex-row justify-center gap-4">
+                    <Button type="submit" color="primary" size="lg">{m.onsiteRegistration_register()}</Button>
+                </div>
+            </form>
+        {:else}
+            <Alert color="red" class="mt-4">{m.onsiteRegistration_invalidCode()}</Alert>
+        {/if}
     </div>
 </div>

@@ -241,6 +241,7 @@ class EventAdminSchema(Schema):
     email_template_abstract_submission: Union[EmailTemplateSchema, None]
     email_template_certificate: Union[EmailTemplateSchema, None]
     invitation_code: str
+    onsite_code: str
     published: bool
     is_archived: bool
     nametag_paper_width: float

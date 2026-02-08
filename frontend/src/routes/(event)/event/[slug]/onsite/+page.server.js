@@ -2,7 +2,7 @@ import { get, post } from '$lib/fetch';
 import { error, fail, redirect } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ parent, params }) {
+export async function load({ parent, params, url }) {
     const data = await parent();
     const event = data.event;
 
@@ -10,6 +10,12 @@ export async function load({ parent, params }) {
     if (today < event.start_date || today > event.end_date) {
         throw redirect(303, `/event/${params.slug}`);
     }
+
+    // Validate onsite code from URL query param
+    const code = url.searchParams.get('code') || '';
+    const response_code = await get(`api/event/${params.slug}/onsite/verify?code=${encodeURIComponent(code)}`);
+    data.onsite_code_valid = response_code.ok && response_code.status === 200;
+    data.onsite_code = code;
 
     return data;
 }

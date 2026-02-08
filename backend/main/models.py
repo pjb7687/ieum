@@ -177,6 +177,7 @@ class Event(models.Model):
     email_template_abstract_submission = models.ForeignKey('EmailTemplate', on_delete=models.SET_NULL, blank=True, null=True, related_name='email_template_abstract_submission')
     email_template_certificate = models.ForeignKey('EmailTemplate', on_delete=models.SET_NULL, blank=True, null=True, related_name='email_template_certificate')
     invitation_code = models.CharField(max_length=100, blank=True)  # Empty = public event, non-empty = invitation only
+    onsite_code = models.CharField(max_length=6, blank=True)  # Auto-generated code for onsite registration URL
     attendees = models.ManyToManyField('Attendee', related_name='events', blank=True)
     reviewers = models.ManyToManyField('Attendee', related_name='reviewed_events', blank=True)
     admins = models.ManyToManyField('User', related_name='admins', blank=True)

@@ -531,6 +531,8 @@
 	"onsiteRegistration_qrCode": "현장 등록 QR 코드",
 	"onsiteRegistration_qrCodeTitle": "현장 등록 QR 코드",
 	"onsiteRegistration_linkUrl": "등록 링크",
+	"onsiteRegistration_invalidCode": "유효하지 않거나 누락된 등록 코드입니다. 행사 주최자가 제공한 올바른 링크를 사용해주세요.",
+	"onsiteRegistration_onsiteCode": "현장 등록 코드",
 
 	"abstracts_title": "초록",
 	"abstracts_description": "심사자 및 제출된 초록을 관리합니다.",

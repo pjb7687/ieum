@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate, ManualTransaction, AccountSettings, PrivacyPolicy, TermsOfService, Organizer
 from main.schema import *
-from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format, validate_editor_file
+from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format, validate_editor_file, generate_onsite_code
 
 from .tasks import send_mail, send_mail_with_attachment
 
@@ -523,6 +523,7 @@ def add_event(request):
         email_template_registration=email_template_registration,
         email_template_abstract_submission=email_template_abstract_submission,
         email_template_certificate=email_template_certificate,
+        onsite_code=generate_onsite_code(),
     )
 
     # Add organizers from provided data
@@ -1803,6 +1804,16 @@ def get_email_templates(request, event_id: int):
     }
     return rtn
 
+@api.get("/event/{event_id}/onsite/verify", auth=None)
+def verify_onsite_code(request, event_id: int, code: str = ""):
+    try:
+        event = Event.objects.get(id=event_id)
+    except Event.DoesNotExist:
+        return api.create_response(request, {"code": "not_found", "message": "Event not found."}, status=404)
+    if not event.onsite_code or code.strip().upper() != event.onsite_code:
+        return api.create_response(request, {"code": "invalid_code", "message": "Invalid code."}, status=403)
+    return {"code": "success", "message": "Valid code."}
+
 @api.post("/event/{event_id}/onsite", auth=None)
 @rate_limit(max_requests=20, window_seconds=60)
 def register_on_site(request, event_id: int):
@@ -1819,6 +1830,15 @@ def register_on_site(request, event_id: int):
         )
 
     data = json.loads(request.body)
+
+    # Validate onsite code
+    code = data.get("code", "").strip().upper()
+    if not event.onsite_code or code != event.onsite_code:
+        return api.create_response(
+            request,
+            {"code": "invalid_code", "message": "Invalid onsite registration code."},
+            status=403,
+        )
 
     email = data.get("email", "").strip()
     if not email:

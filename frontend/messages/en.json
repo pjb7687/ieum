@@ -531,6 +531,8 @@
 	"onsiteRegistration_qrCode": "On-site Registration QR Code",
 	"onsiteRegistration_qrCodeTitle": "On-site Registration QR Code",
 	"onsiteRegistration_linkUrl": "Registration Link",
+	"onsiteRegistration_invalidCode": "Invalid or missing registration code. Please use the correct link provided by the event organizer.",
+	"onsiteRegistration_onsiteCode": "On-site Code",
 
 	"abstracts_title": "Abstracts",
 	"abstracts_description": "Manage reviewers and submitted abstracts.",
