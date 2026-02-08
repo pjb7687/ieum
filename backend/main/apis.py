@@ -646,7 +646,8 @@ def update_event(request, event_id: int):
     event.accepts_abstract = data["accepts_abstract"] == "true"
     event.abstract_submission_type = data.get("abstract_submission_type", "internal")
     event.external_abstract_url = data.get("external_abstract_url", "")
-    event.published = data.get("published", "false") == "true"
+    if "published" in data:
+        event.published = data["published"] == "true"
     event.invitation_code = data.get("invitation_code", "").strip().upper()
     event.save()
     if event.accepts_abstract and event.abstract_submission_type == "internal":
