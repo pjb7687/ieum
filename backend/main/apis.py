@@ -518,6 +518,8 @@ def add_event(request):
         registration_deadline=registration_deadline,
         capacity=data["capacity"],
         accepts_abstract=data["accepts_abstract"] == "true",
+        abstract_submission_type=data.get("abstract_submission_type", "internal"),
+        external_abstract_url=data.get("external_abstract_url", ""),
         email_template_registration=email_template_registration,
         email_template_abstract_submission=email_template_abstract_submission,
         email_template_certificate=email_template_certificate,
@@ -543,7 +545,7 @@ def add_event(request):
         event.link_info = f"{settings.HEADLESS_URL_ROOT}/event/{event.id}"
         event.save()
 
-    if data["accepts_abstract"] == "true":
+    if data["accepts_abstract"] == "true" and data.get("abstract_submission_type", "internal") == "internal":
         event.abstract_deadline = data["abstract_deadline"]
         event.capacity_abstract = data["capacity_abstract"]
         event.max_votes = data["max_votes"]
@@ -642,10 +644,12 @@ def update_event(request, event_id: int):
     event.capacity = data["capacity"]
     event.registration_fee = int(data["registration_fee"]) if data.get("registration_fee") not in [None, ""] else None
     event.accepts_abstract = data["accepts_abstract"] == "true"
+    event.abstract_submission_type = data.get("abstract_submission_type", "internal")
+    event.external_abstract_url = data.get("external_abstract_url", "")
     event.published = data.get("published", "false") == "true"
     event.invitation_code = data.get("invitation_code", "").strip().upper()
     event.save()
-    if event.accepts_abstract:
+    if event.accepts_abstract and event.abstract_submission_type == "internal":
         event.abstract_deadline = data["abstract_deadline"] if data["abstract_deadline"] else None
         event.capacity_abstract = int(data["capacity_abstract"]) if data.get("capacity_abstract") not in [None, ""] else 0
         event.max_votes = int(data["max_votes"]) if data.get("max_votes") not in [None, ""] else 2
@@ -1104,6 +1108,12 @@ def submit_abstract(request, event_id: int):
         return api.create_response(
             request,
             {"code": "not_accepted", "message": "This event does not accept abstracts."},
+            status=400,
+        )
+    if event.abstract_submission_type == 'external':
+        return api.create_response(
+            request,
+            {"code": "external_abstract", "message": "This event uses an external abstract submission system."},
             status=400,
         )
 

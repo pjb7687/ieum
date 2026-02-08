@@ -182,6 +182,8 @@ class EventSchema(Schema):
     registration_deadline: Union[date, None]
     registration_fee: Union[int, None]
     accepts_abstract: bool
+    abstract_submission_type: str
+    external_abstract_url: str
     abstract_deadline: Union[date, None]
     published: bool
     is_invitation_only: bool
@@ -230,6 +232,8 @@ class EventAdminSchema(Schema):
     capacity: int
     registration_fee: Union[int, None]
     accepts_abstract: bool
+    abstract_submission_type: str
+    external_abstract_url: str
     abstract_deadline: Union[date, None]
     capacity_abstract: Union[int, None]
     max_votes: Union[int, None]

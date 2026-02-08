@@ -168,6 +168,8 @@ class Event(models.Model):
     capacity = models.IntegerField()
     registration_fee = models.IntegerField(blank=True, null=True)
     accepts_abstract = models.BooleanField(default=False)
+    abstract_submission_type = models.CharField(max_length=10, choices=[('internal', 'Internal'), ('external', 'External')], default='internal')
+    external_abstract_url = models.URLField(max_length=500, blank=True)
     abstract_deadline = models.DateField(blank=True, null=True)
     capacity_abstract = models.IntegerField(null=True)
     max_votes = models.IntegerField(null=True)

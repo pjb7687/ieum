@@ -23,6 +23,8 @@
         registration_fee: null,
         invitation_code: '',
         accepts_abstract: false,
+        abstract_submission_type: 'internal',
+        external_abstract_url: '',
         abstract_deadline: '',
         capacity_abstract: 0,
         max_votes: 2,
@@ -38,6 +40,8 @@
     let venue_longitude = $state(data.venue_longitude ?? null);
     let main_languages = $state(data.main_languages || []);
     let accepts_abstract = $state(data.accepts_abstract ?? false);
+    let abstract_submission_type = $state(data.abstract_submission_type ?? 'internal');
+    let external_abstract_url = $state(data.external_abstract_url ?? '');
     let invitation_code = $state(data.invitation_code?.toUpperCase() || '');
     let capacity_abstract = $state(data.capacity_abstract ?? 0);
     let max_votes = $state(data.max_votes ?? 2);
@@ -53,6 +57,8 @@
         data.venue_longitude = venue_longitude;
         data.main_languages = main_languages;
         data.accepts_abstract = accepts_abstract;
+        data.abstract_submission_type = abstract_submission_type;
+        data.external_abstract_url = external_abstract_url;
         data.invitation_code = invitation_code;
         data.capacity_abstract = capacity_abstract;
         data.max_votes = max_votes;
@@ -172,6 +178,20 @@
 </div>
 {#if accepts_abstract}
 <div class="mb-6">
+    <Label for="abstract_submission_type" class="block mb-2">{m.eventForm_abstractSubmissionType()}</Label>
+    <Select id="abstract_submission_type" name="abstract_submission_type" bind:value={abstract_submission_type} items={[
+        { value: 'internal', name: m.eventForm_abstractInternal() },
+        { value: 'external', name: m.eventForm_abstractExternal() }
+    ]} />
+</div>
+
+{#if abstract_submission_type === 'external'}
+<div class="mb-6">
+    <Label for="external_abstract_url" class="block mb-2">{m.eventForm_externalAbstractUrl()}</Label>
+    <Input type="url" id="external_abstract_url" name="external_abstract_url" bind:value={external_abstract_url} placeholder="https://example.com/submit-abstract" />
+</div>
+{:else}
+<div class="mb-6">
     <Label for="abstract_deadline" class="block mb-2">{m.eventForm_abstractDeadline()}</Label>
     <Input type="date" id="abstract_deadline" name="abstract_deadline" value={data.abstract_deadline} />
     <span class="text-sm">* {m.eventForm_abstractDeadlineHelp()}</span>
@@ -188,4 +208,5 @@
     <Input type="number" id="max_votes" name="max_votes" bind:value={max_votes} />
     <span class="text-sm">* {m.eventForm_maxVotesHelp()}</span>
 </div>
+{/if}
 {/if}

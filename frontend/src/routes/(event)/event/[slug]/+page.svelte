@@ -149,7 +149,7 @@
                                     <span class="font-medium">{m.eventDetail_registrationDeadline()}:</span> {formatDate(event.registration_deadline)}
                                 </p>
                             {/if}
-                            {#if event.abstract_deadline && event.accepts_abstract}
+                            {#if event.abstract_deadline && event.accepts_abstract && event.abstract_submission_type === 'internal'}
                                 <p class="text-xs text-gray-600 mt-1.5">
                                     <span class="font-medium">{m.eventDetail_abstractDeadline()}:</span> {formatDate(event.abstract_deadline)}
                                 </p>
@@ -224,9 +224,15 @@
                                 <p class="text-sm mt-1">{m.eventDetail_registeredThankYou()}</p>
                             </div>
                             {#if event.accepts_abstract}
-                                <Button href="/event/{event.id}/abstract" color="primary" class="w-full">
-                                    {abstract_submitted ? m.eventDetail_viewAbstract() : m.eventDetail_submitAbstract()}
-                                </Button>
+                                {#if event.abstract_submission_type === 'external' && event.external_abstract_url}
+                                    <Button href={event.external_abstract_url} target="_blank" rel="noopener noreferrer" color="primary" class="w-full">
+                                        {m.eventDetail_submitAbstract()}
+                                    </Button>
+                                {:else}
+                                    <Button href="/event/{event.id}/abstract" color="primary" class="w-full">
+                                        {abstract_submitted ? m.eventDetail_viewAbstract() : m.eventDetail_submitAbstract()}
+                                    </Button>
+                                {/if}
                             {/if}
                         {/if}
                         <Button href="/event/{event.id}/registration" color="alternative" class="w-full">

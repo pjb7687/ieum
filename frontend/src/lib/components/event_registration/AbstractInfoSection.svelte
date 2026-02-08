@@ -12,7 +12,12 @@
 </div>
 
 {#if event.accepts_abstract}
-    {#if my_abstract}
+    {#if event.abstract_submission_type === 'external' && event.external_abstract_url}
+        <div class="pl-8">
+            <p class="text-gray-600 mb-4">{m.myRegistration_externalAbstract()}</p>
+            <Button color="primary" href={event.external_abstract_url} target="_blank" rel="noopener noreferrer">{m.myRegistration_goToExternalAbstract()}</Button>
+        </div>
+    {:else if my_abstract}
         <div class="space-y-4 pl-8">
             <div>
                 <p class="text-sm font-medium text-gray-500">{m.myRegistration_abstractTitle()}</p>

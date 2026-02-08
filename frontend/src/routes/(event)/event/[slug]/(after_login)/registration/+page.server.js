@@ -16,8 +16,8 @@ export async function load({ parent, params, cookies }) {
         rtn.attendee = response_attendee.data;
     }
 
-    // Fetch abstract if user has submitted one
-    if (rtn.event.accepts_abstract) {
+    // Fetch abstract if user has submitted one (only for internal abstract management)
+    if (rtn.event.accepts_abstract && rtn.event.abstract_submission_type !== 'external') {
         try {
             const response_abstract = await get(`api/event/${params.slug}/abstract`, cookies);
             if (response_abstract.ok && response_abstract.status === 200) {

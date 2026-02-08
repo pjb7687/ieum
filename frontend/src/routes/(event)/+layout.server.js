@@ -20,10 +20,14 @@ export async function load({ parent, params, cookies }) {
             rtn.payment_status = response_registered.data.payment_status;
         }
 
-        // Check if user has submitted an abstract
-        const response_abstract = await get(`api/event/${params.slug}/abstract`, cookies);
-        if (response_abstract.ok && response_abstract.status === 200) {
-            rtn.abstract_submitted = true;
+        // Check if user has submitted an abstract (only for internal abstract management)
+        if (rtn.event.accepts_abstract && rtn.event.abstract_submission_type !== 'external') {
+            const response_abstract = await get(`api/event/${params.slug}/abstract`, cookies);
+            if (response_abstract.ok && response_abstract.status === 200) {
+                rtn.abstract_submitted = true;
+            } else {
+                rtn.abstract_submitted = false;
+            }
         } else {
             rtn.abstract_submitted = false;
         }
