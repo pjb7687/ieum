@@ -825,6 +825,7 @@
 	"admin_businessSettings_representative": "Representative",
 	"admin_businessSettings_phone": "Phone",
 	"admin_businessSettings_email": "Email",
+	"admin_businessSettings_timezone": "Timezone",
 	"admin_businessSettings_save": "Save",
 	"admin_businessSettings_success": "Business information saved successfully.",
 

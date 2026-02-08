@@ -96,10 +96,22 @@ class OnSiteAttendee(models.Model):
     OnSiteAttendee model
     """
     event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='onsite_attendees')
+    onsiteattendee_nametag_id = models.PositiveIntegerField(default=0)
     name = models.CharField(max_length=1000)
     email = models.EmailField(blank=True)
     institute = models.CharField(max_length=1000)
     job_title = models.CharField(max_length=1000, blank=True)
+
+    class Meta:
+        unique_together = [['event', 'onsiteattendee_nametag_id']]
+
+    def save(self, *args, **kwargs):
+        if not self.onsiteattendee_nametag_id:
+            max_id = OnSiteAttendee.objects.filter(event=self.event).aggregate(
+                models.Max('onsiteattendee_nametag_id')
+            )['onsiteattendee_nametag_id__max'] or 0
+            self.onsiteattendee_nametag_id = max_id + 1
+        super().save(*args, **kwargs)
 
     @property
     def korean_name(self):
@@ -411,6 +423,7 @@ class BusinessSettings(models.Model):
     representative = models.CharField(max_length=100, blank=True)  # 대표자
     phone = models.CharField(max_length=20, blank=True)  # 연락처
     email = models.EmailField(blank=True)  # 이메일
+    timezone = models.CharField(max_length=50, default='Asia/Seoul')  # 시간대
 
     class Meta:
         verbose_name = 'Business Settings'

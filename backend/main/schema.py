@@ -386,6 +386,7 @@ class AbstractVoteSchema(Schema):
 
 class OnSiteAttendeeSchema(Schema):
     id: int
+    onsiteattendee_nametag_id: int
     name: str
     email: str
     institute: str
@@ -418,6 +419,7 @@ class BusinessSettingsSchema(Schema):
     representative: str
     phone: str
     email: str
+    timezone: str
 
 
 class BusinessSettingsUpdateSchema(Schema):
@@ -427,6 +429,7 @@ class BusinessSettingsUpdateSchema(Schema):
     representative: str = ""
     phone: str = ""
     email: str = ""
+    timezone: str = "Asia/Seoul"
 
 
 class AccountSettingsSchema(Schema):

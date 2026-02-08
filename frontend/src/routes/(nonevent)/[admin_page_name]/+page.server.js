@@ -196,7 +196,8 @@ export const actions = {
             address: formdata.get('address') || '',
             representative: formdata.get('representative') || '',
             phone: formdata.get('phone') || '',
-            email: formdata.get('email') || ''
+            email: formdata.get('email') || '',
+            timezone: formdata.get('timezone') || 'Asia/Seoul'
         };
         const response = await post('api/admin/business-settings', data, cookies);
         if (response.ok && response.status === 200) {

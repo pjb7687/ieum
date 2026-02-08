@@ -11,8 +11,27 @@
         address: '',
         representative: '',
         phone: '',
-        email: ''
+        email: '',
+        timezone: 'Asia/Seoul'
     };
+
+    const timezoneOptions = [
+        'Asia/Seoul',
+        'Asia/Tokyo',
+        'Asia/Shanghai',
+        'Asia/Singapore',
+        'Asia/Kolkata',
+        'Europe/London',
+        'Europe/Paris',
+        'Europe/Berlin',
+        'America/New_York',
+        'America/Chicago',
+        'America/Denver',
+        'America/Los_Angeles',
+        'Pacific/Auckland',
+        'Australia/Sydney',
+        'UTC',
+    ];
 
     // Extract initial value to avoid reactive warning (we intentionally want initial value only)
     const initialSettings = data.admin.businessSettings;
@@ -62,6 +81,14 @@
         <div class="md:col-span-2">
             <label for="address" class="block mb-2 text-sm font-medium">{m.admin_businessSettings_address()}</label>
             <input type="text" id="address" name="address" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" bind:value={businessSettings.address} />
+        </div>
+        <div>
+            <label for="timezone" class="block mb-2 text-sm font-medium">{m.admin_businessSettings_timezone()}</label>
+            <select id="timezone" name="timezone" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" bind:value={businessSettings.timezone}>
+                {#each timezoneOptions as tz}
+                    <option value={tz}>{tz}</option>
+                {/each}
+            </select>
         </div>
     </div>
     {#if business_settings_success}

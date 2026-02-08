@@ -1,6 +1,19 @@
 import { get, post } from '$lib/fetch';
 import { error, fail, redirect } from '@sveltejs/kit';
 
+/** @type {import('./$types').PageServerLoad} */
+export async function load({ parent, params }) {
+    const data = await parent();
+    const event = data.event;
+
+    const today = new Date().toISOString().split('T')[0];
+    if (today < event.start_date || today > event.end_date) {
+        throw redirect(303, `/event/${params.slug}`);
+    }
+
+    return data;
+}
+
 /** @type {import('./$types').Actions} */
 export const actions = {
     onsiteregister: async ({ cookies, params, request }) => {
@@ -14,6 +27,6 @@ export const actions = {
             throw error(response.status, { error: true, message: 'Failed due to server error. It this persists, please contact the admininistrator.' });
         }
         let rtn = await response.data;
-        return redirect(303, `/event/${params.slug}/onsite/${rtn.id}`);
+        return redirect(303, `/event/${params.slug}/onsite/${rtn.onsiteattendee_nametag_id}`);
     },
 };

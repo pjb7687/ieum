@@ -825,6 +825,7 @@
 	"admin_businessSettings_representative": "대표자",
 	"admin_businessSettings_phone": "연락처",
 	"admin_businessSettings_email": "이메일",
+	"admin_businessSettings_timezone": "시간대",
 	"admin_businessSettings_save": "저장",
 	"admin_businessSettings_success": "사업자 정보가 성공적으로 저장되었습니다.",
 

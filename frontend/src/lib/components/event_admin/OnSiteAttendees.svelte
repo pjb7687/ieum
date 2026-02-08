@@ -168,6 +168,7 @@
             name: p.name,
             institute: p.institute,
             role,
+            id: p.onsiteattendee_nametag_id,
             paperWidth: nametag_paper_width,
             paperHeight: nametag_paper_height,
             orientation: nametag_orientation
@@ -431,7 +432,7 @@
                         selectedAttendees = selectedAttendees.filter(a => a !== row.id);
                     }
                 }} /></TableBodyCell>
-                <TableBodyCell>{row.id}</TableBodyCell>
+                <TableBodyCell>{row.onsiteattendee_nametag_id}</TableBodyCell>
                 <TableBodyCell>{row.name}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
                 <TableBodyCell>{row.institute}</TableBodyCell>

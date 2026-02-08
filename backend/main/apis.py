@@ -1779,7 +1779,18 @@ def get_email_templates(request, event_id: int):
 @api.post("/event/{event_id}/onsite", auth=None)
 @rate_limit(max_requests=20, window_seconds=60)
 def register_on_site(request, event_id: int):
+    from zoneinfo import ZoneInfo
     event = Event.objects.get(id=event_id)
+
+    tz = ZoneInfo(BusinessSettings.get_instance().timezone)
+    today = datetime.now(tz).date()
+    if today < event.start_date or today > event.end_date:
+        return api.create_response(
+            request,
+            {"code": "not_available", "message": "On-site registration is only available during the event."},
+            status=400,
+        )
+
     data = json.loads(request.body)
 
     email = data.get("email", "").strip()
@@ -1797,7 +1808,7 @@ def register_on_site(request, event_id: int):
         institute=data.get("institute", ""),
         job_title=data.get("job_title", "")
     )
-    return {"code": "success", "message": "Successfully registered on-site.", "id": oa.id}
+    return {"code": "success", "message": "Successfully registered on-site.", "id": oa.id, "onsiteattendee_nametag_id": oa.onsiteattendee_nametag_id}
 
 @api.get("/event/{event_id}/onsite", response=List[OnSiteAttendeeSchema])
 @ensure_event_staff
@@ -1855,6 +1866,7 @@ def get_business_settings(request):
         'representative': settings.representative,
         'phone': settings.phone,
         'email': settings.email,
+        'timezone': settings.timezone,
     }
 
 @api.post("/admin/business-settings", response=BusinessSettingsSchema)
@@ -1868,6 +1880,7 @@ def update_business_settings(request, data: BusinessSettingsUpdateSchema):
     settings.representative = data.representative
     settings.phone = data.phone
     settings.email = data.email
+    settings.timezone = data.timezone
     settings.save()
     return {
         'business_name': settings.business_name,
@@ -1876,6 +1889,7 @@ def update_business_settings(request, data: BusinessSettingsUpdateSchema):
         'representative': settings.representative,
         'phone': settings.phone,
         'email': settings.email,
+        'timezone': settings.timezone,
     }
 
 
