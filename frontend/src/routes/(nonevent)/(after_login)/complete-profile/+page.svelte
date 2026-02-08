@@ -109,7 +109,7 @@
 </script>
 
 <svelte:head>
-    <title>{m.completeProfile_title()} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+    <title>{m.completeProfile_title()} | {page_data.site_settings?.site_name ?? 'IEUM'}</title>
 </svelte:head>
 
 <!-- Page Header Card -->

@@ -137,7 +137,7 @@
 </script>
 
 <svelte:head>
-    <title>{m.registration_title()} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+    <title>{m.registration_title()} | {page_data.site_settings?.site_name ?? 'IEUM'}</title>
 </svelte:head>
 
 <!-- Page Header Card -->
