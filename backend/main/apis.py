@@ -412,7 +412,8 @@ def get_events(request, offset: int = 0, limit: int = 20, year: str = None, sear
         events = events.filter(
             Q(name__icontains=search) |
             Q(venue__icontains=search) |
-            Q(organizers__icontains=search)
+            Q(organizers_en__icontains=search) |
+            Q(organizers_ko__icontains=search)
         )
 
     if showOnlyOpen:
@@ -425,7 +426,7 @@ def get_events(request, offset: int = 0, limit: int = 20, year: str = None, sear
     total = events.count()
 
     # Apply pagination and prefetch organizers to prevent N+1 queries
-    events = events[offset:offset + limit].prefetch_related('organizers')
+    events = events[offset:offset + limit].prefetch_related('organizer_set')
 
     return {
         "events": list(events),
@@ -521,13 +522,20 @@ def add_event(request):
         email_template_certificate=email_template_certificate,
     )
 
-    # Add organizers (M2M field)
-    organizer_ids = data.get("organizer_ids", [])
-    if isinstance(organizer_ids, str):
-        organizer_ids = json.loads(organizer_ids) if organizer_ids else []
-    if organizer_ids:
-        organizers = User.objects.filter(id__in=organizer_ids)
-        event.organizers.add(*organizers)
+    # Add organizers from provided data
+    organizers_data = data.get("organizers", [])
+    if isinstance(organizers_data, str):
+        organizers_data = json.loads(organizers_data) if organizers_data else []
+    for org in organizers_data:
+        Organizer.objects.create(
+            event=event,
+            name=org.get("name", ""),
+            korean_name=org.get("korean_name", ""),
+            email=org.get("email", ""),
+            affiliation=org.get("affiliation", ""),
+            affiliation_ko=org.get("affiliation_ko", ""),
+            order=org.get("order", 0),
+        )
 
     # Set default link_info if not provided
     if not link_info:
