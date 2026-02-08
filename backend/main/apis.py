@@ -1369,7 +1369,14 @@ def get_abstracts(request, event_id: int):
 def get_user_abstract(request, event_id: int):
     user = request.user
     event = Event.objects.get(id=event_id)
-    attendee = Attendee.objects.get(user=user, event=event)
+    try:
+        attendee = Attendee.objects.get(user=user, event=event)
+    except Attendee.DoesNotExist:
+        return api.create_response(
+            request,
+            {"code": "not_registered", "message": "You are not registered for this event."},
+            status=404,
+        )
     try:
         abstract = attendee.abstracts.get(event_id=event_id)
     except Abstract.DoesNotExist:
