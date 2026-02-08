@@ -35,11 +35,21 @@
 @source "../node_modules/flowbite-svelte-icons/dist";
 
 @layer base {
-  /* Set default border color to gray-300 */
+  /* Initialize CSS variables for Tailwind ring/shadow utilities */
   *,
   ::before,
   ::after {
     border-color: var(--color-gray-300);
+    --tw-ring-inset: ;
+    --tw-ring-offset-width: 0px;
+    --tw-ring-offset-color: #fff;
+    --tw-ring-color: rgba(59, 130, 246, 0.5);
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-shadow: 0 0 #0000;
+    --tw-shadow-colored: 0 0 #0000;
+    --tw-inset-shadow: 0 0 #0000;
+    --tw-inset-ring-shadow: 0 0 #0000;
   }
 
   /* disable chrome cancel button */
@@ -47,11 +57,26 @@
     display: none;
   }
 
-  /* Custom button focus styles - lighter and thinner */
-  button:focus-visible {
-    outline: 2px solid rgba(33, 150, 243, 0.5);
-    outline-offset: 2px;
-  }
+}
+
+button:focus,
+button:focus-visible {
+  outline: none !important;
+  --tw-ring-shadow: 0 0 0 2px var(--color-primary-500) !important;
+  box-shadow: 0 0 0 2px var(--color-primary-500), 0 0 8px 2px rgba(33, 150, 243, 0.4) !important;
+}
+
+input:focus,
+input:focus-visible,
+select:focus,
+select:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+[role="combobox"]:focus,
+[role="combobox"]:focus-visible {
+  outline: none !important;
+  --tw-ring-shadow: 0 0 0 1px var(--color-primary-500) !important;
+  box-shadow: 0 0 0 1px var(--color-primary-500), 0 0 8px 2px rgba(33, 150, 243, 0.4) !important;
 }
 
 html, body {
