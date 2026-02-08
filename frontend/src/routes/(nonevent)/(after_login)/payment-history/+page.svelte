@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-    <title>{m.paymentHistory_title()} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+    <title>{m.paymentHistory_title()} | {page_data.site_settings?.site_name ?? 'IEUM'}</title>
 </svelte:head>
 
 <!-- Page Header Card -->
