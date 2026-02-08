@@ -305,6 +305,10 @@ class CustomQuestion(models.Model):
                                   #  'question': 'What is your favorite color?',
                                   #  'detail': 'Please select one color.',
                                   #  'options': ['Red', 'Green', 'Blue']}
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
 
 class CustomAnswer(models.Model):
     """

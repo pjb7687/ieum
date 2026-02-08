@@ -68,6 +68,7 @@
     let isRegistrationClosed = $derived.by(() => {
         if (!event.registration_deadline) return false;
         const deadline = new Date(event.registration_deadline);
+        deadline.setHours(23, 59, 59, 999);
         const now = new Date();
         return deadline < now;
     });

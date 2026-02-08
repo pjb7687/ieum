@@ -768,16 +768,18 @@ def update_event_questions(request, event_id: int):
     for q in event.custom_questions.all():
         if not any(q.id == q2.get("id") for q2 in data["questions"]):
             q.delete()
-    for q in data["questions"]:
+    for idx, q in enumerate(data["questions"]):
         if q.get("id") == -1:
             cq = CustomQuestion.objects.create(
                 event=event,
-                question=q["question"]
+                question=q["question"],
+                order=idx
             )
         else:
             # Validate question belongs to this event to prevent cross-event modification
             cq = CustomQuestion.objects.get(id=q["id"], event=event)
             cq.question = q["question"]
+            cq.order = idx
             cq.save()
             for ca in CustomAnswer.objects.filter(reference=cq):
                 ca.question = q["question"]["question"]

@@ -1,16 +1,28 @@
 <script>
     import { enhance } from '$app/forms';
     import { Alert, Button, Card, Heading, Input, Label, Li, List, Select, Textarea } from 'flowbite-svelte';
+    import { ChevronUpOutline, ChevronDownOutline } from 'flowbite-svelte-icons';
+    import { flip } from 'svelte/animate';
     import * as m from '$lib/paraglide/messages.js';
 
     let { data } = $props();
 
     let custom_questions = $state({});
     let message_custom_question_changes = $state({});
+    let nextKey = 1;
+
+    function moveQuestion(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= custom_questions.length) return;
+        const updated = [...custom_questions];
+        [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+        custom_questions = updated;
+    }
 
     const addNewCustomQuestion = () => {
         custom_questions = [...custom_questions, {
             id: -1,
+            _key: nextKey++,
             question: {
                 type: 'checkbox',
                 question: '',
@@ -24,6 +36,7 @@
         custom_questions = data.questions.map(q => {
             let rtn = {
                 id: q.id,
+                _key: nextKey++,
                 question: {
                     type: q.question.type,
                     question: q.question.question
@@ -67,8 +80,20 @@
         <Button color="primary" onclick={resetCustomQuestionChanges}>{m.eventQuestions_resetChanges()}</Button>
         <Button type="submit" color="primary">{m.eventQuestions_applyChanges()}</Button>
     </div>
-    {#each custom_questions as question}
+    {#each custom_questions as question, i (question._key)}
+    <div animate:flip={{ duration: 300 }}>
     <Card size="xl" class="mb-6 p-5">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-sm font-medium text-gray-500">#{i + 1}</span>
+            <div class="flex gap-1">
+                <Button type="button" size="xs" color="light" disabled={i === 0} onclick={() => moveQuestion(i, -1)}>
+                    <ChevronUpOutline class="w-4 h-4" />
+                </Button>
+                <Button type="button" size="xs" color="light" disabled={i === custom_questions.length - 1} onclick={() => moveQuestion(i, 1)}>
+                    <ChevronDownOutline class="w-4 h-4" />
+                </Button>
+            </div>
+        </div>
         <div class="mb-6">
             <Label for="question_type" class="block mb-2">{m.eventQuestions_questionType()}</Label>
             <Select id="question_type" name="question_type[]" bind:value={question.question.type} items={[
@@ -91,11 +116,12 @@
         <Input type="hidden" name="question_id[]" bind:value={question.id} />
         <div class="flex justify-center">
             <Button color="red" class="ml-2" onclick={() => {
-                custom_questions = custom_questions.filter(q => q.id !== question.id);
+                custom_questions = custom_questions.filter((_, idx) => idx !== i);
             }}>{m.eventQuestions_deleteQuestion()}</Button>
         </div>
 
     </Card>
+    </div>
     {/each}
     {#if custom_questions.length === 0}
         <p class="font-light text-center mb-6">{m.eventQuestions_noQuestions()}</p>

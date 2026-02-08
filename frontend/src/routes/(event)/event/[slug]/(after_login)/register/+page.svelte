@@ -40,6 +40,7 @@
             ]
     );
     let deadline = event.registration_deadline ? new Date(event.registration_deadline) : new Date(event.start_date);
+    deadline.setHours(23, 59, 59, 999);
     let now = new Date();
 
     // Determine which languages are included in the event
