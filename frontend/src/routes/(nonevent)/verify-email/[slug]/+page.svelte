@@ -39,6 +39,10 @@
     };
 </script>
 
+<svelte:head>
+    <title>{m.verifyEmail_title()} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+</svelte:head>
+
 <div class="container mx-auto max-w-2xl my-10 px-3 sm:px-7">
     <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
         <div class="text-center mb-6">

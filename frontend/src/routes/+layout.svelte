@@ -79,6 +79,23 @@
 	let isReceiptPage = $derived($page.url.pathname.startsWith('/receipt/'));
 </script>
 
+<svelte:head>
+	<title>{data.site_settings?.site_name ?? 'IEUM'}</title>
+	{#if data.site_settings?.site_description}
+		<meta name="description" content={data.site_settings.site_description} />
+		<meta property="og:description" content={data.site_settings.site_description} />
+		<meta property="twitter:description" content={data.site_settings.site_description} />
+	{/if}
+	{#if data.site_settings?.site_keywords}
+		<meta name="keywords" content={data.site_settings.site_keywords} />
+	{/if}
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={data.site_settings?.site_name ?? 'IEUM'} />
+	<meta property="og:site_name" content={data.site_settings?.site_name ?? 'IEUM'} />
+	<meta property="twitter:card" content="summary" />
+	<meta property="twitter:title" content={data.site_settings?.site_name ?? 'IEUM'} />
+</svelte:head>
+
 {#if isLoading}
 	<div class="fixed inset-0 bg-white flex items-center justify-center z-50">
 		<Spinner size="12" />

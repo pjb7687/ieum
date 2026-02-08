@@ -23,7 +23,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate, ManualTransaction, AccountSettings, PrivacyPolicy, TermsOfService, Organizer
+from main.models import Event, EmailTemplate, Attendee, CustomQuestion, CustomAnswer, Abstract, AbstractVote, OnSiteAttendee, Institution, PaymentHistory, BusinessSettings, ExchangeRate, ManualTransaction, AccountSettings, PrivacyPolicy, TermsOfService, Organizer, SiteSettings
 from main.schema import *
 from main.utils import validate_abstract_file, sanitize_filename, rate_limit, sanitize_email_header, validate_email_format, validate_editor_file, generate_onsite_code
 
@@ -1985,6 +1985,35 @@ def update_account_settings(request, data: AccountSettingsUpdateSchema):
         'attendee_retention_years': account_settings.attendee_retention_years,
         'payment_retention_years': account_settings.payment_retention_years,
         'minimum_retention_years': AccountSettings.MINIMUM_RETENTION_YEARS,
+    }
+
+
+# ===== Site Settings (Global Admin) =====
+
+@api.get("/site-settings", response=SiteSettingsSchema, auth=None)
+def get_site_settings(request):
+    """Get site settings for meta tags (public endpoint)."""
+    settings = SiteSettings.get_instance()
+    return {
+        'site_name': settings.site_name,
+        'site_description': settings.site_description,
+        'site_keywords': settings.site_keywords,
+    }
+
+
+@api.post("/admin/site-settings", response=SiteSettingsSchema)
+@ensure_staff
+def update_site_settings(request, data: SiteSettingsUpdateSchema):
+    """Update site settings (admin only)."""
+    settings = SiteSettings.get_instance()
+    settings.site_name = data.site_name
+    settings.site_description = data.site_description
+    settings.site_keywords = data.site_keywords
+    settings.save()
+    return {
+        'site_name': settings.site_name,
+        'site_description': settings.site_description,
+        'site_keywords': settings.site_keywords,
     }
 
 

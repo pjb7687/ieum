@@ -99,6 +99,10 @@
     });
 </script>
 
+<svelte:head>
+    <title>{m.admin_title()} - {data.event.name} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+</svelte:head>
+
 <svelte:window onhashchange={setAdminPage}/>
 
 {#snippet process_spaces(text)}

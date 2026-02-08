@@ -454,6 +454,18 @@ class AccountSettingsUpdateSchema(Schema):
     payment_retention_years: int = 5
 
 
+class SiteSettingsSchema(Schema):
+    site_name: str
+    site_description: str
+    site_keywords: str
+
+
+class SiteSettingsUpdateSchema(Schema):
+    site_name: str = "IEUM"
+    site_description: str = "An open-source conference management system for organizing scientific conferences. Manage event registrations, abstract submissions, and attendee workflows seamlessly."
+    site_keywords: str = "conference management, event registration, abstract submission, scientific conference, academic event"
+
+
 class RegistrationHistorySchema(Schema):
     id: int
     registration_date: str

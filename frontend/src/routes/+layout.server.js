@@ -59,5 +59,17 @@ export async function load({ cookies, url }) {
 
     rtn.csrf_token = response_csrftoken.data.csrftoken;
 
+    // Load site settings (public endpoint)
+    const siteSettingsResponse = await get('api/site-settings');
+    if (siteSettingsResponse.ok && siteSettingsResponse.status === 200) {
+        rtn.site_settings = siteSettingsResponse.data;
+    } else {
+        rtn.site_settings = {
+            site_name: 'IEUM',
+            site_description: '',
+            site_keywords: ''
+        };
+    }
+
     return rtn;
 }

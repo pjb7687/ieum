@@ -76,6 +76,10 @@
     };
 </script>
 
+<svelte:head>
+    <title>{m.login_title()} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+</svelte:head>
+
 <div class="container mx-auto max-w-4xl my-10 px-3 sm:px-7">
     <Card size="xl" padding="none" class="grid md:grid-cols-2">
         <div class="p-8 flex flex-col space-y-8 border-l border-b border-gray-300">

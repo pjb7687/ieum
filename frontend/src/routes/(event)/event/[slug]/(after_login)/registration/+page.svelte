@@ -70,6 +70,10 @@
     let showChangeRequestModal = $state(false);
 </script>
 
+<svelte:head>
+    <title>{m.myRegistration_title()} - {event.name} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+</svelte:head>
+
 <svelte:window onhashchange={setPage}/>
 
 <div class="container mx-auto my-10 px-3 sm:px-7">

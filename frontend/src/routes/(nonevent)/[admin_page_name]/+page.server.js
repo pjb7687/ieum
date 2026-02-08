@@ -26,6 +26,18 @@ export async function load({ parent, params, cookies }) {
         institutions: await get_data_or_404('institutions')
     };
 
+    // Load site settings (public endpoint, doesn't require admin auth)
+    const siteSettingsResponse = await get('api/site-settings', cookies);
+    if (siteSettingsResponse.ok && siteSettingsResponse.status === 200) {
+        data.admin.siteSettings = siteSettingsResponse.data;
+    } else {
+        data.admin.siteSettings = {
+            site_name: 'IEUM',
+            site_description: '',
+            site_keywords: ''
+        };
+    }
+
     // Load business settings (public endpoint, doesn't require admin auth)
     const businessSettingsResponse = await get('api/business-settings', cookies);
     if (businessSettingsResponse.ok && businessSettingsResponse.status === 200) {
@@ -182,6 +194,20 @@ export const actions = {
         }
 
         const response = await post(`api/admin/user/${user_id}/update`, data, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
+    'update_site_settings': async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const data = {
+            site_name: formdata.get('site_name') || 'IEUM',
+            site_description: formdata.get('site_description') || '',
+            site_keywords: formdata.get('site_keywords') || ''
+        };
+        const response = await post('api/admin/site-settings', data, cookies);
         if (response.ok && response.status === 200) {
             return response.data;
         } else {

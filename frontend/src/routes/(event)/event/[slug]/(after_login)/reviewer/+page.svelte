@@ -42,6 +42,10 @@
     };
 </script>
 
+<svelte:head>
+    <title>Abstract Voting - {data.event.name} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+</svelte:head>
+
 <Heading tag="h1" class="text-2xl font-bold mb-3">Abstract Voting</Heading>
 <p class="mb-6">Please review the abstract below and vote for the ones you think are the best.</p>
 

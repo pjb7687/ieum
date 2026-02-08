@@ -9,6 +9,10 @@
     const event = data.event;
 </script>
 
+<svelte:head>
+    <title>{m.onsiteRegistration_complete()} - {event.name} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+</svelte:head>
+
 <div class="flex items-center justify-center min-h-screen bg-gray-50 px-4">
     <Card size="xl" class="max-w-md w-full text-center">
         <div class="flex justify-center mb-4">

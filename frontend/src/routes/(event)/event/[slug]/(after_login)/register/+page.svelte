@@ -365,6 +365,10 @@
     }
 </script>
 
+<svelte:head>
+    <title>{m.eventRegister_title()} - {event.name} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+</svelte:head>
+
 {#snippet process_spaces(text)}
     {@html text.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}
 {/snippet}

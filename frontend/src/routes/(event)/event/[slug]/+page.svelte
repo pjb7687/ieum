@@ -117,6 +117,10 @@
     }
 </script>
 
+<svelte:head>
+    <title>{event.name} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+</svelte:head>
+
 <div class="container mx-auto my-10 px-3 sm:px-7">
     <!-- Page Header Card -->
     <div class="relative rounded-lg shadow-sm py-16 px-8 mb-8 overflow-hidden" style="background-image: url('/bg-events.webp'); background-size: cover; background-position: center;">

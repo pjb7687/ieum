@@ -495,6 +495,42 @@ class AccountSettings(models.Model):
         return "Account Settings"
 
 
+class SiteSettings(models.Model):
+    """
+    Singleton model for site name and meta tag settings
+    """
+    site_name = models.CharField(max_length=200, default='IEUM')
+    site_description = models.TextField(
+        blank=True,
+        default='An open-source conference management system for organizing scientific conferences. Manage event registrations, abstract submissions, and attendee workflows seamlessly.'
+    )
+    site_keywords = models.CharField(
+        max_length=500,
+        blank=True,
+        default='conference management, event registration, abstract submission, scientific conference, academic event'
+    )
+
+    class Meta:
+        verbose_name = 'Site Settings'
+        verbose_name_plural = 'Site Settings'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def get_instance(cls):
+        """Get or create the singleton instance"""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return f"Site Settings - {self.site_name}"
+
+
 class PrivacyPolicy(models.Model):
     """
     Singleton model for privacy policy content in English and Korean.

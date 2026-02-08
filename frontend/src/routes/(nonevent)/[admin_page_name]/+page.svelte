@@ -1,7 +1,7 @@
 <script>
     import { Card, Button } from 'flowbite-svelte';
     import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper } from 'flowbite-svelte';
-    import { CalendarMonthSolid, UsersGroupSolid, BuildingSolid, CogSolid, ClockSolid, FileLinesSolid, ClipboardListSolid } from 'flowbite-svelte-icons';
+    import { CalendarMonthSolid, UsersGroupSolid, BuildingSolid, CogSolid, ClockSolid, FileLinesSolid, ClipboardListSolid, GlobeSolid } from 'flowbite-svelte-icons';
     import { onMount } from 'svelte';
     import { fly } from 'svelte/transition';
     import * as m from '$lib/paraglide/messages.js';
@@ -13,6 +13,7 @@
     import AccountSettings from '$lib/components/admin/AccountSettings.svelte';
     import PrivacyPolicy from '$lib/components/admin/PrivacyPolicy.svelte';
     import TermsOfService from '$lib/components/admin/TermsOfService.svelte';
+    import SiteSettings from '$lib/components/admin/SiteSettings.svelte';
 
     let { data } = $props();
 
@@ -25,6 +26,7 @@
         if (location.hash !== '#events' &&
             location.hash !== '#users' &&
             location.hash !== '#institutions' &&
+            location.hash !== '#site_settings' &&
             location.hash !== '#business_settings' &&
             location.hash !== '#account_settings' &&
             location.hash !== '#privacy_policy' &&
@@ -79,6 +81,10 @@
     });
 </script>
 
+<svelte:head>
+    <title>{m.admin_title()} | {data.site_settings?.site_name ?? 'IEUM'}</title>
+</svelte:head>
+
 <svelte:window onhashchange={setAdminPage}/>
 
 <!-- Page Header Card -->
@@ -115,6 +121,11 @@
                         <SidebarItem label={m.admin_sidebar_institutions()} active={sidebar_selected === 'institutions'} href="#institutions">
                             {#snippet icon()}
                                 <BuildingSolid class="w-6 h-6" />
+                            {/snippet}
+                        </SidebarItem>
+                        <SidebarItem label={m.admin_sidebar_siteSettings()} active={sidebar_selected === 'site_settings'} href="#site_settings">
+                            {#snippet icon()}
+                                <GlobeSolid class="w-6 h-6" />
                             {/snippet}
                         </SidebarItem>
                         <SidebarItem label={m.admin_sidebar_businessSettings()} active={sidebar_selected === 'business_settings'} href="#business_settings">
@@ -161,6 +172,10 @@
 
             {#if sidebar_selected === 'institutions'}
             <Institutions {data} />
+            {/if}
+
+            {#if sidebar_selected === 'site_settings'}
+            <SiteSettings {data} />
             {/if}
 
             {#if sidebar_selected === 'business_settings'}
