@@ -474,7 +474,7 @@ class EventPaymentSchema(Schema):
     payment_type: str
     manual_payment_type: str = ""  # For 직접입력: card, transfer, cash
     note: str
-    attendee_id: int
+    attendee_id: Optional[int] = None
     attendee_name: str
     attendee_name_ko: str
     attendee_email: str

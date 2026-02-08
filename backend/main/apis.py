@@ -463,7 +463,8 @@ def add_event(request):
             "Event Details:\n"
             " - Dates: {{ event.start_date|date:'F d, Y' }} - {{ event.end_date|date:'F d, Y' }}\n"
             " - Venue: {{ event.venue }}\n"
-            " - Event Link: {{ event.link_info }}\n\n"
+            " - Event Official Website: {{ event.link_info }}\n"
+            " - Event Registration: " + settings.HEADLESS_URL_ROOT + "/event/{{ event.id }}/register\n\n"
             "If you have any questions, please contact us at: " + settings.EMAIL_FROM + "\n\n"
             "We look forward to seeing you at the event!\n\n"
             "Warm regards,\n"
@@ -1950,18 +1951,10 @@ def update_account_settings(request, data: AccountSettingsUpdateSchema):
 def get_event_payments(request, event_id: int):
     """Get all payments for an event (event admin only)."""
     event = Event.objects.get(id=event_id)
-    payments = PaymentHistory.objects.filter(event=event).select_related('attendee', 'attendee__user', 'manual_transaction')
+    payments = PaymentHistory.objects.filter(event=event).select_related('manual_transaction')
 
     payment_list = []
     for payment in payments:
-        attendee = payment.attendee
-        # Construct attendee name
-        name_parts = [attendee.first_name or '']
-        if attendee.middle_initial:
-            name_parts.append(attendee.middle_initial)
-        name_parts.append(attendee.last_name or '')
-        attendee_name = ' '.join(filter(None, name_parts))
-
         # Get manual transaction details if exists
         manual_payment_type = ''
         supply_amount = 0
@@ -1995,12 +1988,12 @@ def get_event_payments(request, event_id: int):
             'payment_type': payment.payment_type,
             'manual_payment_type': manual_payment_type,
             'note': payment.note,
-            'attendee_id': attendee.id,
-            'attendee_name': attendee_name,
-            'attendee_name_ko': attendee.korean_name or '',
-            'attendee_email': attendee.user.email,
-            'attendee_institute': attendee.institute or '',
-            'attendee_institute_ko': attendee.institute_ko or '',
+            'attendee_id': payment.attendee_id,
+            'attendee_name': payment.attendee_name,
+            'attendee_name_ko': payment.attendee_korean_name or '',
+            'attendee_email': payment.attendee_email or '',
+            'attendee_institute': payment.attendee_institute or '',
+            'attendee_institute_ko': payment.attendee_institute_ko or '',
             'supply_amount': supply_amount,
             'vat': vat,
             'card_type': card_type,
