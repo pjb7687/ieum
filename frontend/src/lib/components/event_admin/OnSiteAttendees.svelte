@@ -3,7 +3,7 @@
     import { Modal, Heading, Textarea, Select, Label, Card, Input } from 'flowbite-svelte';
     import { Alert } from 'flowbite-svelte';
     import { enhance } from '$app/forms';
-    import { UserEditSolid, UserRemoveSolid, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
+    import { UserEditSolid, UserRemoveSolid, TagOutline, AwardOutline, CheckCircleSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
     import { generateNametagPDF, generateCertificatePDF, loadKoreanFonts } from '$lib/pdfUtils.js';
 
@@ -19,8 +19,18 @@
         loadKoreanFonts();
     });
 
-    // Create a sorted derived value for attendees
-    let sortedAttendees = $derived([...data.onsite_attendees].sort((a, b) => a.id - b.id));
+    // Local overrides for optimistic UI updates (e.g., toggling confirmed)
+    let localOverrides = $state({});
+
+    // Create a sorted derived value for attendees, applying local overrides
+    let sortedAttendees = $derived.by(() => {
+        return [...data.onsite_attendees]
+            .map(a => {
+                const override = localOverrides[a.id];
+                return override ? { ...a, ...override } : a;
+            })
+            .sort((a, b) => a.id - b.id);
+    });
 
     const exportAttendeesAsCSV = () => {
         const csv = [
@@ -120,15 +130,38 @@
         };
     };
 
+    const toggleConfirm = async (id, currentValue) => {
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('is_confirmed', (!currentValue).toString());
+        const response = await fetch('?/confirm_onsite_attendee', {
+            method: 'POST',
+            body: formData
+        });
+        if (response.ok) {
+            localOverrides = { ...localOverrides, [id]: { is_confirmed: !currentValue } };
+        }
+    };
+
     let nametag_modal = $state(false);
     let selected_nametag = $state('');
     let selected_nametag_id = $state(null);
     let selected_role = $state('Participant');
 
-    // Nametag paper settings from event
-    let nametag_paper_width = $state(data.event.nametag_paper_width ?? 90);
-    let nametag_paper_height = $state(data.event.nametag_paper_height ?? 100);
-    let nametag_orientation = $state(data.event.nametag_orientation ?? 'portrait');
+    // Nametag paper settings from event (use $derived for reactive defaults, $state for local edits)
+    let _nametag_defaults = $derived.by(() => ({
+        w: data.event.nametag_paper_width ?? 90,
+        h: data.event.nametag_paper_height ?? 100,
+        o: data.event.nametag_orientation ?? 'portrait'
+    }));
+    let nametag_paper_width = $state(90);
+    let nametag_paper_height = $state(100);
+    let nametag_orientation = $state('portrait');
+    $effect.pre(() => {
+        nametag_paper_width = _nametag_defaults.w;
+        nametag_paper_height = _nametag_defaults.h;
+        nametag_orientation = _nametag_defaults.o;
+    });
 
     const saveNametagSettings = async () => {
         try {
@@ -211,7 +244,7 @@
         try {
             for (const id of selectedAttendees) {
                 const p = sortedAttendees.find(a => a.id === id);
-                if (!p.email) continue;
+                if (!p.email || !p.is_confirmed) continue;
                 const pdfDataUri = await generateCertificatePDF({
                     attendee: { name: p.name, institute: p.institute },
                     event: data.event,
@@ -401,9 +434,9 @@
     <TableHead>
         <TableHeadCell class="w-1">
             <Checkbox
-                checked={selectedAttendees.length > 0 && selectedAttendees.length === data.onsite_attendees.length}
+                checked={selectedAttendees.length > 0 && selectedAttendees.length === sortedAttendees.length}
                 intermediate={
-                    selectedAttendees.length > 0 && (selectedAttendees.length < data.onsite_attendees.length)
+                    selectedAttendees.length > 0 && (selectedAttendees.length < sortedAttendees.length)
                 }
                 onclick={(e) => {
                     if (e.target.checked) {
@@ -415,6 +448,7 @@
             />
         </TableHeadCell>
         <TableHeadCell>{m.onsiteAttendees_id()}</TableHeadCell>
+        <TableHeadCell class="w-1">{m.onsiteAttendees_confirmed()}</TableHeadCell>
         <TableHeadCell>{m.onsiteAttendees_name()}</TableHeadCell>
         <TableHeadCell>{m.onsiteAttendees_email()}</TableHeadCell>
         <TableHeadCell>{m.onsiteAttendees_institute()}</TableHeadCell>
@@ -432,6 +466,11 @@
                     }
                 }} /></TableBodyCell>
                 <TableBodyCell>{row.onsiteattendee_nametag_id}</TableBodyCell>
+                <TableBodyCell>
+                    <button onclick={() => toggleConfirm(row.id, row.is_confirmed)} class="cursor-pointer">
+                        <CheckCircleSolid class="w-5 h-5 {row.is_confirmed ? 'text-green-500' : 'text-gray-300'}" />
+                    </button>
+                </TableBodyCell>
                 <TableBodyCell>{row.name}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
                 <TableBodyCell>{row.institute}</TableBodyCell>
@@ -441,8 +480,8 @@
                         <Button color="none" size="none" onclick={() => showNametagModal(row.id)}>
                             <TagOutline class="w-5 h-5" />
                         </Button>
-                        <Button color="none" size="none" onclick={() => showCertificateModal(row.id)}>
-                            <AwardOutline class="w-5 h-5" />
+                        <Button color="none" size="none" onclick={() => showCertificateModal(row.id)} disabled={!row.is_confirmed}>
+                            <AwardOutline class="w-5 h-5 {row.is_confirmed ? '' : 'opacity-30'}" />
                         </Button>
                         <Button color="none" size="none" onclick={() => showAttenteeModal(row.id)}>
                             <UserEditSolid class="w-5 h-5" />
@@ -456,7 +495,7 @@
         {/each}
         {#if filteredAttendees.length === 0}
             <TableBodyRow>
-                <TableBodyCell colspan="7" class="text-center">{m.onsiteAttendees_noRecords()}</TableBodyCell>
+                <TableBodyCell colspan="8" class="text-center">{m.onsiteAttendees_noRecords()}</TableBodyCell>
             </TableBodyRow>
         {/if}
     </TableBody>

@@ -175,6 +175,18 @@ export const actions = {
         }
         return;
     },
+    toggle_attended: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/attendee/${parseInt(formdata.get('id'))}/update`, {
+            is_attended: formdata.get('is_attended') === 'true',
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
     update_answers: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
         let answers = [];
@@ -357,6 +369,18 @@ export const actions = {
             email: formdata.get('email'),
             institute: formdata.get('institute'),
             job_title: formdata.get('job_title'),
+        }, cookies);
+        if (response.ok && response.status === 200) {
+            return response.data;
+        } else {
+            error(response.status, response.data);
+        }
+        return;
+    },
+    confirm_onsite_attendee: async ({ cookies, params, request }) => {
+        let formdata = await request.formData();
+        const response = await post(`api/event/${params.slug}/onsite/${formdata.get('id')}/update`, {
+            is_confirmed: formdata.get('is_confirmed') === 'true',
         }, cookies);
         if (response.ok && response.status === 200) {
             return response.data;

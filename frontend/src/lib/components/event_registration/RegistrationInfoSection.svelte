@@ -174,5 +174,5 @@
 
 <!-- Print Certificate Button -->
 <div class="flex flex-wrap gap-4 mt-8 pt-6 border-t border-gray-200">
-    <Button color="light" disabled={!eventHasEnded} onclick={generateCertificate}>{m.paymentHistory_printCertificate()}</Button>
+    <Button color="light" disabled={!eventHasEnded || !attendee?.is_attended} onclick={generateCertificate}>{m.paymentHistory_printCertificate()}</Button>
 </div>

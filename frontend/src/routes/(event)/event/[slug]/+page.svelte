@@ -29,12 +29,12 @@
     });
 
     let { data } = $props();
-    let event = data.event;
-    let user = data.user;
-    let registered = data.registered;
-    let payment_status = data.payment_status;
-    let is_event_admin = data.is_event_admin;
-    let abstract_submitted = data.abstract_submitted;
+    let event = $derived(data.event);
+    let user = $derived(data.user);
+    let registered = $derived(data.registered);
+    let payment_status = $derived(data.payment_status);
+    let is_event_admin = $derived(data.is_event_admin);
+    let abstract_submitted = $derived(data.abstract_submitted);
 
     // Check if user needs to pay (registered for paid event but hasn't paid)
     let needsPayment = $derived(

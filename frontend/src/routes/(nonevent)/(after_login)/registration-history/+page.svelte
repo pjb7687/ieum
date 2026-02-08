@@ -155,7 +155,7 @@
                         <TableBodyCell class="align-top whitespace-nowrap">
                             <div class="flex flex-row gap-1">
                                 <Button size="xs" color="primary" href="/event/{registration.event_id}/registration">{m.common_viewDetails()}</Button>
-                                <Button size="xs" color="light" disabled={!hasEventEnded(registration.end_date)} onclick={() => generateCertificate(registration)}>{m.paymentHistory_printCertificate()}</Button>
+                                <Button size="xs" color="light" disabled={!hasEventEnded(registration.end_date) || !registration.is_attended} onclick={() => generateCertificate(registration)}>{m.paymentHistory_printCertificate()}</Button>
                             </div>
                         </TableBodyCell>
                     </TableBodyRow>

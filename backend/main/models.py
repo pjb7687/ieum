@@ -75,6 +75,7 @@ class Attendee(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)  # When the registration was created
     user_deleted_at = models.DateTimeField(null=True, blank=True)  # When the associated user was deleted
     user_email = models.EmailField(blank=True)  # Preserved email after user deletion
+    is_attended = models.BooleanField(default=False)
 
     class Meta:
         unique_together = [['event', 'attendee_nametag_id']]
@@ -101,6 +102,7 @@ class OnSiteAttendee(models.Model):
     email = models.EmailField(blank=True)
     institute = models.CharField(max_length=1000)
     job_title = models.CharField(max_length=1000, blank=True)
+    is_confirmed = models.BooleanField(default=False)
 
     class Meta:
         unique_together = [['event', 'onsiteattendee_nametag_id']]

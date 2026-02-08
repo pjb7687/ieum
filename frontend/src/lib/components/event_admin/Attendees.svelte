@@ -3,7 +3,7 @@
     import { Modal, Heading, Textarea, Select, Label, Card, Input } from 'flowbite-svelte';
     import { Alert } from 'flowbite-svelte';
     import { enhance } from '$app/forms';
-    import { UserEditSolid, UserRemoveSolid, TagOutline, AwardOutline } from 'flowbite-svelte-icons';
+    import { UserEditSolid, UserRemoveSolid, TagOutline, AwardOutline, CheckCircleSolid } from 'flowbite-svelte-icons';
     import * as m from '$lib/paraglide/messages.js';
     import { languageTag } from '$lib/paraglide/runtime.js';
     import { generateNametagPDF, generateCertificatePDF, loadKoreanFonts } from '$lib/pdfUtils.js';
@@ -77,6 +77,7 @@
                 job_title: item.job_title,
                 disability: item.disability,
                 dietary: item.dietary,
+                is_attended: item.is_attended,
                 custom_answers: []
             }
 
@@ -290,6 +291,21 @@
         };
     };
 
+    const toggleAttended = async (id, currentValue) => {
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('is_attended', (!currentValue).toString());
+        const response = await fetch('?/toggle_attended', {
+            method: 'POST',
+            body: formData
+        });
+        if (response.ok) {
+            table_data_attendees = table_data_attendees.map(a =>
+                a.id === id ? { ...a, is_attended: !currentValue } : a
+            );
+        }
+    };
+
     let form_config = {
         hide_login_info: true,
     };
@@ -412,7 +428,7 @@
         try {
             for (const id of selectedAttendees) {
                 const p = table_data_attendees.find(a => a.id === id);
-                if (!p.email) continue;
+                if (!p.email || !p.is_attended) continue;
                 const pdfDataUri = await generateCertificatePDF({
                     attendee: { name: p.name, institute: p.institute },
                     event: data.event,
@@ -575,6 +591,7 @@
             />
         </TableHeadCell>
         <TableHeadCell>{m.attendees_id()}</TableHeadCell>
+        <TableHeadCell class="w-1">{m.attendees_attended()}</TableHeadCell>
         <TableHeadCell>{m.attendees_name()}</TableHeadCell>
         <TableHeadCell>{m.attendees_email()}</TableHeadCell>
         <TableHeadCell>{m.attendees_nationality()}</TableHeadCell>
@@ -602,6 +619,11 @@
                     }
                 }} /></TableBodyCell>
                 <TableBodyCell>{row.attendee_nametag_id}</TableBodyCell>
+                <TableBodyCell>
+                    <button onclick={() => toggleAttended(row.id, row.is_attended)} class="cursor-pointer">
+                        <CheckCircleSolid class="w-5 h-5 {row.is_attended ? 'text-green-500' : 'text-gray-300'}" />
+                    </button>
+                </TableBodyCell>
                 <TableBodyCell>{row.name}</TableBodyCell>
                 <TableBodyCell>{row.email}</TableBodyCell>
                 <TableBodyCell>{stringify_nationality(row.nationality)}</TableBodyCell>
@@ -621,8 +643,8 @@
                         <Button color="none" size="none" onclick={() => showNametagModal(row.id)}>
                             <TagOutline class="w-5 h-5" />
                         </Button>
-                        <Button color="none" size="none" onclick={() => showCertificateModal(row.id)}>
-                            <AwardOutline class="w-5 h-5" />
+                        <Button color="none" size="none" onclick={() => showCertificateModal(row.id)} disabled={!row.is_attended}>
+                            <AwardOutline class="w-5 h-5 {row.is_attended ? '' : 'opacity-30'}" />
                         </Button>
                         <Button color="none" size="none" onclick={() => showAttenteeModal(row.id)}>
                             <UserEditSolid class="w-5 h-5" />
@@ -637,7 +659,7 @@
         {#if filteredAttendees.length === 0}
             <TableBodyRow>
                 <TableBodyCell colspan={
-                    expand_attendees ? custom_headers_attendees.length + 11 : 6
+                    expand_attendees ? custom_headers_attendees.length + 12 : 7
                 } class="text-center">{m.attendees_noRecords()}</TableBodyCell>
             </TableBodyRow>
         {/if}

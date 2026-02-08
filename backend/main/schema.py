@@ -287,6 +287,7 @@ class AttendeeSchema(Schema):
     disability: str
     dietary: str
     user_email: str
+    is_attended: bool
     custom_answers: List[AnswerSchema]
 
     @staticmethod
@@ -396,6 +397,7 @@ class OnSiteAttendeeSchema(Schema):
     email: str
     institute: str
     job_title: str
+    is_confirmed: bool
 
 class PaymentHistorySchema(Schema):
     number: str
@@ -467,6 +469,7 @@ class RegistrationHistorySchema(Schema):
     attendee_institute: str
     registration_fee: int
     payment_status: str  # 'free', 'completed', 'pending', 'cancelled'
+    is_attended: bool
 
 
 class EventPaymentSchema(Schema):

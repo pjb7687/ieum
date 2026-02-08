@@ -263,7 +263,8 @@ def get_registration_history(request):
             'attendee_name': attendee_name,
             'attendee_institute': attendee_institute,
             'registration_fee': registration_fee,
-            'payment_status': payment_status
+            'payment_status': payment_status,
+            'is_attended': attendee.is_attended
         })
 
     # Sort by event start date descending
@@ -879,30 +880,36 @@ def update_attendee(request, event_id: int, attendee_id: int):
     data = json.loads(request.body)
     event = Event.objects.get(id=event_id)
     attendee = Attendee.objects.get(id=attendee_id, event=event)
-    attendee.first_name = data.get("first_name", "")
-    attendee.middle_initial = data.get("middle_initial", "")
-    attendee.last_name = data.get("last_name", "")
-    attendee.korean_name = data.get("korean_name", "")
-    attendee.nationality = data["nationality"]
 
-    # Get institution by ID to retrieve both English and Korean names
-    institute_id = data.get("institute")
-    if institute_id:
-        try:
-            institution = Institution.objects.get(id=int(institute_id))
-            attendee.institute = institution.name_en
-            attendee.institute_ko = institution.name_ko
-        except (Institution.DoesNotExist, ValueError):
-            return api.create_response(
-                request,
-                {"code": "invalid_institution", "message": "Invalid institution"},
-                status=400,
-            )
+    if "is_attended" in data:
+        attendee.is_attended = data.get("is_attended", False)
 
-    attendee.department = data.get("department", "")
-    attendee.job_title = data.get("job_title", "")
-    attendee.disability = data.get("disability", "")
-    attendee.dietary = data.get("dietary", "")
+    if "first_name" in data or "nationality" in data:
+        attendee.first_name = data.get("first_name", "")
+        attendee.middle_initial = data.get("middle_initial", "")
+        attendee.last_name = data.get("last_name", "")
+        attendee.korean_name = data.get("korean_name", "")
+        attendee.nationality = data["nationality"]
+
+        # Get institution by ID to retrieve both English and Korean names
+        institute_id = data.get("institute")
+        if institute_id:
+            try:
+                institution = Institution.objects.get(id=int(institute_id))
+                attendee.institute = institution.name_en
+                attendee.institute_ko = institution.name_ko
+            except (Institution.DoesNotExist, ValueError):
+                return api.create_response(
+                    request,
+                    {"code": "invalid_institution", "message": "Invalid institution"},
+                    status=400,
+                )
+
+        attendee.department = data.get("department", "")
+        attendee.job_title = data.get("job_title", "")
+        attendee.disability = data.get("disability", "")
+        attendee.dietary = data.get("dietary", "")
+
     attendee.save()
     return {"code": "success", "message": "Successfully updated."}
 
@@ -1877,28 +1884,34 @@ def update_on_site_attendee(request, event_id: int, onsite_id: int):
     event = Event.objects.get(id=event_id)
     oa = OnSiteAttendee.objects.get(id=onsite_id, event=event)
     data = json.loads(request.body)
-    email = data.get("email", "").strip()
-    if not email:
-        return api.create_response(
-            request,
-            {"code": "email_required", "message": "Email is required."},
-            status=400,
-        )
-    oa.name = data.get("name")
-    oa.email = email
 
-    # Auto-create institution if it doesn't exist
-    institute_name = data.get("institute", "")
-    if institute_name:
-        institution, _ = Institution.objects.get_or_create(
-            name_en=institute_name,
-            defaults={'name_ko': ''}
-        )
-        oa.institute = institution.name_en
-    else:
-        oa.institute = institute_name
+    if "is_confirmed" in data:
+        oa.is_confirmed = data.get("is_confirmed", False)
 
-    oa.job_title = data.get("job_title")
+    if "name" in data or "email" in data or "institute" in data or "job_title" in data:
+        email = data.get("email", "").strip()
+        if not email:
+            return api.create_response(
+                request,
+                {"code": "email_required", "message": "Email is required."},
+                status=400,
+            )
+        oa.name = data.get("name")
+        oa.email = email
+
+        # Auto-create institution if it doesn't exist
+        institute_name = data.get("institute", "")
+        if institute_name:
+            institution, _ = Institution.objects.get_or_create(
+                name_en=institute_name,
+                defaults={'name_ko': ''}
+            )
+            oa.institute = institution.name_en
+        else:
+            oa.institute = institute_name
+
+        oa.job_title = data.get("job_title")
+
     oa.save()
     return {"code": "success", "message": "On-site attendee updated."}
 
