@@ -262,7 +262,7 @@ class QuestionSchema(Schema):
 
 class AnswerSchema(Schema):
     id: int
-    reference: QuestionSchema
+    reference: Optional[QuestionSchema] = None
     question: str
     answer: Union[str, int]
 

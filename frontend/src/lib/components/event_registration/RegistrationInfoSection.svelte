@@ -30,13 +30,13 @@
 
     // Parse checkbox answer format
     function parseCheckboxAnswer(answer) {
-        const lines = answer.split('\n');
+        const lines = answer.split(/\r?\n/);
         return lines.map(line => {
-            const match = line.match(/^-\s*(.+?):\s*(.+)$/);
+            const match = line.trim().match(/^-\s*(.+?):\s*(.+)$/);
             if (match) {
                 return {
-                    option: match[1],
-                    checked: match[2] === 'on' || match[2] === 'true' || match[2] === 'checked'
+                    option: match[1].trim(),
+                    checked: match[2].trim() === 'on' || match[2].trim() === 'true' || match[2].trim() === 'checked'
                 };
             }
             return null;
