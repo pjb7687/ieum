@@ -117,7 +117,7 @@
         </div>
         <div>
             <p class="text-sm font-medium text-gray-500">{m.form_institute()}</p>
-            <p class="text-base text-gray-900">{hasEnglish ? attendee.institute : (showKoreanName && attendee.institute_ko ? attendee.institute_ko : attendee.institute)}</p>
+            <p class="text-base text-gray-900">{currentLang === 'ko' && attendee.institute_ko ? attendee.institute_ko : attendee.institute}</p>
         </div>
         {#if attendee.department}
             <div>

@@ -42,6 +42,30 @@ export async function load({ parent, params, cookies, request }) {
 
 /** @type {import('./$types').Actions} */
 export const actions = {
+    search_institutions: async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const search = formdata.get('search') || '';
+
+        const response = await get(`api/institutions?search=${encodeURIComponent(search)}`, cookies);
+        if (response.ok) {
+            return { success: true, institutions: response.data };
+        } else {
+            return { success: false, institutions: [] };
+        }
+    },
+    create_institution: async ({ cookies, request }) => {
+        let formdata = await request.formData();
+        const data = {
+            name_en: formdata.get('name_en'),
+            name_ko: formdata.get('name_ko') || ''
+        };
+        const response = await post('api/institutions', data, cookies);
+        if (response.ok && response.status === 200) {
+            return { success: true, institution: response.data };
+        } else {
+            throw error(response.status, response.data);
+        }
+    },
     toggle_published: async ({ cookies, params, request }) => {
         const response = await post(`api/event/${params.slug}/toggle_published`, {}, cookies);
         if (response.ok && response.status === 200) {
@@ -156,10 +180,11 @@ export const actions = {
     update_attendee: async ({ cookies, params, request }) => {
         let formdata = await request.formData();
 
-        const response = await post(`api/event/${params.slug}/attendee/${parseInt(formdata.get('id'))}/update`, { 
+        const response = await post(`api/event/${params.slug}/attendee/${parseInt(formdata.get('id'))}/update`, {
             first_name: formdata.get('first_name'),
             middle_initial: formdata.get('middle_initial'),
             last_name: formdata.get('last_name'),
+            korean_name: formdata.get('korean_name'),
             nationality: formdata.get('nationality'),
             institute: formdata.get('institute'),
             department: formdata.get('department'),

@@ -308,7 +308,14 @@
 
     let form_config = {
         hide_login_info: true,
+        show_english_name: true,
+        show_korean_name: true,
     };
+
+    let edit_institution_resolved = $derived(selected_idx !== null ? {
+        name_en: table_data_attendees[selected_idx].institute_en,
+        name_ko: table_data_attendees[selected_idx].institute_ko,
+    } : null);
 
     const stringify_nationality = (value) => {
         if (value === '1') {
@@ -672,7 +679,7 @@
     <form method="post" action="?/update_attendee" use:enhance={afterSuccessfulSubmitDefaultAnswerChanges}>
         <input type="hidden" name="id" value={table_data_attendees[selected_idx].id} />
         <Heading tag="h2" class="text-lg font-bold pt-3 mb-6">{m.attendees_basicInformation()}</Heading>
-        <RegistrationForm data={table_data_attendees[selected_idx]} config={form_config} />
+        <RegistrationForm data={table_data_attendees[selected_idx]} config={form_config} institution_resolved={edit_institution_resolved} />
         {#if message_default_answer_changes.type === 'success'}
             <Alert type="success" color="green">{message_default_answer_changes.message}</Alert>
         {:else if message_default_answer_changes.type === 'error'}

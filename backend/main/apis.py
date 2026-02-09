@@ -893,14 +893,17 @@ def update_attendee(request, event_id: int, attendee_id: int):
         attendee.korean_name = data.get("korean_name", "")
         attendee.nationality = data["nationality"]
 
-        # Get institution by ID to retrieve both English and Korean names
-        institute_id = data.get("institute")
-        if institute_id:
+        # Update institution - accept either an integer ID or a string name
+        institute_val = data.get("institute")
+        if institute_val:
             try:
-                institution = Institution.objects.get(id=int(institute_id))
+                institution = Institution.objects.get(id=int(institute_val))
                 attendee.institute = institution.name_en
                 attendee.institute_ko = institution.name_ko
-            except (Institution.DoesNotExist, ValueError):
+            except (ValueError, TypeError):
+                # String name passed directly (e.g. from attendee edit modal)
+                attendee.institute = str(institute_val)
+            except Institution.DoesNotExist:
                 return api.create_response(
                     request,
                     {"code": "invalid_institution", "message": "Invalid institution"},
